@@ -148,10 +148,38 @@
     }
 
     @media screen and (max-width: 768px) {
-      .container {
-        transform: scale(0.75);
-        transform-origin: top center;
-      }
+  .container {
+    transform: scale(0.65);
+    transform-origin: top center;
+  }
+  .dial-wrapper {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+  }
+  .symbol-grid {
+    grid-template-columns: repeat(2, 50px);
+    grid-template-rows: repeat(7, 50px);
+    gap: 5px;
+  }
+  .symbol {
+    width: 50px;
+    height: 50px;
+  }
+  .dial {
+    width: 320px;
+    height: 320px;
+    background-size: contain;
+  }
+  .dial-slot {
+    width: 60px;
+    height: 60px;
+  }
+  #truthLieLabel {
+    font-size: 1.6em;
+    width: 320px;
+  }
+}
     }
   </style>
 </head>

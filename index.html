@@ -1,15 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Symbol Dial Map Interface</title>
+  <title>Kerrev, The Erased - Dial Helper</title>
   <style>
-    body { background: #111; color: white; font-family: sans-serif; text-align: center; }
-    .container { padding: 20px; }
-    
-  place-items: center;
+    html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
+
+body {
+      background-color: #111;
+      background-image: url('./img/background_wallaper_blur.jpg');
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+    }
+    .container { padding: 20px; }
     .symbol-grid {
       display: grid;
       grid-template-columns: repeat(2, 60px);
@@ -25,28 +43,6 @@
       border: 2px solid white;
       cursor: pointer;
     }
-    
-  margin: 0 auto;
-}
-    .dial-base {
-      background: url('./empty_dial.png') no-repeat center center / contain;
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-    }
-    .dial-overlay {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      background: url('./truth_lie.png') center center / contain no-repeat;
-      opacity: 0.7;
-      pointer-events: none;
-      z-index: 1;
-      transform: scaleX(1);
-    }
     .dial-slot {
       position: absolute;
       width: 80px;
@@ -58,12 +54,12 @@
       transition: box-shadow 0.2s ease;
       z-index: 2;
     }
-    .dial-slot.left1 { top: 120px; left: 50px; }
-    .dial-slot.left2 { top: 250px; left: 10px; }
-    .dial-slot.left3 { top: 400px; left: 50px; }
-    .dial-slot.right1 { top: 120px; right: 50px; }
-    .dial-slot.right2 { top: 250px; right: 10px; }
-    .dial-slot.right3 { top: 400px; right: 50px; }
+    .dial-slot.left1 { top: 95px; left: 130px; }
+    .dial-slot.left2 { top: 240px; left: 65px; }
+    .dial-slot.left3 { top: 380px; left: 125px; }
+    .dial-slot.right1 { top: 95px; right: 130px; }
+    .dial-slot.right2 { top: 240px; right: 70px; }
+    .dial-slot.right3 { top: 380px; right: 125px; }
     .map-container {
       position: relative;
       max-width: 1000px;
@@ -80,83 +76,146 @@
       position: absolute;
       width: 5%;
       aspect-ratio: 1 / 1;
-      border-radius: 50%;
-      background: rgba(0,255,0,0.2);
-      border: 2px solid transparent;
+      pointer-events: none;
+      z-index: 2;
+      background: transparent;
+      border: none;
       transition: all 0.3s ease;
     }
     .symbol-overlay.pulse {
-      animation: pulse 1.5s infinite;
-      border-color: #00ff00;
-      background-color: rgba(0,255,0,0.4);
-    }
+  animation: pulse 1.5s infinite;
+  filter: drop-shadow(0 0 12px yellow);
+}
+
+
     @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+  50% { transform: scale(1.2); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+
+  50% { transform: scale(1.2); opacity: 0.3; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
       50% { transform: scale(1.2); opacity: 0.6; }
       100% { transform: scale(1); opacity: 1; }
     }
     button { margin: 10px; padding: 10px 20px; font-size: 16px; }
-  </style>
+  .pressed {
+  transform: scale(0.95);
+  box-shadow: 0 0 20px #00ff99, 0 0 30px #00ff99 inset;
+}
+
+.pressed {
+  transform: scale(0.95);
+  box-shadow: 0 0 20px #00ff99, 0 0 30px #00ff99 inset;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <h1>Symbol Dial</h1>
-    <div id="truthLieLabel" style="display: flex; justify-content: space-between; font-size: 1.5em; margin: 30px auto; font-weight: bold; width: 300px; text-shadow: 0 0 10px #000;"></div>
-    <div class="dial-section" style="display: grid; grid-template-columns: auto 572px auto; gap: 40px; align-items: center; justify-content: center;">
-      <div class="symbol-grid" id="left-symbols" style="display: grid; grid-template-columns: repeat(2, 60px); grid-template-rows: repeat(7, 60px); gap: 6px; justify-content: center;"></div>
-      <div class="dial" style="position: relative; width: 572px; height: 572px; margin: 0 auto; background: url('./empty_dial.png') no-repeat center center / contain;">
-        
-        <div class="dial-slot left1" data-position="left1"></div>
-        <div class="dial-slot left2" data-position="left2"></div>
-        <div class="dial-slot left3" data-position="left3"></div>
-        <div class="dial-slot right1" data-position="right1"></div>
-        <div class="dial-slot right2" data-position="right2"></div>
-        <div class="dial-slot right3" data-position="right3"></div>
-      </div>
-      <div class="symbol-grid" id="right-symbols" style="display: grid; grid-template-columns: repeat(2, 60px); grid-template-rows: repeat(7, 60px); gap: 6px; justify-content: center;"></div>
-    </div>
-    <button onclick="lockInSymbols()">Lock In</button>
-    <button onclick="resetDial()">Reset</button>
-    <h2>Map</h2>
-    <div class="map-container">
-      <img src="./map.jpg" alt="Map" class="map-img" />
-      <div class="map-overlay" id="map-overlay"></div>
+<div style="position: absolute; top: 20px; left: 20px; z-index: 10;">
+    <button onclick="toggleInstructions()" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 16px; font-family: 'Manrope', sans-serif; font-weight: 300; background-color: #333; color: white; border: 2px solid #555; border-radius: 6px; cursor: pointer; text-transform: uppercase;"><img src="./img/notepad-48.png" alt="Instructions Icon" style="height: 24px; width: 24px;"> INSTRUCTIONS</button>
+    <div id="instructionsBox" style="display: none; margin-top: 10px; padding: 15px; background-color: rgba(0, 0, 0, 0.6); border: 1px solid #555; border-radius: 8px; max-width: 600px; margin-left: 0; text-align: left;">
+      <ol style="padding-left: 20px; text-align: left;">
+        <li>Look at the in-game dial and identify the 3 left and 3 right symbols.</li>
+        <li>Click each slot on the left and right to assign those symbols.</li>
+        <li>Click a symbol again to toggle its illumination (lit or not).</li>
+        <li>Once all 6 slots are filled and symbols have been toggled, click Lock In.</li>
+        <li>The map will show which symbols you need to interact with to solve the puzzle.</li>
+        <li>Click Reset to start over.</li>
+      </ol>
     </div>
   </div>
-  <script>
-    const truthCombinations = [
+  </div>
+  <h1 style="font-size: 2em; line-height: 1em; margin-bottom: 0px; text-shadow: 0 0 10px #ff0044, 0 0 20px #ff0044, 0 0 40px #ff0044; font-family: 'Manrope', sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">KERREV, THE ERASED<br>
+  <span style='font-size: 0.5em; font-weight: 300;'>Sundered Doctrine</span><br>
+  <span style='font-size: 0.6em; font-weight: 400;'>DIAL HELPER</span>
+</h1>
+  <div id="truthLieLabel" style="position: absolute; top: 125px; left: 50%; transform: translateX(-50%); width: 572px; display: grid; grid-template-columns: repeat(3, 1fr); font-size: 2.6em; font-weight: bold; text-transform: uppercase; text-shadow: 0 0 4px #000, 0 0 10px #000, 0 0 20px #000;"></div>
+  <div class="dial-section" style="display: grid; grid-template-columns: auto 572px auto; gap: 40px; align-items: center; justify-content: center;">
+    <div class="symbol-grid" id="left-symbols"></div>
+    <div class="dial" style="position: relative; width: 572px; height: 572px; margin: 0 auto; background: url('./img/empty_dial.png') center center / contain no-repeat;">
+      <div class="dial-slot left1" data-position="left1"></div>
+      <div class="dial-slot left2" data-position="left2"></div>
+      <div class="dial-slot left3" data-position="left3"></div>
+      <div class="dial-slot right1" data-position="right1"></div>
+      <div class="dial-slot right2" data-position="right2"></div>
+      <div class="dial-slot right3" data-position="right3"></div>
+    </div>
+    <div class="symbol-grid" id="right-symbols"></div>
+  </div>
+  <div style="margin: 10px auto; display: flex; gap: 20px; justify-content: center;">
+    <button onclick="lockInSymbols(); this.classList.add('pressed'); setTimeout(() => this.classList.remove('pressed'), 300);" style="text-transform: uppercase;padding: 12px 24px; font-size: 18px; font-weight: bold; background-color: #00ff99; color: #000; border: none; border-radius: 8px; box-shadow: 0 0 10px #00ff99; cursor: pointer; transition: all 0.3s ease;">Lock In</button>
+    <button onclick="resetDial()" style="text-transform: uppercase;padding: 12px 24px; font-size: 18px; font-weight: bold; background-color: #ff0066; color: #fff; border: none; border-radius: 8px; box-shadow: 0 0 10px #ff0066; cursor: pointer; transition: background 0.3s ease;">Reset</button>
+  </div>
+  <div class="map-container" style="margin-top: 20px;">
+    <img src="./img/map.jpg" alt="Map" class="map-img" />
+    <div class="map-overlay" id="map-overlay"></div>
+  </div>
+</div>
+<script>
+const truthCombinations = [
   ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
   ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
   ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
 ];
-    const lieCombinations = [
+const lieCombinations = [
   ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
   ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
   ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
   ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
 ];
-    const symbolPositions = {
-  'give': { top: '31.73%', left: '42.19%' }, 'savathun': { top: '5.12%', left: '75.2%' }, 'pyramid': { top: '63.15%', left: '6.25%' },
-  'drink': { top: '31.63%', left: '53.71%' }, 'guardian': { top: '64.28%', left: '21.97%' }, 'witness': { top: '64.07%', left: '54.93%' },
-  'kill': { top: '68.37%', left: '66.31%' }, 'worm': { top: '4.81%', left: '70.7%' }, 'traveller': { top: '75.74%', left: '19.58%' },
-  'worship': { top: '50.67%', left: '52.98%' }, 'stop': { top: '18.83%', left: '41.06%' }, 'hive': { top: '9.93%', left: '26.12%' },
-  'light': { top: '73.18%', left: '59.57%' }, 'darkness': { top: '49.95%', left: '60.06%' }
+const symbolPositions = {
+  "stop": { top: '22.31%', left: '38.64%' },
+  "kill": { top: '70.14%', left: '65.96%' },
+  "darkness": { top: '39.91%', left: '80.93%' },
+  "drink": { top: '1.74%', left: '56.29%' },
+  "give": { top: '22.31%', left: '53.32%' },
+  "guardian": { top: '45.96%', left: '19.49%' },
+  "hive": { top: '29.77%', left: '19.53%' },
+  "light": { top: '59.68%', left: '72.98%' },
+  "pyramid": { top: '62.75%', left: '2.15%' },
+  "savathun": { top: '5.32%', left: '92.50%' },
+  "traveller": { top: '87.52%', left: '19.53%' },
+  "witness": { top: '30.20%', left: '2.00%' },
+  "worm": { top: '7.16%', left: '75.20%' },
+  "worship": { top: '70.42%', left: '31.45%' }
 };
 
-    function pulseMapSymbols(symbolsToHighlight) {
+function pulseMapSymbols(symbolsToHighlight) {
   const overlay = document.getElementById('map-overlay');
   overlay.innerHTML = '';
   Object.entries(symbolPositions).forEach(([name, pos]) => {
-    const div = document.createElement('div');
+    const div = document.createElement('img');
     div.className = 'symbol-overlay';
+    div.src = `./img/${name}.png`;
     div.style.top = pos.top;
     div.style.left = pos.left;
-    div.dataset.symbol = name;
-    if (symbolsToHighlight.includes(name)) div.classList.add('pulse');
-    overlay.appendChild(div);
+    div.style.position = 'absolute';
+    div.style.width = '5%';
+    div.style.aspectRatio = '1 / 1';
+    div.style.pointerEvents = 'none';
+    div.style.zIndex = '2';
+    if (symbolsToHighlight.includes(name)) {
+      div.classList.add('pulse');
+      overlay.appendChild(div);
+    }
   });
 }
-    function getSymbolsFromSlots(group) {
+
+function getSymbolsFromSlots(group) {
   const positions = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
   return positions.map(pos => {
     const el = document.querySelector(`.dial-slot.${pos}`);
@@ -164,54 +223,79 @@
     return match ? match[1].replace('.png','') : null;
   });
 }
-    function lockInSymbols() {
+
+function lockInSymbols() {
   const left = getSymbolsFromSlots('left').sort();
   const right = getSymbolsFromSlots('right').sort();
+  const leftIlluminated = ['left1','left2','left3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => {
+    const match = document.querySelector(`.dial-slot.${id}`).style.backgroundImage.match(/\/([^\/]+)\.png/);
+    return match ? match[1].replace('.png','') : null;
+  });
+  const rightIlluminated = ['right1','right2','right3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => {
+    const match = document.querySelector(`.dial-slot.${id}`).style.backgroundImage.match(/\/([^\/]+)\.png/);
+    return match ? match[1].replace('.png','') : null;
+  });
+
   const isLeftTruth = truthCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(left));
   const isRightTruth = truthCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(right));
   const isLeftLie = lieCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(left));
   const isRightLie = lieCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(right));
+
   const label = document.getElementById('truthLieLabel');
+  let symbolsToHighlight = [];
+  let truthSymbols = [];
+  let lieSymbols = [];
+
   if (isLeftTruth && isRightLie) {
-    label.innerHTML = '<span style="color: #00ff00">TRUTH</span><span style="color: #ff4444">LIE</span>'; label.style.display = 'flex'; label.style.justifyContent = 'space-between'; label.style.gap = '100px';
+    label.innerHTML = '<div style="text-align: center; color: #00ff00;">TRUTH</div><div></div><div style="text-align: center; color: #ff4444;">LIE</div>';
+    truthSymbols = left;
+    lieSymbols = right;
   } else if (isRightTruth && isLeftLie) {
-    label.innerHTML = '<span style="color: #ff4444">LIE</span><span style="color: #00ff00">TRUTH</span>'; label.style.display = 'flex'; label.style.justifyContent = 'space-between'; label.style.gap = '100px';
+    label.innerHTML = '<div style="text-align: center; color: #ff4444;">LIE</div><div></div><div style="text-align: center; color: #00ff00;">TRUTH</div>';
+    truthSymbols = right;
+    lieSymbols = left;
   } else {
     alert('Could not match either side to a valid truth/lie combo.');
     label.textContent = '';
   }
-  document.querySelectorAll('.dial-slot').forEach(slot => {
-    if (slot.classList.contains('active')) slot.classList.add('locked');
-  });
-  const allSymbols = [...left, ...right];
-  pulseMapSymbols(allSymbols);
+
+  const allIlluminated = [...leftIlluminated, ...rightIlluminated];
+  const truthToVisit = truthSymbols.filter(sym => allIlluminated.includes(sym));
+  const lieToVisit = [...left, ...right].filter(sym => lieSymbols.includes(sym) && !allIlluminated.includes(sym));
+  symbolsToHighlight = [...truthToVisit, ...lieToVisit];
+  pulseMapSymbols(symbolsToHighlight);
 }
-    function resetDial() {
+
+function resetDial() {
   document.querySelectorAll('.dial-slot').forEach(slot => {
     slot.style.backgroundImage = '';
     slot.classList.remove('active','locked');
     slot.style.boxShadow = 'none';
   });
-    document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('truthLieLabel').textContent = '';
 }
 
-    const symbols = [
+const symbols = [
   'guardian.png', 'hive.png', 'kill.png', 'light.png', 'darkness.png',
   'drink.png', 'give.png', 'pyramid.png', 'savathun.png', 'stop.png',
   'traveller.png', 'witness.png', 'worm.png', 'worship.png'
 ];
-    const leftGrid = document.getElementById('left-symbols');
-    const rightGrid = document.getElementById('right-symbols');
 
-    function createSymbol(img, group) {
+const leftGrid = document.getElementById('left-symbols');
+const rightGrid = document.getElementById('right-symbols');
+
+function createSymbol(img, group) {
   const div = document.createElement('div');
   div.className = 'symbol';
-  div.style.backgroundImage = `url('./${img}')`;
+  div.style.backgroundImage = `url('./img/${img}')`;
   div.dataset.image = img;
+  div.dataset.name = img.replace('.png', '');
   div.addEventListener('click', () => handleSymbolClick(div, group));
   return div;
 }
-    function handleSymbolClick(symbol, group) {
+
+function handleSymbolClick(symbol, group) {
   const emptySlot = [...document.querySelectorAll('.dial-slot')].find(slot =>
     slot.dataset.position.includes(group) && !slot.style.backgroundImage
   );
@@ -220,21 +304,32 @@
   }
 }
 
-    document.querySelectorAll('.dial-slot').forEach(slot => {
-      slot.addEventListener('click', () => {
-        if (slot.style.backgroundImage) {
-          slot.classList.toggle('active');
-          slot.style.boxShadow = slot.classList.contains('active')
-            ? '0 0 12px 6px yellow'
-            : 'none';
-        }
-      });
-    });
+document.querySelectorAll('.dial-slot').forEach(slot => {
+  slot.addEventListener('click', () => {
+    const leftFilled = ['left1','left2','left3'].every(id => document.querySelector(`.dial-slot.${id}`).style.backgroundImage);
+    const rightFilled = ['right1','right2','right3'].every(id => document.querySelector(`.dial-slot.${id}`).style.backgroundImage);
+    if (!leftFilled || !rightFilled) return;
+    if (slot.style.backgroundImage) {
+      slot.classList.toggle('active');
+      slot.style.boxShadow = slot.classList.contains('active')
+        ? '0 0 12px 6px yellow'
+        : 'none';
+    }
+  });
+});
 
-    symbols.forEach(sym => {
-      leftGrid.appendChild(createSymbol(sym, 'left'));
-      rightGrid.appendChild(createSymbol(sym, 'right'));
-    });
-  </script>
-</body>
+symbols.forEach(sym => {
+  const leftEl = createSymbol(sym, 'left');
+  const rightEl = createSymbol(sym, 'right');
+  leftGrid.appendChild(leftEl);
+  rightGrid.appendChild(rightEl);
+});
+function toggleInstructions() {
+  const box = document.getElementById('instructionsBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+<div style="position: fixed; bottom: 10px; right: 20px; font-family: 'Open Sans', sans-serif; font-size: 1.2em; color: #aaa; opacity: 0.8;">
+  MADE BY LAMZO
+</div>
 </html>

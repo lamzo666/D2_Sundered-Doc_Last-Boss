@@ -1,136 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Kerrev, The Erased - Dial Helper</title>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Manrope:wght@300;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Manrope:wght@300;700&display=swap" rel="stylesheet" />
   <style>
     body {
-      margin: 0; padding: 0; background: #111 url('./img/background_wallaper_blur.jpg') center/cover no-repeat fixed;
-      font-family: 'Open Sans', sans-serif; color: white; text-align: center;
+      background-color: #111;
+      background-image: url('./img/background_wallaper_blur.jpg');
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: white;
+      font-family: 'Open Sans', sans-serif;
+      text-align: center;
+      margin: 0;
     }
-    .container { padding: 20px; max-width: 1200px; margin: auto; }
-    .dial-container { display: flex; justify-content: center; position: relative; }
+    .dial-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
     .dial {
-      width: 572px; height: 572px; background: url('./img/empty_dial.png') center/contain no-repeat;
       position: relative;
+      width: 572px;
+      height: 572px;
+      background: url('./img/empty_dial.png') center center / contain no-repeat;
     }
     .dial-slot {
-      position: absolute; width: 80px; height: 80px; background-size: contain; background-repeat: no-repeat;
-      border: 2px solid white; cursor: pointer; transition: box-shadow 0.2s ease;
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      border: 2px solid white;
+      cursor: pointer;
+      transition: box-shadow 0.2s ease;
+      z-index: 2;
     }
-    .left1 { top: 95px; left: 130px; }
-    .left2 { top: 240px; left: 65px; }
-    .left3 { top: 380px; left: 125px; }
-    .right1 { top: 95px; right: 130px; }
-    .right2 { top: 240px; right: 70px; }
-    .right3 { top: 380px; right: 125px; }
-    .popup-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 10;
+    .dial-slot.left1 { top: 95px; left: 130px; }
+    .dial-slot.left2 { top: 240px; left: 65px; }
+    .dial-slot.left3 { top: 380px; left: 125px; }
+    .dial-slot.right1 { top: 95px; right: 130px; }
+    .dial-slot.right2 { top: 240px; right: 70px; }
+    .dial-slot.right3 { top: 380px; right: 125px; }
+    .symbol-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #222;
+      border: 2px solid #888;
+      border-radius: 8px;
+      padding: 20px;
+      z-index: 999;
     }
-    .popup-grid {
-      display: grid; grid-template-columns: repeat(4, 60px); gap: 10px; background: #222;
-      padding: 20px; border-radius: 10px;
+    .symbol-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 60px);
+      gap: 10px;
+      justify-content: center;
     }
-    .popup-symbol {
-      width: 60px; height: 60px; background-size: contain; background-repeat: no-repeat;
-      border: 2px solid white; cursor: pointer;
+    .symbol-option {
+      width: 60px;
+      height: 60px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      border: 2px solid white;
+      cursor: pointer;
     }
-    .buttons { margin: 20px 0; }
-    .buttons button {
-      width: 60px; height: 60px; border: none; border-radius: 10px; margin: 0 10px;
-      transition: all 0.3s ease;
+    .map-container {
+      position: relative;
+      max-width: 1000px;
+      margin: 40px auto;
     }
-    .buttons button img { width: 40px; height: 40px; }
-    #lockInBtn { background-color: #009966; }
-    #lockInBtn.phase2 { background-color: #ffaa00; box-shadow: 0 0 10px #ffaa00; }
-    .buttons button.reset { background-color: #cc0044; box-shadow: 0 0 10px #cc0044; }
-    .map-container { position: relative; max-width: 1000px; margin: 0 auto; }
     .map-img { width: 100%; height: auto; display: block; }
     .map-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    .symbol-overlay {
+      position: absolute;
+      width: 5%;
+      aspect-ratio: 1 / 1;
+      pointer-events: none;
+      z-index: 2;
+      background: transparent;
+      border: none;
+      transition: all 0.3s ease;
     }
     .symbol-overlay.pulse {
-      animation: pulse 1.5s infinite; filter: drop-shadow(0 0 12px yellow);
-      position: absolute; width: 5%; aspect-ratio: 1 / 1;
+      animation: pulse 1.5s infinite;
+      filter: drop-shadow(0 0 12px yellow);
     }
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.2); opacity: 1; }
       100% { transform: scale(1); opacity: 1; }
     }
+    .btn-icon {
+      width: 60px;
+      height: 60px;
+      border: none;
+      border-radius: 12px;
+      background-color: #003322;
+      box-shadow: 0 0 8px #005f3c, 0 0 12px #005f3c;
+      cursor: pointer;
+    }
+    .btn-icon img { width: 40px; height: 40px; }
+    .btn-reset {
+      background-color: #330011;
+      box-shadow: 0 0 8px #660022, 0 0 12px #660022;
+    }
     #truthLieLabel {
       min-height: 60px;
-      margin: 20px auto;
+      margin: 40px auto -20px auto;
       width: 572px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      font-size: 2.2em;
+      font-size: 2.6em;
       font-weight: bold;
       text-transform: uppercase;
       text-shadow: 0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
     }
-    #instructionsBtn {
-      position: fixed; top: 20px; left: 20px; background: transparent; border: none; cursor: pointer;
+    #instructionsIcon {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      cursor: pointer;
     }
-    #instructionsBtn img { width: 28px; height: 28px; }
+    #instructionsBox {
+      display: none;
+      position: fixed;
+      top: 70px;
+      left: 20px;
+      background-color: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 300px;
+      text-align: left;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>
-  <button id="instructionsBtn" onclick="toggleInstructions()">
-    <img src="./img/notepad-48.png" alt="Instructions">
-  </button>
-  <div class="container">
-    <h1 style="font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 2.2em; text-shadow: 0 0 10px #ff0044, 0 0 20px #ff0044; letter-spacing: 1px; text-transform: uppercase;">KERREV, THE ERASED</h1>
-    <p style="margin-top: -10px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 1.1em;">Sundered Doctrine<br>DIAL HELPER</p>
-    <div id="truthLieLabel"></div>
-    <div class="dial-container">
-      <div class="dial">
-        <div class="dial-slot left1" data-position="left1"></div>
-        <div class="dial-slot left2" data-position="left2"></div>
-        <div class="dial-slot left3" data-position="left3"></div>
-        <div class="dial-slot right1" data-position="right1"></div>
-        <div class="dial-slot right2" data-position="right2"></div>
-        <div class="dial-slot right3" data-position="right3"></div>
-      </div>
-    </div>
-    <div class="buttons">
-      <button id="lockInBtn" onclick="handleLockClick()"><img src="./img/lock-50.png"></button>
-      <button class="reset" onclick="resetDial()"><img src="./img/reset-60.png"></button>
-    </div>
-    <div class="map-container">
-      <img src="./img/map.jpg" class="map-img">
-      <div class="map-overlay" id="map-overlay"></div>
+  <img src="./img/notepad-48.png" alt="Instructions" id="instructionsIcon" onclick="toggleInstructions()" />
+  <div id="instructionsBox">
+    <ol>
+      <li>Select 6 symbols by clicking the dial.</li>
+      <li>Click again to toggle illumination (glow).</li>
+      <li>Click lock icon to continue phase or show map.</li>
+      <li>Click reset icon to start over.</li>
+    </ol>
+  </div>
+
+  <h1 style="font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 2.2em; text-shadow: 0 0 10px #ff0044, 0 0 20px #ff0044, 0 0 40px #ff0044;">KERREV, THE ERASED</h1>
+  <p style="margin-top: -10px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 1.1em;">Sundered Doctrine<br>DIAL HELPER</p>
+  <div id="truthLieLabel"></div>
+
+  <div class="dial-wrapper">
+    <div class="dial" id="dial">
+      <div class="dial-slot left1" data-position="left1"></div>
+      <div class="dial-slot left2" data-position="left2"></div>
+      <div class="dial-slot left3" data-position="left3"></div>
+      <div class="dial-slot right1" data-position="right1"></div>
+      <div class="dial-slot right2" data-position="right2"></div>
+      <div class="dial-slot right3" data-position="right3"></div>
     </div>
   </div>
-  <div class="popup-overlay" id="symbolPopup">
-    <div class="popup-grid" id="popupGrid"></div>
+
+  <div class="symbol-popup" id="symbolPopup">
+    <div class="symbol-grid" id="popupGrid"></div>
   </div>
+
+  <div class="map-container">
+    <img src="./img/map.jpg" alt="Map" class="map-img">
+    <div class="map-overlay" id="map-overlay"></div>
+  </div>
+
+  <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px;">
+    <button class="btn-icon" onclick="lockInSymbols()"><img src="./img/lock-50.png" alt="Lock" /></button>
+    <button class="btn-icon btn-reset" onclick="resetDial()"><img src="./img/reset-60.png" alt="Reset" /></button>
+  </div>
+
   <script>
-// JavaScript logic restored here
-</script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kerrev, The Erased - Dial Helper</title>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Manrope:wght@300;700&display=swap" rel="stylesheet">
-  <style>
-    /* Styles are unchanged for brevity */
-  </style>
-</head>
-<body>
-  <!-- Body content remains unchanged -->
-  <script>
-    const symbols = [
-      'guardian', 'hive', 'kill', 'light', 'darkness',
-      'drink', 'give', 'pyramid', 'savathun', 'stop',
-      'traveller', 'witness', 'worm', 'worship'
+    const symbolList = [
+      "guardian", "hive", "kill", "light", "darkness", "drink", "give",
+      "pyramid", "savathun", "stop", "traveller", "witness", "worm", "worship"
+    ];
+
+    const truthCombinations = [
+      ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
+      ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
+      ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
+    ];
+    const lieCombinations = [
+      ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
+      ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
+      ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
+      ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
     ];
 
     const symbolPositions = {
@@ -150,140 +226,99 @@
       "worship": { top: '70.42%', left: '31.45%' }
     };
 
-    const truthCombinations = [
-      ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
-      ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
-      ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
-    ];
-
-    const lieCombinations = [
-      ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
-      ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
-      ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
-      ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
-    ];
-
     let selectedSlot = null;
-    let currentPhase = 1;
 
-    const popup = document.getElementById('symbolPopup');
-    const popupGrid = document.getElementById('popupGrid');
+    function toggleInstructions() {
+      const box = document.getElementById('instructionsBox');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function openSymbolPicker(slot) {
+      selectedSlot = slot;
+      const used = Array.from(document.querySelectorAll('.dial-slot'))
+        .map(s => s.dataset.symbol).filter(Boolean);
+      const available = symbolList.filter(sym => !used.includes(sym));
+
+      const grid = document.getElementById('popupGrid');
+      grid.innerHTML = '';
+      available.forEach(sym => {
+        const div = document.createElement('div');
+        div.className = 'symbol-option';
+        div.style.backgroundImage = `url('./img/${sym}.png')`;
+        div.onclick = () => {
+          slot.style.backgroundImage = `url('./img/${sym}.png')`;
+          slot.dataset.symbol = sym;
+          document.getElementById('symbolPopup').style.display = 'none';
+        };
+        grid.appendChild(div);
+      });
+      document.getElementById('symbolPopup').style.display = 'block';
+    }
 
     document.querySelectorAll('.dial-slot').forEach(slot => {
       slot.addEventListener('click', () => {
-        if (currentPhase === 1) {
-          selectedSlot = slot;
-          openPopup(slot);
-        } else if (currentPhase === 2 && slot.style.backgroundImage) {
+        if (!slot.dataset.symbol) {
+          openSymbolPicker(slot);
+        } else {
           slot.classList.toggle('active');
-          slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
+          slot.style.boxShadow = slot.classList.contains('active')
+            ? '0 0 12px 6px yellow'
+            : 'none';
         }
       });
     });
 
-    function openPopup(slot) {
-      popupGrid.innerHTML = '';
-      const usedImages = [...document.querySelectorAll('.dial-slot')]
-        .map(el => el.style.backgroundImage.match(/\/([^\/]+)\.png/)?.[1]);
-
-      symbols.forEach(sym => {
-        if (!usedImages.includes(sym)) {
-          const div = document.createElement('div');
-          div.className = 'popup-symbol';
-          div.style.backgroundImage = `url('./img/${sym}.png')`;
-          div.addEventListener('click', () => {
-            slot.style.backgroundImage = `url('./img/${sym}.png')`;
-            popup.style.display = 'none';
-            selectedSlot = null;
-            checkLockEligibility();
-          });
-          popupGrid.appendChild(div);
-        }
-      });
-      popup.style.display = 'flex';
-    }
-
-    popup.addEventListener('click', (e) => {
-      if (e.target === popup) popup.style.display = 'none';
-    });
-
-    function checkLockEligibility() {
-      const filled = [...document.querySelectorAll('.dial-slot')].every(slot => slot.style.backgroundImage);
-      document.getElementById('lockInBtn').style.display = filled ? 'inline-block' : 'none';
-    }
-
-    function handleLockClick() {
-      const lockBtn = document.getElementById('lockInBtn');
-      if (currentPhase === 1) {
-        currentPhase = 2;
-        lockBtn.classList.add('phase2');
-      } else {
-        lockBtn.classList.remove('phase2');
-        lockInSymbols();
-        currentPhase = 1;
-      }
-    }
-
-    function getSymbolsFromSlots(group) {
-      const pos = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
-      return pos.map(id => {
-        const el = document.querySelector(`.${id}`);
-        const match = el.style.backgroundImage.match(/\/([^\/]+)\.png/);
-        return match ? match[1] : null;
+    function getGroupSymbols(pos) {
+      return ['1','2','3'].map(i => {
+        const el = document.querySelector(`.dial-slot.${pos}${i}`);
+        return el?.dataset.symbol || null;
       });
     }
 
     function lockInSymbols() {
-      const left = getSymbolsFromSlots('left').sort();
-      const right = getSymbolsFromSlots('right').sort();
-
-      const leftIlluminated = ['left1','left2','left3'].filter(id => document.querySelector(`.${id}`).classList.contains('active')).map(id => {
-        const match = document.querySelector(`.${id}`).style.backgroundImage.match(/\/([^\/]+)\.png/);
-        return match ? match[1] : null;
-      });
-      const rightIlluminated = ['right1','right2','right3'].filter(id => document.querySelector(`.${id}`).classList.contains('active')).map(id => {
-        const match = document.querySelector(`.${id}`).style.backgroundImage.match(/\/([^\/]+)\.png/);
-        return match ? match[1] : null;
-      });
+      const left = getGroupSymbols('left').sort();
+      const right = getGroupSymbols('right').sort();
+      const leftLit = ['left1','left2','left3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
+      const rightLit = ['right1','right2','right3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
 
       const label = document.getElementById('truthLieLabel');
-      let truthSymbols = [], lieSymbols = [], symbolsToHighlight = [];
-
       const isLeftTruth = truthCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(left));
       const isRightTruth = truthCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(right));
       const isLeftLie = lieCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(left));
       const isRightLie = lieCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(right));
 
+      let truthSymbols = [], lieSymbols = [];
+
       if (isLeftTruth && isRightLie) {
-        label.innerHTML = '<div style="color:#00ff00">TRUTH</div><div></div><div style="color:#ff4444">LIE</div>';
+        label.innerHTML = '<div style="text-align: center; color: #00ff00;">TRUTH</div><div></div><div style="text-align: center; color: #ff4444;">LIE</div>';
         truthSymbols = left;
         lieSymbols = right;
       } else if (isRightTruth && isLeftLie) {
-        label.innerHTML = '<div style="color:#ff4444">LIE</div><div></div><div style="color:#00ff00">TRUTH</div>';
+        label.innerHTML = '<div style="text-align: center; color: #ff4444;">LIE</div><div></div><div style="text-align: center; color: #00ff00;">TRUTH</div>';
         truthSymbols = right;
         lieSymbols = left;
       } else {
-        alert('Could not determine valid truth/lie combination.');
+        alert("Could not determine truth/lie side.");
         return;
       }
 
-      const allIlluminated = [...leftIlluminated, ...rightIlluminated];
-      const truthToVisit = truthSymbols.filter(sym => allIlluminated.includes(sym));
-      const lieToVisit = [...left, ...right].filter(sym => lieSymbols.includes(sym) && !allIlluminated.includes(sym));
-      symbolsToHighlight = [...truthToVisit, ...lieToVisit];
-      pulseMapSymbols(symbolsToHighlight);
+      const allLit = [...leftLit, ...rightLit];
+      const toHighlight = [
+        ...truthSymbols.filter(sym => allLit.includes(sym)),
+        ...lieSymbols.filter(sym => !allLit.includes(sym))
+      ];
+      showMapSymbols(toHighlight);
     }
 
-    function pulseMapSymbols(symbolsToHighlight) {
+    function showMapSymbols(symbols) {
       const overlay = document.getElementById('map-overlay');
       overlay.innerHTML = '';
-      symbolsToHighlight.forEach(name => {
-        const pos = symbolPositions[name];
+      symbols.forEach(sym => {
         const div = document.createElement('img');
-        div.src = `./img/${name}.png`;
         div.className = 'symbol-overlay pulse';
-        div.style.top = pos.top;
-        div.style.left = pos.left;
+        div.src = `./img/${sym}.png`;
+        div.style.top = symbolPositions[sym].top;
+        div.style.left = symbolPositions[sym].left;
         overlay.appendChild(div);
       });
     }
@@ -291,18 +326,12 @@
     function resetDial() {
       document.querySelectorAll('.dial-slot').forEach(slot => {
         slot.style.backgroundImage = '';
+        slot.style.boxShadow = '';
         slot.classList.remove('active');
-        slot.style.boxShadow = 'none';
+        delete slot.dataset.symbol;
       });
       document.getElementById('map-overlay').innerHTML = '';
       document.getElementById('truthLieLabel').innerHTML = '';
-      currentPhase = 1;
-      document.getElementById('lockInBtn').classList.remove('phase2');
-      document.getElementById('lockInBtn').style.display = 'none';
-    }
-
-    function toggleInstructions() {
-      alert(`1. Click a slot to pick a symbol.\n2. Fill all 6 slots.\n3. Press Lock to toggle illumination.\n4. Press Lock again to confirm.\n5. Interact with shown symbols on the map.`);
     }
   </script>
 </body>

@@ -39,21 +39,25 @@ const lieCombinations = [
   ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
 ];
 
-function getRemainingValidSymbols(partialCombo) {
+function getRemainingValidSymbols(partialCombo, group) {
   const allCombos = [...truthCombinations, ...lieCombinations];
-  const filtered = allCombos.filter(c => partialCombo.every(sym => c.includes(sym)));
-  return [...new Set(filtered.flat().filter(sym => !partialCombo.includes(sym)))];
+  const groupCombos = allCombos.filter(combo => {
+    const current = group === 'left' ? combo : combo;
+    return partialCombo.every(sym => current.includes(sym));
+  });
+  return [...new Set(groupCombos.flat().filter(sym => !partialCombo.includes(sym)))];
 }
 
 function createPopupGrid() {
   const grid = document.getElementById('popupGrid');
   grid.innerHTML = '';
 
-  const currentSelections = Array.from(document.querySelectorAll('.dial-slot'))
-    .map(slot => slot.dataset.symbol)
-    .filter(Boolean);
+  const target = grid.dataset.target;
+  const group = target.startsWith('left') ? 'left' : 'right';
+  const groupPositions = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
 
-  const filteredSymbols = getRemainingValidSymbols(currentSelections);
+  const currentSelections = groupPositions.map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol).filter(Boolean);
+  const filteredSymbols = getRemainingValidSymbols(currentSelections, group);
 
   symbols.forEach(symbol => {
     if (!selectedSymbols.has(symbol) && (filteredSymbols.includes(symbol) || currentSelections.length < 1)) {
@@ -62,7 +66,6 @@ function createPopupGrid() {
       div.style.backgroundImage = `url('./img/${symbol}.png')`;
       div.dataset.symbol = symbol;
       div.onclick = () => {
-        const target = grid.dataset.target;
         const slot = document.querySelector(`.dial-slot.${target}`);
         slot.style.backgroundImage = `url('./img/${symbol}.png')`;
         slot.dataset.symbol = symbol;

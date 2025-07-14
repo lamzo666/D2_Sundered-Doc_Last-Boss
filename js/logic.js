@@ -39,11 +39,24 @@ const lieCombinations = [
   ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
 ];
 
+function getRemainingValidSymbols(partialCombo) {
+  const allCombos = [...truthCombinations, ...lieCombinations];
+  const filtered = allCombos.filter(c => partialCombo.every(sym => c.includes(sym)));
+  return [...new Set(filtered.flat().filter(sym => !partialCombo.includes(sym)))];
+}
+
 function createPopupGrid() {
   const grid = document.getElementById('popupGrid');
   grid.innerHTML = '';
+
+  const currentSelections = Array.from(document.querySelectorAll('.dial-slot'))
+    .map(slot => slot.dataset.symbol)
+    .filter(Boolean);
+
+  const filteredSymbols = getRemainingValidSymbols(currentSelections);
+
   symbols.forEach(symbol => {
-    if (!selectedSymbols.has(symbol)) {
+    if (!selectedSymbols.has(symbol) && (filteredSymbols.includes(symbol) || currentSelections.length < 1)) {
       const div = document.createElement('div');
       div.className = 'symbol-option';
       div.style.backgroundImage = `url('./img/${symbol}.png')`;

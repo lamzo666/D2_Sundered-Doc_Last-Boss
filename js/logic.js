@@ -1,25 +1,13 @@
 // logic.js
 
-let isInIlluminationPhase = false;
-let selectedSlot = null;
-const allSymbols = [
+const symbols = [
   'guardian', 'hive', 'kill', 'light', 'darkness',
   'drink', 'give', 'pyramid', 'savathun', 'stop',
   'traveller', 'witness', 'worm', 'worship'
 ];
 
-const truthCombinations = [
-  ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
-  ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
-  ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
-];
-
-const lieCombinations = [
-  ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
-  ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
-  ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
-  ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
-];
+let selectedSymbols = new Set();
+let illuminationPhase = false;
 
 const symbolPositions = {
   "stop": { top: '22.31%', left: '38.64%' },
@@ -38,141 +26,138 @@ const symbolPositions = {
   "worship": { top: '70.42%', left: '31.45%' }
 };
 
-function toggleInstructions() {
-  const box = document.getElementById('instructionsBox');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+const truthCombinations = [
+  ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
+  ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
+  ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
+];
+
+const lieCombinations = [
+  ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
+  ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
+  ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
+  ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
+];
+
+function createPopupGrid() {
+  const grid = document.getElementById('popupGrid');
+  grid.innerHTML = '';
+  symbols.forEach(symbol => {
+    if (!selectedSymbols.has(symbol)) {
+      const div = document.createElement('div');
+      div.className = 'symbol-option';
+      div.style.backgroundImage = `url('./img/${symbol}.png')`;
+      div.dataset.symbol = symbol;
+      div.onclick = () => {
+        const target = grid.dataset.target;
+        const slot = document.querySelector(`.dial-slot.${target}`);
+        slot.style.backgroundImage = `url('./img/${symbol}.png')`;
+        slot.dataset.symbol = symbol;
+        selectedSymbols.add(symbol);
+        document.getElementById('symbolPopup').style.display = 'none';
+      };
+      grid.appendChild(div);
+    }
+  });
 }
 
+document.querySelectorAll('.dial-slot').forEach(slot => {
+  slot.onclick = () => {
+    if (illuminationPhase) {
+      slot.classList.toggle('active');
+      slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
+    } else {
+      const popup = document.getElementById('symbolPopup');
+      const grid = document.getElementById('popupGrid');
+      grid.dataset.target = slot.dataset.position;
+      createPopupGrid();
+      popup.style.display = 'block';
+    }
+  };
+});
+
+document.body.addEventListener('click', e => {
+  const popup = document.getElementById('symbolPopup');
+  if (!popup.contains(e.target) && !e.target.classList.contains('dial-slot')) {
+    popup.style.display = 'none';
+  }
+});
+
 function handleLock() {
-  const lockButton = document.getElementById('lockButton');
-  if (!isInIlluminationPhase) {
-    isInIlluminationPhase = true;
-    lockButton.classList.add('glow-phase');
+  const filled = [...document.querySelectorAll('.dial-slot')].every(slot => slot.style.backgroundImage);
+  if (!filled) return alert('All 6 slots must be filled.');
+
+  const lockBtn = document.getElementById('lockButton');
+
+  if (!illuminationPhase) {
+    illuminationPhase = true;
+    lockBtn.classList.add('glow-phase');
   } else {
-    isInIlluminationPhase = false;
-    lockButton.classList.remove('glow-phase');
-    lockInSymbols();
+    illuminationPhase = false;
+    lockBtn.classList.remove('glow-phase');
+    checkTruthLie();
   }
 }
 
-function resetDial() {
-  document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.style.backgroundImage = '';
-    slot.classList.remove('active');
-    slot.style.boxShadow = 'none';
-  });
-  document.getElementById('truthLieLabel').textContent = '';
-  document.getElementById('map-overlay').innerHTML = '';
-  document.getElementById('lockButton').classList.remove('glow-phase');
-  isInIlluminationPhase = false;
-  renderSymbolPicker();
-}
-
-function lockInSymbols() {
-  const left = getSymbolsFromSlots(['left1', 'left2', 'left3']).sort();
-  const right = getSymbolsFromSlots(['right1', 'right2', 'right3']).sort();
-  const leftLit = getIlluminatedSymbols(['left1', 'left2', 'left3']);
-  const rightLit = getIlluminatedSymbols(['right1', 'right2', 'right3']);
-
-  const label = document.getElementById('truthLieLabel');
-  let truthSymbols = [], lieSymbols = [];
+function checkTruthLie() {
+  const left = ['left1','left2','left3'].map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol).sort();
+  const right = ['right1','right2','right3'].map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol).sort();
+  const illuminated = [...document.querySelectorAll('.dial-slot.active')].map(el => el.dataset.symbol);
 
   const isLeftTruth = truthCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(left));
   const isRightTruth = truthCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(right));
   const isLeftLie = lieCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(left));
   const isRightLie = lieCombinations.some(t => JSON.stringify(t.sort()) === JSON.stringify(right));
 
+  let truth = [], lie = [], label = document.getElementById('truthLieLabel');
+  label.innerHTML = '';
+
   if (isLeftTruth && isRightLie) {
-    label.innerHTML = '<div style="text-align: center; color: #00ff00; text-shadow: 0 0 4px #000, 0 0 10px #000">TRUTH</div><div></div><div style="text-align: center; color: #ff4444; text-shadow: 0 0 4px #000, 0 0 10px #000">LIE</div>';
-    truthSymbols = left;
-    lieSymbols = right;
+    label.innerHTML = '<div style="color:red">LIE</div><div></div><div style="color:lime">TRUTH</div>';
+    truth = left; lie = right;
   } else if (isRightTruth && isLeftLie) {
-    label.innerHTML = '<div style="text-align: center; color: #ff4444; text-shadow: 0 0 4px #000, 0 0 10px #000">LIE</div><div></div><div style="text-align: center; color: #00ff00; text-shadow: 0 0 4px #000, 0 0 10px #000">TRUTH</div>';
-    truthSymbols = right;
-    lieSymbols = left;
+    label.innerHTML = '<div style="color:red">LIE</div><div></div><div style="color:lime">TRUTH</div>';
+    truth = right; lie = left;
   } else {
-    label.textContent = '';
-    alert('Could not match either side to a valid truth/lie combo.');
+    alert('No valid truth/lie match found.');
     return;
   }
 
-  const illuminated = [...leftLit, ...rightLit];
-  const truthToVisit = truthSymbols.filter(sym => illuminated.includes(sym));
-  const lieToVisit = [...left, ...right].filter(sym => lieSymbols.includes(sym) && !illuminated.includes(sym));
-  pulseMapSymbols([...truthToVisit, ...lieToVisit]);
+  const highlight = [
+    ...truth.filter(sym => illuminated.includes(sym)),
+    ...lie.filter(sym => !illuminated.includes(sym))
+  ];
+  showHighlights(highlight);
 }
 
-function getSymbolsFromSlots(positions) {
-  return positions.map(id => {
-    const el = document.querySelector(`.dial-slot.${id}`);
-    const match = el?.style.backgroundImage.match(/\/([^\/]+)\.png/);
-    return match ? match[1].replace('.png','') : null;
-  });
-}
-
-function getIlluminatedSymbols(positions) {
-  return positions.filter(id => {
-    const el = document.querySelector(`.dial-slot.${id}`);
-    return el.classList.contains('active');
-  }).map(id => {
-    const match = document.querySelector(`.dial-slot.${id}`).style.backgroundImage.match(/\/([^\/]+)\.png/);
-    return match ? match[1].replace('.png','') : null;
-  });
-}
-
-function pulseMapSymbols(symbolsToHighlight) {
+function showHighlights(names) {
   const overlay = document.getElementById('map-overlay');
   overlay.innerHTML = '';
-  Object.entries(symbolPositions).forEach(([name, pos]) => {
-    if (symbolsToHighlight.includes(name)) {
-      const div = document.createElement('img');
-      div.className = 'symbol-overlay pulse';
-      div.src = `./img/${name}.png`;
-      div.style.top = pos.top;
-      div.style.left = pos.left;
-      overlay.appendChild(div);
-    }
+  names.forEach(name => {
+    const img = document.createElement('img');
+    img.src = `./img/${name}.png`;
+    img.className = 'symbol-overlay pulse';
+    img.style.top = symbolPositions[name].top;
+    img.style.left = symbolPositions[name].left;
+    overlay.appendChild(img);
   });
 }
 
-function renderSymbolPicker() {
-  const grid = document.getElementById('popupGrid');
-  grid.innerHTML = '';
-  allSymbols.forEach(name => {
-    const div = document.createElement('div');
-    div.className = 'symbol-option';
-    div.style.backgroundImage = `url('./img/${name}.png')`;
-    div.onclick = () => {
-      if (selectedSlot) {
-        selectedSlot.style.backgroundImage = `url('./img/${name}.png')`;
-        document.getElementById('symbolPopup').style.display = 'none';
-        selectedSlot = null;
-        renderSymbolPicker();
-      }
-    };
-    grid.appendChild(div);
-  });
-}
-
-function openSymbolPicker(slot) {
-  selectedSlot = slot;
-  document.getElementById('symbolPopup').style.display = 'block';
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  renderSymbolPicker();
+function resetDial() {
   document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.addEventListener('click', () => {
-      if (!isInIlluminationPhase) {
-        openSymbolPicker(slot);
-      } else {
-        if (slot.style.backgroundImage) {
-          slot.classList.toggle('active');
-          slot.style.boxShadow = slot.classList.contains('active')
-            ? '0 0 12px 6px yellow'
-            : 'none';
-        }
-      }
-    });
+    slot.style.backgroundImage = '';
+    slot.style.boxShadow = 'none';
+    slot.classList.remove('active');
+    delete slot.dataset.symbol;
   });
-});
+  document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('truthLieLabel').innerHTML = '';
+  selectedSymbols.clear();
+  illuminationPhase = false;
+  document.getElementById('lockButton').classList.remove('glow-phase');
+}
+
+function toggleInstructions() {
+  const box = document.getElementById('instructionsBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}

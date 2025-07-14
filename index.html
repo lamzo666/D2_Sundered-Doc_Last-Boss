@@ -184,9 +184,10 @@
   </style>
 </head>
 <body>
+  <img id="instructionsIcon" src="./img/notepad-48.png" alt="Instructions" onclick="toggleInstructions()">
   <h1>KERREV, THE ERASED</h1>
   <h2>Sundered Doctrine<br>DIAL HELPER</h2>
-  <img id="instructionsIcon" src="./img/notepad-48.png" alt="Instructions" onclick="toggleInstructions()">
+
   <div id="instructionsBox">
     <ol>
       <li>Click each dial slot and choose a symbol.</li>
@@ -195,7 +196,9 @@
       <li>Click Reset to clear everything.</li>
     </ol>
   </div>
+
   <div id="truthLieLabel"></div>
+
   <div class="dial-wrapper">
     <div class="dial">
       <div class="dial-slot left1" data-position="left1"></div>
@@ -206,6 +209,7 @@
       <div class="dial-slot right3" data-position="right3"></div>
     </div>
   </div>
+
   <div class="btn-container">
     <button class="btn-icon" id="lockButton" onclick="handleLock()">
       <img src="./img/lock-50.png" alt="Lock">
@@ -214,13 +218,16 @@
       <img src="./img/reset-60.png" alt="Reset">
     </button>
   </div>
+
   <div class="symbol-popup" id="symbolPopup">
     <div class="symbol-grid" id="popupGrid"></div>
   </div>
+
   <div class="map-container">
     <img src="./img/map.jpg" alt="Map" class="map-img" />
     <div class="map-overlay" id="map-overlay"></div>
   </div>
+
   <script src="./js/logic.js"></script>
 </body>
 </html>

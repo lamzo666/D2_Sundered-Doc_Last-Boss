@@ -99,13 +99,13 @@ function showSymbolPopup() {
     filtered.flat().filter(s => !groupSelected.includes(s) && !alreadyUsed.has(s))
   )];
 
-  // Limit first slot options if it's the first selection in the group
+  // NEW: Limit all initial symbols to valid set
   if (groupSelected.length === 0) {
-    const firstSymbols = new Set(
-      pool.map(c => c[0]).filter(s => !selected.includes(s))
+    const possibleSymbols = new Set(
+      pool.flat().filter(s => !selected.includes(s))
     );
     popupGrid.innerHTML = "";
-    firstSymbols.forEach(sym => {
+    possibleSymbols.forEach(sym => {
       const div = document.createElement("div");
       div.className = "symbol-option";
       div.style.backgroundImage = `url('./img/${sym}.png')`;

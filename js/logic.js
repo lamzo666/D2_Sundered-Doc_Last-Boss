@@ -37,17 +37,14 @@ function getValidNextSymbols(group, index) {
   const otherIsTruth = truthCombinations.some(c => equalArray(c, otherFilled));
   const otherIsLie = lieCombinations.some(c => equalArray(c, otherFilled));
 
-  let pool = allCombinations.filter(combo => {
-    return filled.every((sym, i) => combo[i] === sym);
-  });
-
+  let pool = allCombinations;
   if (otherComplete) {
-    if (otherIsTruth) {
-      pool = lieCombinations.filter(combo => filled.every((sym, i) => combo[i] === sym));
-    } else if (otherIsLie) {
-      pool = truthCombinations.filter(combo => filled.every((sym, i) => combo[i] === sym));
-    }
+    if (otherIsTruth) pool = lieCombinations;
+    else if (otherIsLie) pool = truthCombinations;
   }
+
+  // Filter to those matching what we’ve already selected in this group
+  pool = pool.filter(combo => filled.every((sym, i) => combo[i] === sym));
 
   return [...new Set(pool.map(c => c[index]))];
 }

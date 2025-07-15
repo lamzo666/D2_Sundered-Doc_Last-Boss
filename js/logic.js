@@ -26,17 +26,18 @@ const lieCombinations = [
   ["savathun", "stop", "darkness"], ["light", "stop", "savathun"]
 ];
 
+let remainingLeft = [...truthCombinations, ...lieCombinations];
+let remainingRight = [...truthCombinations, ...lieCombinations];
+let selectedSymbols = {};
+let truthGroup = null;
+let lockPhase = 0;
+
 const symbolPopup = document.getElementById("symbolPopup");
 const popupGrid = document.getElementById("popupGrid");
 const mapOverlay = document.getElementById("map-overlay");
 const lockButton = document.getElementById("lockButton");
 const truthLieLabel = document.getElementById("truthLieLabel");
 let currentSlot = null;
-let lockPhase = 0;
-
-let remainingLeft = [...truthCombinations, ...lieCombinations];
-let remainingRight = [...truthCombinations, ...lieCombinations];
-let selectedSymbols = {};
 
 const symbolPositions = {
   stop: { top: "22.31%", left: "38.64%" },
@@ -76,11 +77,24 @@ function showSymbolPopup() {
   const selected = Object.values(selectedSymbols);
   const isLeft = currentSlot.classList.contains("left1") || currentSlot.classList.contains("left2") || currentSlot.classList.contains("left3");
   const group = isLeft ? "left" : "right";
+  const otherGroup = isLeft ? "right" : "left";
+
   const groupKeys = Object.keys(selectedSymbols).filter(k => k.includes(group));
   const groupSelected = groupKeys.map(k => selectedSymbols[k]);
 
-  let filtered = (group === "left" ? remainingLeft : remainingRight).filter(comb => groupSelected.every(s => comb.includes(s)));
-  const nextOptions = [...new Set(filtered.flat().filter(s => !groupSelected.includes(s)))];
+  const otherKeys = Object.keys(selectedSymbols).filter(k => k.includes(otherGroup));
+  const otherSelected = otherKeys.map(k => selectedSymbols[k]);
+
+  let pool = group === "left" ? remainingLeft : remainingRight;
+
+  // Filter out any combinations that use symbols from the other group
+  if (truthGroup === otherGroup) {
+    const base = truthGroup === "left" ? lieCombinations : truthCombinations;
+    pool = base.filter(comb => !comb.some(sym => otherSelected.includes(sym)));
+  }
+
+  let filtered = pool.filter(comb => groupSelected.every(s => comb.includes(s)));
+  const nextOptions = [...new Set(filtered.flat().filter(s => !groupSelected.includes(s) && !selected.includes(s)))];
 
   if (filtered.length === 1 && groupSelected.length < 3) {
     const combo = filtered[0];
@@ -136,6 +150,7 @@ function resetDial() {
   lockButton.classList.remove("glow-phase");
   lockPhase = 0;
   mapOverlay.innerHTML = "";
+  truthGroup = null;
 }
 
 function handleLock() {
@@ -166,10 +181,12 @@ function showMapResults() {
     truthLieLabel.innerHTML = `<div style="text-align:center;color:#00ff00">TRUTH</div><div></div><div style="text-align:center;color:#ff4444">LIE</div>`;
     truthSymbols = left;
     lieSymbols = right;
+    truthGroup = "left";
   } else if (isRightTruth && isLeftLie) {
     truthLieLabel.innerHTML = `<div style="text-align:center;color:#ff4444">LIE</div><div></div><div style="text-align:center;color:#00ff00">TRUTH</div>`;
     truthSymbols = right;
     lieSymbols = left;
+    truthGroup = "right";
   } else {
     alert("Could not match either side to a valid truth/lie combo.");
     return;

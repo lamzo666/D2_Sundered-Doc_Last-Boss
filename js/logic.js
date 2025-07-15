@@ -34,7 +34,8 @@ const truthLieLabel = document.getElementById("truthLieLabel");
 let currentSlot = null;
 let lockPhase = 0;
 
-let remainingCombinations = [...truthCombinations, ...lieCombinations];
+let remainingLeft = [...truthCombinations, ...lieCombinations];
+let remainingRight = [...truthCombinations, ...lieCombinations];
 let selectedSymbols = {};
 
 const symbolPositions = {
@@ -75,26 +76,23 @@ function showSymbolPopup() {
   const selected = Object.values(selectedSymbols);
   const isLeft = currentSlot.classList.contains("left1") || currentSlot.classList.contains("left2") || currentSlot.classList.contains("left3");
   const group = isLeft ? "left" : "right";
-
   const groupKeys = Object.keys(selectedSymbols).filter(k => k.includes(group));
   const groupSelected = groupKeys.map(k => selectedSymbols[k]);
 
-  // Reduce combinations
-  let filtered = remainingCombinations.filter(comb => groupSelected.every(s => comb.includes(s)));
-
-  // Predictive filtering
+  let filtered = (group === "left" ? remainingLeft : remainingRight).filter(comb => groupSelected.every(s => comb.includes(s)));
   const nextOptions = [...new Set(filtered.flat().filter(s => !groupSelected.includes(s)))];
 
-  // Auto complete if 1 combination
   if (filtered.length === 1 && groupSelected.length < 3) {
     const combo = filtered[0];
     const remaining = combo.filter(s => !groupSelected.includes(s));
-    const remainingSlots = ["1", "2", "3"].map(n => `${group}${n}`).filter(id => !selectedSymbols[id]);
-    remaining.forEach((sym, idx) => {
-      const slot = document.querySelector(`.dial-slot.${remainingSlots[idx]}`);
-      slot.style.backgroundImage = `url('./img/${sym}.png')`;
-      selectedSymbols[remainingSlots[idx]] = sym;
+    const slots = ["1", "2", "3"].map(n => `${group}${n}`).filter(k => !selectedSymbols[k]);
+    remaining.forEach((sym, i) => {
+      const el = document.querySelector(`.dial-slot.${slots[i]}`);
+      el.style.backgroundImage = `url('./img/${sym}.png')`;
+      selectedSymbols[slots[i]] = sym;
     });
+    if (group === "left") remainingLeft = filtered;
+    else remainingRight = filtered;
     checkShowLock();
     return;
   }
@@ -107,6 +105,8 @@ function showSymbolPopup() {
     div.onclick = () => {
       currentSlot.style.backgroundImage = `url('./img/${sym}.png')`;
       selectedSymbols[currentSlot.dataset.position] = sym;
+      if (group === "left") remainingLeft = filtered;
+      else remainingRight = filtered;
       currentSlot = null;
       symbolPopup.style.display = "none";
       checkShowLock();
@@ -119,21 +119,23 @@ function showSymbolPopup() {
 
 function checkShowLock() {
   if (Object.keys(selectedSymbols).length === 6) {
-    document.getElementById("lockButton").style.display = "inline-block";
+    lockButton.style.display = "inline-block";
   }
 }
 
 function resetDial() {
   document.querySelectorAll(".dial-slot").forEach(slot => {
     slot.style.backgroundImage = "";
-    slot.classList.remove("active", "locked");
+    slot.classList.remove("active");
     slot.style.boxShadow = "none";
   });
-  mapOverlay.innerHTML = "";
-  truthLieLabel.innerHTML = "";
-  lockPhase = 0;
   selectedSymbols = {};
-  remainingCombinations = [...truthCombinations, ...lieCombinations];
+  remainingLeft = [...truthCombinations, ...lieCombinations];
+  remainingRight = [...truthCombinations, ...lieCombinations];
+  truthLieLabel.innerHTML = "";
+  lockButton.classList.remove("glow-phase");
+  lockPhase = 0;
+  mapOverlay.innerHTML = "";
 }
 
 function handleLock() {
@@ -170,27 +172,26 @@ function showMapResults() {
     lieSymbols = left;
   } else {
     alert("Could not match either side to a valid truth/lie combo.");
-    truthLieLabel.innerHTML = "";
     return;
   }
 
   const illuminated = [...leftIll, ...rightIll];
   const truthToVisit = truthSymbols.filter(s => illuminated.includes(s));
   const lieToVisit = [...left, ...right].filter(s => lieSymbols.includes(s) && !illuminated.includes(s));
-  const symbolsToHighlight = [...truthToVisit, ...lieToVisit];
+  const finalSymbols = [...truthToVisit, ...lieToVisit];
 
   mapOverlay.innerHTML = "";
-  symbolsToHighlight.forEach(name => {
-    const div = document.createElement("img");
-    div.className = "symbol-overlay pulse";
-    div.src = `./img/${name}.png`;
-    div.style.top = symbolPositions[name].top;
-    div.style.left = symbolPositions[name].left;
-    mapOverlay.appendChild(div);
+  finalSymbols.forEach(sym => {
+    const img = document.createElement("img");
+    img.className = "symbol-overlay pulse";
+    img.src = `./img/${sym}.png`;
+    img.style.top = symbolPositions[sym].top;
+    img.style.left = symbolPositions[sym].left;
+    mapOverlay.appendChild(img);
   });
 }
 
-window.addEventListener("click", (e) => {
+window.addEventListener("click", e => {
   if (!symbolPopup.contains(e.target) && currentSlot && !e.target.classList.contains("dial-slot")) {
     symbolPopup.style.display = "none";
     currentSlot = null;

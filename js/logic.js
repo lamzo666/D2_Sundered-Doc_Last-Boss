@@ -101,3 +101,7 @@ function checkCombinations() {
     overlay.appendChild(img);
   });
 }
+
+// NOTE: You must ensure the popup symbol picker and dial interaction logic
+// updates `selectedSymbols.left` and `selectedSymbols.right` properly
+// and triggers checkCombinations() on final lock-in.

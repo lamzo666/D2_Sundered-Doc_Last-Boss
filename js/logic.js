@@ -1,160 +1,181 @@
 // logic.js
 
-const symbols = [
-  "guardian", "hive", "kill", "light", "darkness",
-  "drink", "give", "pyramid", "savathun", "stop",
-  "traveller", "witness", "worm", "worship"
-];
-
 const truthCombinations = [
-  ["pyramid", "drink", "worm"], ["pyramid", "kill", "worm"],
-  ["pyramid", "stop", "savathun"], ["pyramid", "give", "darkness"],
-  ["guardian", "worship", "light"], ["guardian", "worship", "traveller"],
-  ["guardian", "kill", "witness"], ["traveller", "give", "guardian"],
-  ["traveller", "give", "light"], ["hive", "worship", "darkness"],
-  ["hive", "worship", "worm"], ["darkness", "stop", "savathun"]
+  ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
+  ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
+  ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
 ];
 
 const lieCombinations = [
-  ["hive", "kill", "worm"], ["hive", "kill", "light"],
-  ["hive", "give", "darkness"], ["hive", "stop", "witness"],
-  ["traveller", "kill", "guardian"], ["traveller", "drink", "worm"],
-  ["traveller", "give", "hive"], ["traveller", "stop", "witness"],
-  ["pyramid", "stop", "witness"], ["witness", "drink", "light"],
-  ["witness", "kill", "pyramid"], ["guardian", "worship", "witness"],
-  ["guardian", "kill", "traveller"], ["savathun", "drink", "darkness"],
-  ["savathun", "stop", "darkness"], ["light", "stop", "savathun"]
+  ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
+  ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
+  ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
+  ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
 ];
 
-let remainingLeft = [...truthCombinations, ...lieCombinations];
-let remainingRight = [...truthCombinations, ...lieCombinations];
-let selectedSymbols = {};
-let truthGroup = null;
-let lockPhase = 0;
+const allCombinations = [...truthCombinations, ...lieCombinations];
+const allSymbols = [...new Set(allCombinations.flat())];
 
-const symbolPopup = document.getElementById("symbolPopup");
-const popupGrid = document.getElementById("popupGrid");
-const mapOverlay = document.getElementById("map-overlay");
-const lockButton = document.getElementById("lockButton");
-const truthLieLabel = document.getElementById("truthLieLabel");
-let currentSlot = null;
-
-const symbolPositions = {
-  stop: { top: "22.31%", left: "38.64%" },
-  kill: { top: "70.14%", left: "65.96%" },
-  darkness: { top: "39.91%", left: "80.93%" },
-  drink: { top: "1.74%", left: "56.29%" },
-  give: { top: "22.31%", left: "53.32%" },
-  guardian: { top: "45.96%", left: "19.49%" },
-  hive: { top: "29.77%", left: "19.53%" },
-  light: { top: "59.68%", left: "72.98%" },
-  pyramid: { top: "62.75%", left: "2.15%" },
-  savathun: { top: "5.32%", left: "92.50%" },
-  traveller: { top: "87.52%", left: "19.53%" },
-  witness: { top: "30.20%", left: "2.00%" },
-  worm: { top: "7.16%", left: "75.20%" },
-  worship: { top: "70.42%", left: "31.45%" }
+let selectedSymbols = {
+  left: [null, null, null],
+  right: [null, null, null],
 };
+let activeSlot = null;
+let phase = 0; // 0 = input phase, 1 = illumination, 2 = lock-in
 
-function toggleInstructions() {
-  const box = document.getElementById("instructionsBox");
-  box.style.display = box.style.display === "none" ? "block" : "none";
+function getValidNextSymbols(group, index) {
+  const current = selectedSymbols[group];
+  const otherGroup = group === 'left' ? 'right' : 'left';
+  const filled = current.slice(0, index);
+
+  if (index === 0) {
+    return [...new Set(allCombinations.map(c => c[0]))];
+  }
+
+  const otherFilled = selectedSymbols[otherGroup];
+  const otherComplete = !otherFilled.includes(null);
+  const otherIsTruth = truthCombinations.some(c => equalArray(c, otherFilled));
+  const otherIsLie = lieCombinations.some(c => equalArray(c, otherFilled));
+
+  let pool = allCombinations.filter(combo => {
+    return filled.every((sym, i) => combo[i] === sym);
+  });
+
+  if (otherComplete) {
+    if (otherIsTruth) {
+      pool = lieCombinations.filter(combo => filled.every((sym, i) => combo[i] === sym));
+    } else if (otherIsLie) {
+      pool = truthCombinations.filter(combo => filled.every((sym, i) => combo[i] === sym));
+    }
+  }
+
+  return [...new Set(pool.map(c => c[index]))];
 }
 
-document.querySelectorAll(".dial-slot").forEach(slot => {
-  slot.addEventListener("click", () => {
-    if (lockPhase !== 0) {
-      slot.classList.toggle("active");
-      slot.style.boxShadow = slot.classList.contains("active") ? "0 0 12px 6px yellow" : "none";
+function openSymbolPopup(slotEl) {
+  const pos = slotEl.dataset.position;
+  const group = pos.includes('left') ? 'left' : 'right';
+  const index = parseInt(pos[pos.length - 1]) - 1;
+  activeSlot = slotEl;
+
+  const validSymbols = getValidNextSymbols(group, index);
+  const used = [...selectedSymbols.left, ...selectedSymbols.right];
+  const popup = document.getElementById('symbolPopup');
+  const grid = document.getElementById('popupGrid');
+  grid.innerHTML = '';
+
+  validSymbols.forEach(name => {
+    if (used.includes(name)) return;
+    const div = document.createElement('div');
+    div.className = 'symbol-option';
+    div.style.backgroundImage = `url('./img/${name}.png')`;
+    div.dataset.name = name;
+    div.onclick = () => selectSymbol(name);
+    grid.appendChild(div);
+  });
+  popup.style.display = 'block';
+}
+
+function selectSymbol(name) {
+  if (!activeSlot) return;
+  activeSlot.style.backgroundImage = `url('./img/${name}.png')`;
+  const group = activeSlot.dataset.position.includes('left') ? 'left' : 'right';
+  const index = parseInt(activeSlot.dataset.position.slice(-1)) - 1;
+  selectedSymbols[group][index] = name;
+  activeSlot.classList.remove('active');
+  activeSlot = null;
+  document.getElementById('symbolPopup').style.display = 'none';
+}
+
+function handleLock() {
+  const btn = document.getElementById('lockButton');
+
+  if (phase === 0) {
+    if ([...selectedSymbols.left, ...selectedSymbols.right].includes(null)) {
+      alert('Fill all 6 symbols first.');
       return;
     }
-    currentSlot = slot;
-    showSymbolPopup();
+    phase = 1;
+    btn.classList.add('glow-phase');
+  } else if (phase === 1) {
+    phase = 2;
+    btn.classList.remove('glow-phase');
+    checkCombinations();
+  }
+}
+
+function checkCombinations() {
+  const truthLabel = document.getElementById('truthLieLabel');
+  const overlay = document.getElementById('map-overlay');
+  overlay.innerHTML = '';
+
+  const left = [...selectedSymbols.left];
+  const right = [...selectedSymbols.right];
+
+  const isLeftTruth = truthCombinations.some(c => equalArray(c, left));
+  const isRightTruth = truthCombinations.some(c => equalArray(c, right));
+  const isLeftLie = lieCombinations.some(c => equalArray(c, left));
+  const isRightLie = lieCombinations.some(c => equalArray(c, right));
+
+  let truth = [], lie = [];
+
+  if (isLeftTruth && isRightLie) {
+    truth = left;
+    lie = right;
+    truthLabel.innerHTML = '<div style="text-align:center;color:#00ff00;">TRUTH</div><div></div><div style="text-align:center;color:#ff4444;">LIE</div>';
+  } else if (isRightTruth && isLeftLie) {
+    truth = right;
+    lie = left;
+    truthLabel.innerHTML = '<div style="text-align:center;color:#ff4444;">LIE</div><div></div><div style="text-align:center;color:#00ff00;">TRUTH</div>';
+  } else {
+    truthLabel.innerHTML = '';
+    alert('No valid Truth/Lie match');
+    return;
+  }
+
+  [...truth, ...lie].forEach(name => {
+    const img = document.createElement('img');
+    img.className = 'symbol-overlay';
+    img.src = `./img/${name}.png`;
+    if (truth.includes(name)) img.classList.add('pulse');
+    document.getElementById('map-overlay').appendChild(img);
+  });
+}
+
+function equalArray(a, b) {
+  return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+}
+
+function resetDial() {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.style.backgroundImage = '';
+    slot.classList.remove('active');
+  });
+  selectedSymbols = { left: [null, null, null], right: [null, null, null] };
+  document.getElementById('symbolPopup').style.display = 'none';
+  document.getElementById('truthLieLabel').innerHTML = '';
+  document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('lockButton').classList.remove('glow-phase');
+  phase = 0;
+}
+
+document.querySelectorAll('.dial-slot').forEach(slot => {
+  slot.addEventListener('click', () => {
+    if (phase === 0) openSymbolPopup(slot);
+    else if (phase === 1) {
+      slot.classList.toggle('active');
+      slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
+    }
   });
 });
 
-function showSymbolPopup() {
-  const selected = Object.values(selectedSymbols);
-  const isLeft = currentSlot.classList.contains("left1") || currentSlot.classList.contains("left2") || currentSlot.classList.contains("left3");
-  const group = isLeft ? "left" : "right";
-  const otherGroup = isLeft ? "right" : "left";
-
-  const groupKeys = Object.keys(selectedSymbols).filter(k => k.includes(group));
-  const groupSelected = groupKeys.map(k => selectedSymbols[k]);
-
-  const otherKeys = Object.keys(selectedSymbols).filter(k => k.includes(otherGroup));
-  const otherSelected = otherKeys.map(k => selectedSymbols[k]);
-
-  let pool = group === "left" ? remainingLeft : remainingRight;
-
-  if (truthGroup === otherGroup) {
-    const base = truthGroup === "left" ? lieCombinations : truthCombinations;
-    pool = base.filter(comb => !comb.some(sym => otherSelected.includes(sym)));
+document.addEventListener('click', e => {
+  if (!document.getElementById('symbolPopup').contains(e.target) && !e.target.classList.contains('dial-slot')) {
+    document.getElementById('symbolPopup').style.display = 'none';
   }
+});
 
-  let filtered = pool.filter(comb => groupSelected.every(s => comb.includes(s)));
-
-  const alreadyUsed = new Set(selected);
-  const nextOptions = [...new Set(
-    filtered.flat().filter(s => !groupSelected.includes(s) && !alreadyUsed.has(s))
-  )];
-
-  const isFirstSlot = groupSelected.length === 0;
-
-  if (isFirstSlot) {
-    const firstSymbolSet = new Set(pool.map(c => c[0]));
-    const valid = [...firstSymbolSet].filter(s => !alreadyUsed.has(s));
-    popupGrid.innerHTML = "";
-    valid.forEach(sym => {
-      const div = document.createElement("div");
-      div.className = "symbol-option";
-      div.style.backgroundImage = `url('./img/${sym}.png')`;
-      div.onclick = () => {
-        currentSlot.style.backgroundImage = `url('./img/${sym}.png')`;
-        selectedSymbols[currentSlot.dataset.position] = sym;
-        if (group === "left") remainingLeft = filtered;
-        else remainingRight = filtered;
-        currentSlot = null;
-        symbolPopup.style.display = "none";
-        checkShowLock();
-      };
-      popupGrid.appendChild(div);
-    });
-    symbolPopup.style.display = "block";
-    return;
-  }
-
-  if (filtered.length === 1 && groupSelected.length < 3) {
-    const combo = filtered[0];
-    const remaining = combo.filter(s => !groupSelected.includes(s));
-    const slots = ["1", "2", "3"].map(n => `${group}${n}`).filter(k => !selectedSymbols[k]);
-    remaining.forEach((sym, i) => {
-      const el = document.querySelector(`.dial-slot.${slots[i]}`);
-      el.style.backgroundImage = `url('./img/${sym}.png')`;
-      selectedSymbols[slots[i]] = sym;
-    });
-    if (group === "left") remainingLeft = filtered;
-    else remainingRight = filtered;
-    checkShowLock();
-    return;
-  }
-
-  popupGrid.innerHTML = "";
-  (nextOptions.length ? nextOptions : symbols.filter(s => !alreadyUsed.has(s))).forEach(sym => {
-    const div = document.createElement("div");
-    div.className = "symbol-option";
-    div.style.backgroundImage = `url('./img/${sym}.png')`;
-    div.onclick = () => {
-      currentSlot.style.backgroundImage = `url('./img/${sym}.png')`;
-      selectedSymbols[currentSlot.dataset.position] = sym;
-      if (group === "left") remainingLeft = filtered;
-      else remainingRight = filtered;
-      currentSlot = null;
-      symbolPopup.style.display = "none";
-      checkShowLock();
-    };
-    popupGrid.appendChild(div);
-  });
-
-  symbolPopup.style.display = "block";
+function toggleInstructions() {
+  const box = document.getElementById('instructionsBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }

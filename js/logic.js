@@ -27,12 +27,33 @@ const lieCombinations = [
 ];
 
 let selectedSymbols = {
-  left: [],
-  right: []
+  left: [null, null, null],
+  right: [null, null, null]
 };
 
 function equalArray(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+function getValidSecondThirdSymbols(group) {
+  const current = selectedSymbols[group].filter(Boolean);
+  const pool = group === 'left' ? truthCombinations : lieCombinations;
+
+  if (current.length === 1) {
+    // Only combos that start with this symbol
+    const first = current[0];
+    return [...new Set(pool
+      .filter(combo => combo[0] === first)
+      .map(combo => combo[1]))];
+  }
+
+  if (current.length === 2) {
+    const [first, second] = current;
+    const match = pool.find(combo => combo[0] === first && combo[1] === second);
+    if (match) return [match[2]];
+  }
+
+  return [];
 }
 
 function checkCombinations() {
@@ -43,10 +64,10 @@ function checkCombinations() {
   const left = [...selectedSymbols.left];
   const right = [...selectedSymbols.right];
 
-  const isLeftTruth = truthCombinations.some(c => equalArray(c, left));
-  const isRightTruth = truthCombinations.some(c => equalArray(c, right));
-  const isLeftLie = lieCombinations.some(c => equalArray(c, left));
-  const isRightLie = lieCombinations.some(c => equalArray(c, right));
+  const isLeftTruth = truthCombinations.some(c => equalArray(c.sort(), left.sort()));
+  const isRightTruth = truthCombinations.some(c => equalArray(c.sort(), right.sort()));
+  const isLeftLie = lieCombinations.some(c => equalArray(c.sort(), left.sort()));
+  const isRightLie = lieCombinations.some(c => equalArray(c.sort(), right.sort()));
 
   let truth = [], lie = [];
 
@@ -102,6 +123,78 @@ function checkCombinations() {
   });
 }
 
-// NOTE: You must ensure the popup symbol picker and dial interaction logic
-// updates `selectedSymbols.left` and `selectedSymbols.right` properly
-// and triggers checkCombinations() on final lock-in.
+function createPopupSymbols(targetSlot) {
+  const popup = document.getElementById('symbolPopup');
+  const grid = document.getElementById('popupGrid');
+  grid.innerHTML = '';
+
+  const group = targetSlot.dataset.position.startsWith('left') ? 'left' : 'right';
+  const index = parseInt(targetSlot.dataset.position.slice(-1)) - 1;
+
+  let options;
+if (index === 0) {
+  // Allow all valid FIRST symbols based on the group
+  const rawSet = group === 'left' ? truthCombinations : lieCombinations;
+  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
+  options = rawSet.map(c => c[0]).filter((sym, i, arr) => arr.indexOf(sym) === i && !used.includes(sym));
+} else {
+  const predicted = getValidSecondThirdSymbols(group);
+  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
+  options = predicted.filter(sym => !used.includes(sym));
+}
+
+  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
+  const availableSymbols = options.filter(sym => !used.includes(sym));
+
+  availableSymbols.forEach(sym => {
+    const div = document.createElement('div');
+    div.className = 'symbol-option';
+    div.style.backgroundImage = `url('./img/${sym}.png')`;
+    div.addEventListener('click', () => {
+      selectedSymbols[group][index] = sym;
+      targetSlot.style.backgroundImage = `url('./img/${sym}.png')`;
+      popup.style.display = 'none';
+      grid.innerHTML = '';
+
+      const groupSymbols = selectedSymbols[group].filter(Boolean);
+      const comboList = group === 'left' ? truthCombinations : lieCombinations;
+      const matching = comboList.filter(combo => groupSymbols.every(sym => combo.includes(sym)));
+
+      if (groupSymbols.length === 2 && matching.length === 1) {
+        const missing = matching[0].find(sym => !groupSymbols.includes(sym));
+        const missingIndex = selectedSymbols[group].findIndex(sym => !sym);
+        if (missing && missingIndex !== -1) {
+          selectedSymbols[group][missingIndex] = missing;
+          const selector = `.dial-slot.${group}${missingIndex + 1}`;
+          const autoSlot = document.querySelector(selector);
+          autoSlot.style.backgroundImage = `url('./img/${missing}.png')`;
+        }
+      }
+    });
+    grid.appendChild(div);
+  });
+
+  popup.style.display = 'block';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
+      const index = parseInt(slot.dataset.position.slice(-1)) - 1;
+      if (!selectedSymbols[group][index]) {
+        createPopupSymbols(slot);
+      } else {
+        slot.classList.toggle('active');
+        slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
+      }
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('symbolPopup');
+    if (popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('dial-slot')) {
+      popup.style.display = 'none';
+    }
+  });
+});

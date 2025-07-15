@@ -75,13 +75,44 @@ function openSymbolPopup(slotEl) {
 
 function selectSymbol(name) {
   if (!activeSlot) return;
-  activeSlot.style.backgroundImage = `url('./img/${name}.png')`;
+
   const group = activeSlot.dataset.position.includes('left') ? 'left' : 'right';
   const index = parseInt(activeSlot.dataset.position.slice(-1)) - 1;
+
   selectedSymbols[group][index] = name;
+  activeSlot.style.backgroundImage = `url('./img/${name}.png')`;
   activeSlot.classList.remove('active');
   activeSlot = null;
   document.getElementById('symbolPopup').style.display = 'none';
+
+  // 🔍 Check for prediction
+  const filled = selectedSymbols[group];
+  const positions = ['1', '2', '3'];
+  const remainingIndices = filled.map((val, i) => val ? null : i).filter(i => i !== null);
+
+  const otherGroup = group === 'left' ? 'right' : 'left';
+  const other = selectedSymbols[otherGroup];
+  const otherComplete = !other.includes(null);
+  const otherIsTruth = truthCombinations.some(c => equalArray(c, other));
+  const otherIsLie = lieCombinations.some(c => equalArray(c, other));
+  let pool = allCombinations;
+
+  if (otherComplete) {
+    if (otherIsTruth) pool = lieCombinations;
+    else if (otherIsLie) pool = truthCombinations;
+  }
+
+  pool = pool.filter(c => filled.every((val, i) => !val || c[i] === val));
+  const remainingCombos = pool.filter(c => !c.some(sym => [...selectedSymbols.left, ...selectedSymbols.right].includes(sym) && !filled.includes(sym)));
+
+  if (remainingCombos.length === 1) {
+    const auto = remainingCombos[0];
+    remainingIndices.forEach(i => {
+      selectedSymbols[group][i] = auto[i];
+      const slot = document.querySelector(`.dial-slot.${group}${i + 1}`);
+      slot.style.backgroundImage = `url('./img/${auto[i]}.png')`;
+    });
+  }
 }
 
 function handleLock() {

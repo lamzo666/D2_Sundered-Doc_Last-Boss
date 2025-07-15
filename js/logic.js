@@ -87,27 +87,55 @@ function showSymbolPopup() {
 
   let pool = group === "left" ? remainingLeft : remainingRight;
 
-  // If other group is confirmed truth/lie, only use opposite set and exclude shared symbols
+  // Only allow opposite set if other group is confirmed
   if (truthGroup === otherGroup) {
     const base = truthGroup === "left" ? lieCombinations : truthCombinations;
     pool = base.filter(comb => !comb.some(sym => otherSelected.includes(sym)));
   }
 
-  // Filter combinations that match current groupSelected entries
   let filtered = pool.filter(comb => groupSelected.every(s => comb.includes(s)));
 
-  // Determine valid next symbol options
-  const alreadyUsed = new Set(selected);
-  const validNext = new Set();
-  filtered.forEach(combo => {
-    combo.forEach(sym => {
-      if (!groupSelected.includes(sym) && !alreadyUsed.has(sym)) {
-        validNext.add(sym);
-      }
-    });
-  });
+  // 🆕 For first symbol selection, reduce available options to valid starting symbols
+  if (groupSelected.length === 0) {
+    const otherUsed = new Set(otherSelected);
+    const possibleFirstSymbols = new Set();
 
-  // If only one combo remains and group isn't full, autocomplete
+    pool.forEach(combo => {
+      combo.forEach(sym => {
+        if (!selected.includes(sym) && !otherUsed.has(sym)) {
+          possibleFirstSymbols.add(sym);
+        }
+      });
+    });
+
+    filtered = pool; // keep pool as filtered for future narrowing
+    popupGrid.innerHTML = "";
+    possibleFirstSymbols.forEach(sym => {
+      const div = document.createElement("div");
+      div.className = "symbol-option";
+      div.style.backgroundImage = `url('./img/${sym}.png')`;
+      div.onclick = () => {
+        currentSlot.style.backgroundImage = `url('./img/${sym}.png')`;
+        selectedSymbols[currentSlot.dataset.position] = sym;
+        if (group === "left") remainingLeft = filtered;
+        else remainingRight = filtered;
+        currentSlot = null;
+        symbolPopup.style.display = "none";
+        checkShowLock();
+      };
+      popupGrid.appendChild(div);
+    });
+
+    symbolPopup.style.display = "block";
+    return;
+  }
+
+  // 🧠 Autocomplete if only one valid combo remains
+  const alreadyUsed = new Set(selected);
+  const nextOptions = [...new Set(
+    filtered.flat().filter(s => !groupSelected.includes(s) && !alreadyUsed.has(s))
+  )];
+
   if (filtered.length === 1 && groupSelected.length < 3) {
     const combo = filtered[0];
     const remaining = combo.filter(s => !groupSelected.includes(s));
@@ -124,8 +152,7 @@ function showSymbolPopup() {
   }
 
   popupGrid.innerHTML = "";
-  const optionsToShow = validNext.size ? Array.from(validNext) : symbols.filter(s => !alreadyUsed.has(s));
-  optionsToShow.forEach(sym => {
+  (nextOptions.length ? nextOptions : symbols.filter(s => !alreadyUsed.has(s))).forEach(sym => {
     const div = document.createElement("div");
     div.className = "symbol-option";
     div.style.backgroundImage = `url('./img/${sym}.png')`;

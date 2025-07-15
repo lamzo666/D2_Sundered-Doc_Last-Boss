@@ -87,18 +87,27 @@ function showSymbolPopup() {
 
   let pool = group === "left" ? remainingLeft : remainingRight;
 
+  // If other group is confirmed truth/lie, only use opposite set and exclude shared symbols
   if (truthGroup === otherGroup) {
     const base = truthGroup === "left" ? lieCombinations : truthCombinations;
     pool = base.filter(comb => !comb.some(sym => otherSelected.includes(sym)));
   }
 
+  // Filter combinations that match current groupSelected entries
   let filtered = pool.filter(comb => groupSelected.every(s => comb.includes(s)));
 
+  // Determine valid next symbol options
   const alreadyUsed = new Set(selected);
-  const nextOptions = [...new Set(
-    filtered.flat().filter(s => !groupSelected.includes(s) && !alreadyUsed.has(s))
-  )];
+  const validNext = new Set();
+  filtered.forEach(combo => {
+    combo.forEach(sym => {
+      if (!groupSelected.includes(sym) && !alreadyUsed.has(sym)) {
+        validNext.add(sym);
+      }
+    });
+  });
 
+  // If only one combo remains and group isn't full, autocomplete
   if (filtered.length === 1 && groupSelected.length < 3) {
     const combo = filtered[0];
     const remaining = combo.filter(s => !groupSelected.includes(s));
@@ -115,7 +124,8 @@ function showSymbolPopup() {
   }
 
   popupGrid.innerHTML = "";
-  (nextOptions.length ? nextOptions : symbols.filter(s => !alreadyUsed.has(s))).forEach(sym => {
+  const optionsToShow = validNext.size ? Array.from(validNext) : symbols.filter(s => !alreadyUsed.has(s));
+  optionsToShow.forEach(sym => {
     const div = document.createElement("div");
     div.className = "symbol-option";
     div.style.backgroundImage = `url('./img/${sym}.png')`;

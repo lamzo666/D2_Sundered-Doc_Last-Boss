@@ -102,24 +102,23 @@ function showSymbolPopup() {
   const isFirstSlot = groupSelected.length === 0;
 
   if (isFirstSlot) {
-    const validFirsts = new Set(pool.map(c => c[0]));
+    const firstSymbolSet = new Set(pool.map(c => c[0]));
+    const valid = [...firstSymbolSet].filter(s => !alreadyUsed.has(s));
     popupGrid.innerHTML = "";
-    validFirsts.forEach(sym => {
-      if (!alreadyUsed.has(sym)) {
-        const div = document.createElement("div");
-        div.className = "symbol-option";
-        div.style.backgroundImage = `url('./img/${sym}.png')`;
-        div.onclick = () => {
-          currentSlot.style.backgroundImage = `url('./img/${sym}.png')`;
-          selectedSymbols[currentSlot.dataset.position] = sym;
-          if (group === "left") remainingLeft = filtered;
-          else remainingRight = filtered;
-          currentSlot = null;
-          symbolPopup.style.display = "none";
-          checkShowLock();
-        };
-        popupGrid.appendChild(div);
-      }
+    valid.forEach(sym => {
+      const div = document.createElement("div");
+      div.className = "symbol-option";
+      div.style.backgroundImage = `url('./img/${sym}.png')`;
+      div.onclick = () => {
+        currentSlot.style.backgroundImage = `url('./img/${sym}.png')`;
+        selectedSymbols[currentSlot.dataset.position] = sym;
+        if (group === "left") remainingLeft = filtered;
+        else remainingRight = filtered;
+        currentSlot = null;
+        symbolPopup.style.display = "none";
+        checkShowLock();
+      };
+      popupGrid.appendChild(div);
     });
     symbolPopup.style.display = "block";
     return;

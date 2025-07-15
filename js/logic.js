@@ -87,7 +87,6 @@ function showSymbolPopup() {
 
   let pool = group === "left" ? remainingLeft : remainingRight;
 
-  // Only allow opposite set if other group is confirmed
   if (truthGroup === otherGroup) {
     const base = truthGroup === "left" ? lieCombinations : truthCombinations;
     pool = base.filter(comb => !comb.some(sym => otherSelected.includes(sym)));
@@ -95,22 +94,18 @@ function showSymbolPopup() {
 
   let filtered = pool.filter(comb => groupSelected.every(s => comb.includes(s)));
 
-  // 🆕 For first symbol selection, reduce available options to valid starting symbols
+  const alreadyUsed = new Set(selected);
+  const nextOptions = [...new Set(
+    filtered.flat().filter(s => !groupSelected.includes(s) && !alreadyUsed.has(s))
+  )];
+
+  // Limit first slot options if it's the first selection in the group
   if (groupSelected.length === 0) {
-    const otherUsed = new Set(otherSelected);
-    const possibleFirstSymbols = new Set();
-
-    pool.forEach(combo => {
-      combo.forEach(sym => {
-        if (!selected.includes(sym) && !otherUsed.has(sym)) {
-          possibleFirstSymbols.add(sym);
-        }
-      });
-    });
-
-    filtered = pool; // keep pool as filtered for future narrowing
+    const firstSymbols = new Set(
+      pool.map(c => c[0]).filter(s => !selected.includes(s))
+    );
     popupGrid.innerHTML = "";
-    possibleFirstSymbols.forEach(sym => {
+    firstSymbols.forEach(sym => {
       const div = document.createElement("div");
       div.className = "symbol-option";
       div.style.backgroundImage = `url('./img/${sym}.png')`;
@@ -125,16 +120,9 @@ function showSymbolPopup() {
       };
       popupGrid.appendChild(div);
     });
-
     symbolPopup.style.display = "block";
     return;
   }
-
-  // 🧠 Autocomplete if only one valid combo remains
-  const alreadyUsed = new Set(selected);
-  const nextOptions = [...new Set(
-    filtered.flat().filter(s => !groupSelected.includes(s) && !alreadyUsed.has(s))
-  )];
 
   if (filtered.length === 1 && groupSelected.length < 3) {
     const combo = filtered[0];

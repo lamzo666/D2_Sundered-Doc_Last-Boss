@@ -37,23 +37,24 @@ function equalArray(a, b) {
 
 function getValidSecondThirdSymbols(group) {
   const current = selectedSymbols[group].filter(Boolean);
+  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
   const pool = group === 'left' ? truthCombinations : lieCombinations;
 
-  if (current.length === 1) {
-    // Only combos that start with this symbol
-    const first = current[0];
-    return [...new Set(pool
-      .filter(combo => combo[0] === first)
-      .map(combo => combo[1]))];
-  }
+  const validCombos = pool.filter(combo =>
+    current.every(sym => combo.includes(sym))
+  );
 
-  if (current.length === 2) {
-    const [first, second] = current;
-    const match = pool.find(combo => combo[0] === first && combo[1] === second);
-    if (match) return [match[2]];
-  }
+  const possible = new Set();
 
-  return [];
+  validCombos.forEach(combo => {
+    combo.forEach(sym => {
+      if (!current.includes(sym) && !used.includes(sym)) {
+        possible.add(sym);
+      }
+    });
+  });
+
+  return Array.from(possible);
 }
 
 function checkCombinations() {
@@ -131,17 +132,17 @@ function createPopupSymbols(targetSlot) {
   const group = targetSlot.dataset.position.startsWith('left') ? 'left' : 'right';
   const index = parseInt(targetSlot.dataset.position.slice(-1)) - 1;
 
+  const validStartingSymbols = [
+    "guardian", "hive", "traveller", "pyramid", "darkness", "savathun", "witness"
+  ];
+
   let options;
-if (index === 0) {
-  // Allow all valid FIRST symbols based on the group
-  const rawSet = group === 'left' ? truthCombinations : lieCombinations;
-  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
-  options = rawSet.map(c => c[0]).filter((sym, i, arr) => arr.indexOf(sym) === i && !used.includes(sym));
-} else {
-  const predicted = getValidSecondThirdSymbols(group);
-  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
-  options = predicted.filter(sym => !used.includes(sym));
-}
+  if (index === 0) {
+    options = validStartingSymbols;
+  } else {
+    const predicted = getValidSecondThirdSymbols(group);
+    options = predicted.length > 0 ? predicted : [];
+  }
 
   const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
   const availableSymbols = options.filter(sym => !used.includes(sym));

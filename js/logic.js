@@ -37,15 +37,14 @@ function equalArray(a, b) {
 
 function getValidSecondThirdSymbols(group) {
   const current = selectedSymbols[group].filter(Boolean);
-  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
-  const pool = group === 'left' ? truthCombinations : lieCombinations;
+  const used = selectedSymbols[group].filter(Boolean);
+  const pool = [...truthCombinations, ...lieCombinations];
 
   const validCombos = pool.filter(combo =>
     current.every(sym => combo.includes(sym))
   );
 
   const possible = new Set();
-
   validCombos.forEach(combo => {
     combo.forEach(sym => {
       if (!current.includes(sym) && !used.includes(sym)) {
@@ -144,8 +143,8 @@ function createPopupSymbols(targetSlot) {
     options = predicted.length > 0 ? predicted : [];
   }
 
-  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
-  const availableSymbols = options.filter(sym => !used.includes(sym));
+  const groupUsed = selectedSymbols[group].filter(Boolean);
+  const availableSymbols = options.filter(sym => !groupUsed.includes(sym));
 
   availableSymbols.forEach(sym => {
     const div = document.createElement('div');
@@ -158,7 +157,7 @@ function createPopupSymbols(targetSlot) {
       grid.innerHTML = '';
 
       const groupSymbols = selectedSymbols[group].filter(Boolean);
-      const comboList = group === 'left' ? truthCombinations : lieCombinations;
+      const comboList = [...truthCombinations, ...lieCombinations];
       const matching = comboList.filter(combo => groupSymbols.every(sym => combo.includes(sym)));
 
       if (groupSymbols.length === 2 && matching.length === 1) {

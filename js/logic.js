@@ -1,6 +1,10 @@
 // logic.js
 
-const symbolOptions = [
+const baseSymbols = [
+  "guardian", "hive", "traveller", "pyramid", "darkness", "savathun", "witness"
+];
+
+const allSymbols = [
   "guardian", "hive", "kill", "light", "darkness",
   "drink", "give", "pyramid", "savathun", "stop",
   "traveller", "witness", "worm", "worship"
@@ -37,32 +41,27 @@ function equalArray(a, b) {
 
 function getValidSymbols(group, index) {
   const otherGroup = group === 'left' ? 'right' : 'left';
-  const currentGroupSymbols = selectedSymbols[group].filter(Boolean);
-  const otherGroupSymbols = selectedSymbols[otherGroup].filter(Boolean);
-
-  const allCurrent = [...currentGroupSymbols, ...otherGroupSymbols];
+  const groupSymbols = selectedSymbols[group].filter(Boolean);
+  const allSelected = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
 
   if (index === 0) {
-    return ["guardian", "hive", "traveller", "pyramid", "darkness", "savathun", "witness"].filter(sym => !allCurrent.includes(sym));
+    return baseSymbols.filter(sym => !allSelected.includes(sym));
   }
 
-  const pool = [...truthCombinations, ...lieCombinations];
+  const partial = [...groupSymbols];
   const possible = new Set();
-  const current = selectedSymbols[group].filter(Boolean);
 
-  const validCombos = pool.filter(combo =>
-    [...current, ...otherGroupSymbols].every(sym => combo.includes(sym))
-  );
-
-  validCombos.forEach(combo => {
-    combo.forEach(sym => {
-      if (!current.includes(sym) && !otherGroupSymbols.includes(sym)) {
-        possible.add(sym);
-      }
-    });
+  [...truthCombinations, ...lieCombinations].forEach(combo => {
+    if (partial.every(s => combo.includes(s))) {
+      combo.forEach(sym => {
+        if (!partial.includes(sym) && !allSelected.includes(sym)) {
+          possible.add(sym);
+        }
+      });
+    }
   });
 
-  return Array.from(possible);
+  return [...possible];
 }
 
 function checkCombinations() {
@@ -115,19 +114,13 @@ function checkCombinations() {
     const img = document.createElement('img');
     img.className = 'symbol-overlay';
     img.src = `./img/${name}.png`;
-
     const pos = symbolPositions[name];
     if (!pos) return;
-
-    img.style.position = 'absolute';
-    img.style.top = pos.top;
-    img.style.left = pos.left;
-    img.style.width = '5%';
-    img.style.aspectRatio = '1 / 1';
-    img.style.pointerEvents = 'none';
-    img.style.zIndex = '2';
+    Object.assign(img.style, {
+      position: 'absolute', top: pos.top, left: pos.left,
+      width: '5%', aspectRatio: '1 / 1', pointerEvents: 'none', zIndex: '2'
+    });
     if (truth.includes(name)) img.classList.add('pulse');
-
     overlay.appendChild(img);
   });
 }
@@ -141,11 +134,10 @@ function createPopupSymbols(targetSlot) {
   const index = parseInt(targetSlot.dataset.position.slice(-1)) - 1;
 
   const options = getValidSymbols(group, index);
-
   const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
-  const availableSymbols = options.filter(sym => !used.includes(sym));
+  const valid = options.filter(sym => !used.includes(sym));
 
-  availableSymbols.forEach(sym => {
+  valid.forEach(sym => {
     const div = document.createElement('div');
     div.className = 'symbol-option';
     div.style.backgroundImage = `url('./img/${sym}.png')`;
@@ -153,16 +145,20 @@ function createPopupSymbols(targetSlot) {
       selectedSymbols[group][index] = sym;
       targetSlot.style.backgroundImage = `url('./img/${sym}.png')`;
       popup.style.display = 'none';
-      grid.innerHTML = '';
 
       const current = selectedSymbols[group].filter(Boolean);
-      const matching = [...truthCombinations, ...lieCombinations].filter(c => current.every(s => c.includes(s)));
-      if (current.length === 2 && matching.length === 1) {
-        const missing = matching[0].find(s => !current.includes(s));
-        const idx = selectedSymbols[group].findIndex(s => !s);
-        if (missing && idx !== -1) {
-          selectedSymbols[group][idx] = missing;
-          const autoSlot = document.querySelector(`.dial-slot.${group}${idx + 1}`);
+      const usedSymbols = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
+
+      const matches = [...truthCombinations, ...lieCombinations].filter(c =>
+        current.every(s => c.includes(s)) && c.every(s => !usedSymbols.includes(s) || current.includes(s))
+      );
+
+      if (current.length === 2 && matches.length === 1) {
+        const missing = matches[0].find(s => !current.includes(s));
+        const autoIndex = selectedSymbols[group].findIndex(s => !s);
+        if (missing && autoIndex !== -1) {
+          selectedSymbols[group][autoIndex] = missing;
+          const autoSlot = document.querySelector(`.dial-slot.${group}${autoIndex + 1}`);
           autoSlot.style.backgroundImage = `url('./img/${missing}.png')`;
         }
       }

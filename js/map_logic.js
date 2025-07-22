@@ -41,3 +41,20 @@ function showMapHighlights(truthToVisit, lieToVisit, allIlluminated) {
 }
 
 window.showMapHighlights = showMapHighlights;
+
+// Attach click event to each dial slot
+window.addEventListener('DOMContentLoaded', () => {
+  const dialSlots = document.querySelectorAll('.dial-slot');
+  dialSlots.forEach(slot => {
+    slot.addEventListener('click', () => {
+      if (!slot.classList.contains('locked')) {
+        openSymbolPopup(slot);
+      }
+    });
+  });
+});
+
+// Dummy fallback to ensure openSymbolPopup is recognized
+function openSymbolPopup(slot) {
+  console.warn("openSymbolPopup is not defined. Make sure it's implemented in logic.js.");
+}

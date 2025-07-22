@@ -37,30 +37,33 @@ let selectedSymbols = {
 
 let currentSlot = null;
 
-function equalArray(a, b) {
-  return a.length === b.length && a.every((v, i) => v === b[i]);
+function getGroupCombo(group) {
+  return selectedSymbols[group].filter(Boolean);
 }
 
 function getValidSymbols(group, index) {
-  const otherGroup = group === 'left' ? 'right' : 'left';
-  const groupSymbols = selectedSymbols[group].filter(Boolean);
   const allSelected = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
 
   if (index === 0) {
     return baseSymbols.filter(sym => !allSelected.includes(sym));
   }
 
-  const partial = [...groupSymbols];
-  const possible = new Set();
+  const groupSelected = selectedSymbols[group].slice(0, index).filter(Boolean);
+  const isLeftGroup = group === 'left';
+  const otherGroup = isLeftGroup ? 'right' : 'left';
 
-  [...truthCombinations, ...lieCombinations].forEach(combo => {
-    if (partial.every(s => combo.includes(s))) {
-      combo.forEach(sym => {
-        if (!partial.includes(sym) && !allSelected.includes(sym)) {
-          possible.add(sym);
-        }
-      });
-    }
+  const validCombos = [...truthCombinations, ...lieCombinations].filter(combo =>
+    groupSelected.every(s => combo.includes(s)) &&
+    combo.every(s => ![...selectedSymbols[group], ...selectedSymbols[otherGroup]].includes(s))
+  );
+
+  const possible = new Set();
+  validCombos.forEach(combo => {
+    combo.forEach(sym => {
+      if (!groupSelected.includes(sym) && !allSelected.includes(sym)) {
+        possible.add(sym);
+      }
+    });
   });
 
   return [...possible];
@@ -68,7 +71,6 @@ function getValidSymbols(group, index) {
 
 function showSymbolPopup(group, index, slot) {
   currentSlot = { group, index, slot };
-
   const popup = document.getElementById('symbolPopup');
   const grid = document.getElementById('popupGrid');
   grid.innerHTML = '';
@@ -89,8 +91,25 @@ function showSymbolPopup(group, index, slot) {
   popup.style.display = 'block';
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const positions = ['left1','left2','left3','right1','right2','right3'];
+function resetDial() {
+  selectedSymbols = { left: [null, null, null], right: [null, null, null] };
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.style.backgroundImage = '';
+    slot.classList.remove('active');
+    slot.style.boxShadow = 'none';
+  });
+  document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('truthLieLabel').innerHTML = '';
+  document.getElementById('lockButton').classList.remove('glow-phase');
+}
+
+function toggleInstructions() {
+  const box = document.getElementById('instructionsBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const positions = ['left1', 'left2', 'left3', 'right1', 'right2', 'right3'];
   positions.forEach(pos => {
     const slot = document.querySelector(`.dial-slot.${pos}`);
     const [group, index] = pos.includes('left') ? ['left', parseInt(pos[4]) - 1] : ['right', parseInt(pos[5]) - 1];
@@ -101,20 +120,3 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 });
-
-function toggleInstructions() {
-  const box = document.getElementById("instructionsBox");
-  box.style.display = box.style.display === "none" ? "block" : "none";
-}
-
-function resetDial() {
-  selectedSymbols = { left: [null, null, null], right: [null, null, null] };
-  document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.style.backgroundImage = '';
-    slot.classList.remove("active");
-    slot.style.boxShadow = 'none';
-  });
-  document.getElementById("map-overlay").innerHTML = '';
-  document.getElementById("truthLieLabel").innerHTML = '';
-  document.getElementById("lockButton").classList.remove("glow-phase");
-}

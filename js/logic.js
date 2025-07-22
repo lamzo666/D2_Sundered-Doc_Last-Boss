@@ -43,24 +43,29 @@ function getGroupCombo(group) {
 
 function getValidSymbols(group, index) {
   const allSelected = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
-
-  if (index === 0) {
-    return baseSymbols.filter(sym => !allSelected.includes(sym));
-  }
-
-  const groupSelected = selectedSymbols[group].slice(0, index).filter(Boolean);
   const isLeftGroup = group === 'left';
   const otherGroup = isLeftGroup ? 'right' : 'left';
+  const currentSelected = selectedSymbols[group][index];
+
+  // Determine current group's selections up to this point
+  const currentGroupSelections = selectedSymbols[group].slice(0, index).filter(Boolean);
+  const otherGroupSelections = selectedSymbols[otherGroup].filter(Boolean);
+
+  const usedSymbols = new Set([...currentGroupSelections, ...otherGroupSelections]);
+
+  if (index === 0) {
+    return baseSymbols.filter(sym => !usedSymbols.has(sym));
+  }
 
   const validCombos = [...truthCombinations, ...lieCombinations].filter(combo =>
-    groupSelected.every(s => combo.includes(s)) &&
-    combo.every(s => ![...selectedSymbols[group], ...selectedSymbols[otherGroup]].includes(s))
+    currentGroupSelections.every(sym => combo.includes(sym)) &&
+    !combo.some(sym => usedSymbols.has(sym))
   );
 
   const possible = new Set();
   validCombos.forEach(combo => {
     combo.forEach(sym => {
-      if (!groupSelected.includes(sym) && !allSelected.includes(sym)) {
+      if (!usedSymbols.has(sym)) {
         possible.add(sym);
       }
     });

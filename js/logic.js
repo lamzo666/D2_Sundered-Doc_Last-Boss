@@ -42,36 +42,31 @@ function getGroupCombo(group) {
 }
 
 function getValidSymbols(group, index) {
-  const allSelected = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
-  const isLeftGroup = group === 'left';
-  const otherGroup = isLeftGroup ? 'right' : 'left';
-  const currentSelected = selectedSymbols[group][index];
-
-  // Determine current group's selections up to this point
+  const otherGroup = group === 'left' ? 'right' : 'left';
   const currentGroupSelections = selectedSymbols[group].slice(0, index).filter(Boolean);
-  const otherGroupSelections = selectedSymbols[otherGroup].filter(Boolean);
-
-  const usedSymbols = new Set([...currentGroupSelections, ...otherGroupSelections]);
+  const usedSymbols = new Set([...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean));
 
   if (index === 0) {
     return baseSymbols.filter(sym => !usedSymbols.has(sym));
   }
 
-  const validCombos = [...truthCombinations, ...lieCombinations].filter(combo =>
+  const pool = [...truthCombinations, ...lieCombinations];
+
+  const validCombos = pool.filter(combo =>
     currentGroupSelections.every(sym => combo.includes(sym)) &&
-    !combo.some(sym => usedSymbols.has(sym))
+    !combo.some(sym => usedSymbols.has(sym) && !currentGroupSelections.includes(sym))
   );
 
   const possible = new Set();
   validCombos.forEach(combo => {
     combo.forEach(sym => {
-      if (!usedSymbols.has(sym)) {
+      if (!usedSymbols.has(sym) || currentGroupSelections.includes(sym)) {
         possible.add(sym);
       }
     });
   });
 
-  return [...possible];
+  return [...possible].filter(sym => !selectedSymbols[group].includes(sym));
 }
 
 function showSymbolPopup(group, index, slot) {

@@ -1,4 +1,4 @@
-// map.js
+// map_logic.js
 
 const symbolPositions = {
   "stop": { top: '22.31%', left: '38.64%' },
@@ -17,25 +17,27 @@ const symbolPositions = {
   "worship": { top: '70.42%', left: '31.45%' }
 };
 
-function showMapHighlights(truthSymbols, lieSymbols, illuminatedSymbols) {
+function showMapHighlights(truthToVisit, lieToVisit, allIlluminated) {
   const overlay = document.getElementById('map-overlay');
-  if (!overlay) return;
-
   overlay.innerHTML = '';
 
-  const truthToShow = truthSymbols.filter(sym => illuminatedSymbols.includes(sym));
-  const lieToShow = lieSymbols.filter(sym => !illuminatedSymbols.includes(sym));
-
-  [...truthToShow, ...lieToShow].forEach(symbol => {
-    if (!symbolPositions[symbol]) return;
-
+  const addSymbol = (name, className) => {
+    if (!symbolPositions[name]) return;
     const img = document.createElement('img');
-    img.src = `./img/${symbol}.png`;
-    img.className = 'symbol-overlay pulse';
-    img.style.top = symbolPositions[symbol].top;
-    img.style.left = symbolPositions[symbol].left;
+    img.className = `symbol-overlay ${className}`;
+    img.src = `./img/${name}.png`;
+    img.style.top = symbolPositions[name].top;
+    img.style.left = symbolPositions[name].left;
+    img.style.position = 'absolute';
+    img.style.width = '5%';
+    img.style.aspectRatio = '1 / 1';
+    img.style.pointerEvents = 'none';
+    img.style.zIndex = '2';
     overlay.appendChild(img);
-  });
+  };
+
+  truthToVisit.forEach(sym => addSymbol(sym, 'pulse'));
+  lieToVisit.forEach(sym => addSymbol(sym, 'pulse'));
 }
 
 window.showMapHighlights = showMapHighlights;

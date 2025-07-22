@@ -70,7 +70,11 @@ function lockInSymbols() {
   const truthToVisit = truthSymbols.filter(sym => allIlluminated.includes(sym));
   const lieToVisit = lieSymbols.filter(sym => !allIlluminated.includes(sym));
 
-  showMapHighlights(truthToVisit, lieToVisit, allIlluminated);
+  if (typeof showMapHighlights === 'function') {
+    showMapHighlights(truthToVisit, lieToVisit, allIlluminated);
+  } else {
+    console.warn("Map logic not available: showMapHighlights() not defined.");
+  }
 }
 
 window.lockInSymbols = lockInSymbols;

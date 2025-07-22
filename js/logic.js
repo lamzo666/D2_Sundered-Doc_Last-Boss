@@ -65,6 +65,8 @@ function getValidSymbols(group, index) {
 }
 
 function checkCombinations() {
+  console.log("🧪 Running map checkCombinations");
+
   const truthLabel = document.getElementById('truthLieLabel');
   const overlay = document.getElementById('map-overlay');
   overlay.innerHTML = '';
@@ -141,4 +143,29 @@ function checkCombinations() {
   });
 }
 
-// Other functions remain unchanged (createPopupSymbols, DOMContentLoaded...)
+function handleLock() {
+  const allSlotsFilled = [...selectedSymbols.left, ...selectedSymbols.right].every(Boolean);
+  if (!allSlotsFilled) {
+    alert("Please select all 6 symbols first.");
+    return;
+  }
+
+  const lockBtn = document.getElementById("lockButton");
+  const glowActive = lockBtn.classList.toggle("glow-phase");
+
+  if (!glowActive) {
+    // Final lock-in phase, check and show map
+    checkCombinations();
+  } else {
+    // Illumination mode – allow toggling
+    document.querySelectorAll(".dial-slot").forEach(slot => {
+      slot.onclick = () => {
+        if (!slot.style.backgroundImage) return;
+        slot.classList.toggle("active");
+        slot.style.boxShadow = slot.classList.contains("active")
+          ? "0 0 12px 6px yellow"
+          : "none";
+      };
+    });
+  }
+}

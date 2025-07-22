@@ -35,19 +35,28 @@ function equalArray(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
-function getValidSecondThirdSymbols(group) {
-  const current = selectedSymbols[group].filter(Boolean);
-  const used = selectedSymbols[group].filter(Boolean);
+function getValidSymbols(group, index) {
+  const otherGroup = group === 'left' ? 'right' : 'left';
+  const currentGroupSymbols = selectedSymbols[group].filter(Boolean);
+  const otherGroupSymbols = selectedSymbols[otherGroup].filter(Boolean);
+
+  const allCurrent = [...currentGroupSymbols, ...otherGroupSymbols];
+
+  if (index === 0) {
+    return ["guardian", "hive", "traveller", "pyramid", "darkness", "savathun", "witness"].filter(sym => !allCurrent.includes(sym));
+  }
+
   const pool = [...truthCombinations, ...lieCombinations];
+  const possible = new Set();
+  const current = selectedSymbols[group].filter(Boolean);
 
   const validCombos = pool.filter(combo =>
-    current.every(sym => combo.includes(sym))
+    [...current, ...otherGroupSymbols].every(sym => combo.includes(sym))
   );
 
-  const possible = new Set();
   validCombos.forEach(combo => {
     combo.forEach(sym => {
-      if (!current.includes(sym) && !used.includes(sym)) {
+      if (!current.includes(sym) && !otherGroupSymbols.includes(sym)) {
         possible.add(sym);
       }
     });
@@ -131,20 +140,10 @@ function createPopupSymbols(targetSlot) {
   const group = targetSlot.dataset.position.startsWith('left') ? 'left' : 'right';
   const index = parseInt(targetSlot.dataset.position.slice(-1)) - 1;
 
-  const validStartingSymbols = [
-    "guardian", "hive", "traveller", "pyramid", "darkness", "savathun", "witness"
-  ];
+  const options = getValidSymbols(group, index);
 
-  let options;
-  if (index === 0) {
-    options = validStartingSymbols;
-  } else {
-    const predicted = getValidSecondThirdSymbols(group);
-    options = predicted.length > 0 ? predicted : [];
-  }
-
-  const groupUsed = selectedSymbols[group].filter(Boolean);
-  const availableSymbols = options.filter(sym => !groupUsed.includes(sym));
+  const used = [...selectedSymbols.left, ...selectedSymbols.right].filter(Boolean);
+  const availableSymbols = options.filter(sym => !used.includes(sym));
 
   availableSymbols.forEach(sym => {
     const div = document.createElement('div');
@@ -156,17 +155,14 @@ function createPopupSymbols(targetSlot) {
       popup.style.display = 'none';
       grid.innerHTML = '';
 
-      const groupSymbols = selectedSymbols[group].filter(Boolean);
-      const comboList = [...truthCombinations, ...lieCombinations];
-      const matching = comboList.filter(combo => groupSymbols.every(sym => combo.includes(sym)));
-
-      if (groupSymbols.length === 2 && matching.length === 1) {
-        const missing = matching[0].find(sym => !groupSymbols.includes(sym));
-        const missingIndex = selectedSymbols[group].findIndex(sym => !sym);
-        if (missing && missingIndex !== -1) {
-          selectedSymbols[group][missingIndex] = missing;
-          const selector = `.dial-slot.${group}${missingIndex + 1}`;
-          const autoSlot = document.querySelector(selector);
+      const current = selectedSymbols[group].filter(Boolean);
+      const matching = [...truthCombinations, ...lieCombinations].filter(c => current.every(s => c.includes(s)));
+      if (current.length === 2 && matching.length === 1) {
+        const missing = matching[0].find(s => !current.includes(s));
+        const idx = selectedSymbols[group].findIndex(s => !s);
+        if (missing && idx !== -1) {
+          selectedSymbols[group][idx] = missing;
+          const autoSlot = document.querySelector(`.dial-slot.${group}${idx + 1}`);
           autoSlot.style.backgroundImage = `url('./img/${missing}.png')`;
         }
       }

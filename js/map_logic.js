@@ -42,8 +42,12 @@ function showMapHighlights(truthToVisit, lieToVisit, allIlluminated) {
 
 window.showMapHighlights = showMapHighlights;
 
-// Attach click event to each dial slot
-window.addEventListener('DOMContentLoaded', () => {
+function bindDialClickHandlers() {
+  if (typeof openSymbolPopup !== 'function') {
+    setTimeout(bindDialClickHandlers, 50);
+    return;
+  }
+
   const dialSlots = document.querySelectorAll('.dial-slot');
   dialSlots.forEach(slot => {
     slot.addEventListener('click', () => {
@@ -52,4 +56,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-});
+}
+
+window.addEventListener('DOMContentLoaded', bindDialClickHandlers);

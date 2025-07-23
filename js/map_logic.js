@@ -53,8 +53,3 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-
-// Dummy fallback to ensure openSymbolPopup is recognized
-function openSymbolPopup(slot) {
-  console.warn("openSymbolPopup is not defined. Make sure it's implemented in logic.js.");
-}

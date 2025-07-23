@@ -34,8 +34,8 @@ function openSymbolPopup(slot) {
 
   if (currentSymbols.length === 0) {
     const validCombos = truthCombinations.concat(lieCombinations);
-    const firsts = new Set(validCombos.map(c => c[0]));
-    validSymbols = allSymbols.filter(sym => firsts.has(sym));
+    const firsts = validCombos.map(c => c[0]);
+    validSymbols = [...new Set(firsts)].filter(sym => !usedSymbols.includes(sym));
   } else {
     const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>
       currentSymbols.every(sym => c.includes(sym))

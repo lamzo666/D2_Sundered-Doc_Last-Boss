@@ -36,14 +36,21 @@ function openSymbolPopup(slot) {
     );
     validSymbols = [...new Set(possibleCombos.flat())].filter(sym => !currentSymbols.includes(sym) && !usedSymbols.includes(sym));
 
+    // ✅ Auto-complete if only 1 symbol is left
     if (currentSymbols.length === 2 && validSymbols.length === 1) {
       const autoSymbol = validSymbols[0];
       slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
       slot.dataset.symbol = autoSymbol;
+      return;  // ✅ Prevent popup from showing
+    }
+
+    // ✅ Don't show popup if no symbols left
+    if (validSymbols.length === 0) {
       return;
     }
   }
 
+  // ✅ Display popup with available symbols
   const popup = document.getElementById('symbolPopup');
   const grid = document.getElementById('popupGrid');
   popup.style.display = 'block';

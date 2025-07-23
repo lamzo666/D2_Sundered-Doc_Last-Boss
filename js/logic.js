@@ -27,21 +27,17 @@ function openSymbolPopup(slot) {
   grid.innerHTML = '';
 
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
-  const otherGroup = group === 'left' ? 'right' : 'left';
-
   const currentSymbols = getSymbolsFromSlots(group).filter(s => s);
   const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(s => s);
 
   let validSymbols = [...allSymbols];
 
-  // Restrict for first slot
   if (currentSymbols.length === 0) {
     const validCombos = truthCombinations.concat(lieCombinations);
     const firsts = new Set(validCombos.map(c => c[0]));
     validSymbols = allSymbols.filter(sym => firsts.has(sym));
   } else {
-    // Predictive filtering for 2nd and 3rd
-    const possibleCombos = (group === 'left' ? truthCombinations : lieCombinations).filter(c =>
+    const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>
       currentSymbols.every(sym => c.includes(sym))
     );
     validSymbols = possibleCombos.flat().filter(sym => !currentSymbols.includes(sym));
@@ -89,7 +85,6 @@ let lockPhase = 0;
 
 function handleLock() {
   if (lockPhase === 0) {
-    // phase 1: verify combinations and prep illumination
     const left = getSymbolsFromSlots('left').sort();
     const right = getSymbolsFromSlots('right').sort();
 
@@ -137,3 +132,15 @@ function handleLock() {
 
 window.handleLock = handleLock;
 window.resetDial = resetDial;
+
+// Bind click handlers to dial slots once DOM is loaded
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      if (!slot.classList.contains('locked') && lockPhase === 0) {
+        openSymbolPopup(slot);
+      }
+    });
+  });
+});

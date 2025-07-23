@@ -33,9 +33,12 @@ function openSymbolPopup(slot) {
   let validSymbols = [...allSymbols];
 
   if (currentSymbols.length === 0) {
-    const validCombos = truthCombinations.concat(lieCombinations);
-    const firsts = validCombos.map(c => c[0]);
-    validSymbols = [...new Set(firsts)].filter(sym => !usedSymbols.includes(sym));
+    // Only show starting symbols from both truth and lie combinations
+    const validStartSymbols = new Set(
+      truthCombinations.map(c => c[0])
+        .concat(lieCombinations.map(c => c[0]))
+    );
+    validSymbols = [...validStartSymbols].filter(sym => !usedSymbols.includes(sym));
   } else {
     const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>
       currentSymbols.every(sym => c.includes(sym))

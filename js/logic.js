@@ -22,37 +22,42 @@ const lieCombinations = [
 
 function openSymbolPopup(slot) {
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
+  const slotId = slot.dataset.position;
+  const groupSlots = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
+  const slotIndex = groupSlots.indexOf(slotId);
+
   const currentSymbols = getSymbolsFromSlots(group).filter(s => s);
-  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(s => s);
+  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
 
-  let validSymbols = [...allSymbols];
+  let validSymbols = [];
 
-if (currentSymbols.length === 0 && usedSymbols.length === 0) {
-  // Only restrict start symbols on the first slot of the first group entered
-  const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
-  validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
-}
- else {
-    const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>
-      currentSymbols.every(sym => c.includes(sym)) && c.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+  // Combine truth and lie combos
+  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
+    currentSymbols.every(sym => combo.includes(sym)) &&
+    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+  );
+
+  // Only show valid starting symbols on the first slot
+  if (slotIndex === 0 && currentSymbols.length === 0) {
+    const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
+    validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
+  } else {
+    validSymbols = [...new Set(possibleCombos.map(c => c[slotIndex]))].filter(sym =>
+      !usedSymbols.includes(sym)
     );
-    validSymbols = [...new Set(possibleCombos.flat())].filter(sym => !currentSymbols.includes(sym) && !usedSymbols.includes(sym));
-
-    // ✅ Auto-complete if only 1 symbol is left
-    if (currentSymbols.length === 2 && validSymbols.length === 1) {
-      const autoSymbol = validSymbols[0];
-      slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
-      slot.dataset.symbol = autoSymbol;
-      return;  // ✅ Prevent popup from showing
-    }
-
-    // ✅ Don't show popup if no symbols left
-    if (validSymbols.length === 0) {
-      return;
-    }
   }
 
-  // ✅ Display popup with available symbols
+  // Autocomplete if only one option
+  if (validSymbols.length === 1) {
+    const autoSymbol = validSymbols[0];
+    slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
+    slot.dataset.symbol = autoSymbol;
+    return;
+  }
+
+  if (validSymbols.length === 0) return;
+
+  // Render popup
   const popup = document.getElementById('symbolPopup');
   const grid = document.getElementById('popupGrid');
   popup.style.display = 'block';
@@ -61,6 +66,7 @@ if (currentSymbols.length === 0 && usedSymbols.length === 0) {
   validSymbols.forEach(name => {
     const div = document.createElement('div');
     div.className = 'symbol-option';
+    div.dataset.name = name;
     div.style.backgroundImage = `url('./img/${name}.png')`;
     div.onclick = () => {
       slot.style.backgroundImage = `url('./img/${name}.png')`;

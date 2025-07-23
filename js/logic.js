@@ -27,10 +27,12 @@ function openSymbolPopup(slot) {
 
   let validSymbols = [...allSymbols];
 
-  if (currentSymbols.length === 0) {
-    const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
-    validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
-  } else {
+if (currentSymbols.length === 0 && usedSymbols.length === 0) {
+  // Only restrict start symbols on the first slot of the first group entered
+  const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
+  validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
+}
+ else {
     const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>
       currentSymbols.every(sym => c.includes(sym)) && c.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
     );

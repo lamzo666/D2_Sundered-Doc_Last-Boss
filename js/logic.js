@@ -34,10 +34,9 @@ function openSymbolPopup(slot) {
 
   if (currentSymbols.length === 0) {
     // Only show starting symbols from both truth and lie combinations
-    const validStartSymbols = new Set(
-      truthCombinations.map(c => c[0])
-        .concat(lieCombinations.map(c => c[0]))
-    );
+const truthStarts = truthCombinations.map(c => c[0]);
+const lieStarts = lieCombinations.map(c => c[0]);
+const validStartSymbols = new Set(truthStarts.filter(sym => lieStarts.includes(sym)));
     validSymbols = [...validStartSymbols].filter(sym => !usedSymbols.includes(sym));
   } else {
     const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>

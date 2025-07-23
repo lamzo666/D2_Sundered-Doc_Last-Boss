@@ -21,11 +21,6 @@ const lieCombinations = [
 ];
 
 function openSymbolPopup(slot) {
-  const popup = document.getElementById('symbolPopup');
-  const grid = document.getElementById('popupGrid');
-  popup.style.display = 'block';
-  grid.innerHTML = '';
-
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
   const currentSymbols = getSymbolsFromSlots(group).filter(s => s);
   const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(s => s);
@@ -45,10 +40,14 @@ function openSymbolPopup(slot) {
       const autoSymbol = validSymbols[0];
       slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
       slot.dataset.symbol = autoSymbol;
-      popup.style.display = 'none';
       return;
     }
   }
+
+  const popup = document.getElementById('symbolPopup');
+  const grid = document.getElementById('popupGrid');
+  popup.style.display = 'block';
+  grid.innerHTML = '';
 
   validSymbols.forEach(name => {
     const div = document.createElement('div');

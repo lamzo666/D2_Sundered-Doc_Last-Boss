@@ -33,10 +33,7 @@ function openSymbolPopup(slot) {
   let validSymbols = [...allSymbols];
 
   if (currentSymbols.length === 0) {
-    // Only show starting symbols from both truth and lie combinations
-const truthStarts = truthCombinations.map(c => c[0]);
-const lieStarts = lieCombinations.map(c => c[0]);
-const validStartSymbols = new Set(truthStarts.filter(sym => lieStarts.includes(sym)));
+    const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
     validSymbols = [...validStartSymbols].filter(sym => !usedSymbols.includes(sym));
   } else {
     const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>
@@ -136,7 +133,6 @@ window.handleLock = handleLock;
 window.resetDial = resetDial;
 
 // Bind click handlers to dial slots once DOM is loaded
-
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.dial-slot').forEach(slot => {
     slot.addEventListener('click', () => {

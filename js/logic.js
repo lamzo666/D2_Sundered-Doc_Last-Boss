@@ -34,17 +34,23 @@ function openSymbolPopup(slot) {
 
   if (currentSymbols.length === 0) {
     const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
-    validSymbols = [...validStartSymbols].filter(sym => !usedSymbols.includes(sym));
+    validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
   } else {
     const possibleCombos = truthCombinations.concat(lieCombinations).filter(c =>
-      currentSymbols.every(sym => c.includes(sym))
+      currentSymbols.every(sym => c.includes(sym)) && c.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
     );
-    validSymbols = possibleCombos.flat().filter(sym => !currentSymbols.includes(sym));
+    validSymbols = [...new Set(possibleCombos.flat())].filter(sym => !currentSymbols.includes(sym) && !usedSymbols.includes(sym));
+
+    if (currentSymbols.length === 2 && validSymbols.length === 1) {
+      const autoSymbol = validSymbols[0];
+      slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
+      slot.dataset.symbol = autoSymbol;
+      popup.style.display = 'none';
+      return;
+    }
   }
 
-  validSymbols = validSymbols.filter(sym => !usedSymbols.includes(sym));
-
-  [...new Set(validSymbols)].forEach(name => {
+  validSymbols.forEach(name => {
     const div = document.createElement('div');
     div.className = 'symbol-option';
     div.style.backgroundImage = `url('./img/${name}.png')`;
@@ -132,7 +138,6 @@ function handleLock() {
 window.handleLock = handleLock;
 window.resetDial = resetDial;
 
-// Bind click handlers to dial slots once DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.dial-slot').forEach(slot => {
     slot.addEventListener('click', () => {

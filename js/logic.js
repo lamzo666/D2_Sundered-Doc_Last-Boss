@@ -154,3 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
     slot.addEventListener('click', () => handleSlotClick(slot));
   });
 });
+
+
+window.handleSlotClick = handleSlotClick;

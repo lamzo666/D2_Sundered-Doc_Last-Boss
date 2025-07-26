@@ -122,6 +122,8 @@ document.addEventListener('click', e => {
   }
 });
 
-document.querySelectorAll('.dial-slot').forEach(slot => {
-  slot.addEventListener('click', () => handleSlotClick(slot));
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.addEventListener('click', () => handleSlotClick(slot));
+  });
 });

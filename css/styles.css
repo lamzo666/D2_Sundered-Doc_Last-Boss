@@ -1,13 +1,40 @@
 
 body {
-  background-color: #111;
-  background-image: url('./img/background_wallaper_blur.png');
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background: #111 url('./img/background_wallaper_blur.png') center/cover no-repeat fixed;
   color: white;
-  font-family: 'Open Sans', sans-serif;
-  text-align: center;
+  font-family: sans-serif;
   margin: 0;
+  text-align: center;
+}
+h1, h2 { margin: 0.5em 0; }
+.dial-wrapper { display: flex; justify-content: center; align-items: center; margin-top: 1em; }
+.dial { position: relative; width: 300px; height: 300px; background: #222; border-radius: 50%; }
+.dial-slot {
+  width: 60px; height: 60px; position: absolute; background-size: contain; background-repeat: no-repeat;
+  border: 2px solid white; border-radius: 8px; cursor: pointer;
+}
+.left1 { top: 20px; left: 30px; }
+.left2 { top: 120px; left: 0px; }
+.left3 { bottom: 20px; left: 30px; }
+.right1 { top: 20px; right: 30px; }
+.right2 { top: 120px; right: 0px; }
+.right3 { bottom: 20px; right: 30px; }
+
+.symbol-popup {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #222; padding: 20px; border: 2px solid #888;
+  z-index: 999;
+}
+.symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 60px);
+  gap: 10px;
+}
+.symbol-option {
+  width: 60px; height: 60px;
+  background-size: contain; background-repeat: no-repeat;
+  border: 2px solid white; cursor: pointer;
 }

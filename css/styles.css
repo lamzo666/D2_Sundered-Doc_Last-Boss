@@ -1,0 +1,13 @@
+
+body {
+  background-color: #111;
+  background-image: url('./img/background_wallaper_blur.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  text-align: center;
+  margin: 0;
+}

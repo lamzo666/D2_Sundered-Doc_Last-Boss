@@ -70,6 +70,18 @@
       const box = document.getElementById('instructionsBox');
       box.style.display = (box.style.display === 'block') ? 'none' : 'block';
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.dial-slot').forEach(slot => {
+        slot.addEventListener('click', () => handleSlotClick(slot));
+      });
+    });
+
+    function handleSlotClick(slot) {
+      if (slot.classList.contains('locked')) return;
+      currentSlot = slot;
+      showSymbolPopup(slot);
+    }
   </script>
   <script src="./js/logic.js"></script>
   <script src="./js/map_logic.js"></script>

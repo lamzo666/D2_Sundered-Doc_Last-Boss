@@ -1,40 +1,76 @@
 
 body {
-  background: #111 url('./img/background_wallaper_blur.png') center/cover no-repeat fixed;
+  background: #111 url('../img/background_wallaper_blur.png') center/cover no-repeat fixed;
   color: white;
-  font-family: sans-serif;
+  font-family: 'Open Sans', sans-serif;
   margin: 0;
   text-align: center;
 }
 h1, h2 { margin: 0.5em 0; }
 .dial-wrapper { display: flex; justify-content: center; align-items: center; margin-top: 1em; }
-.dial { position: relative; width: 300px; height: 300px; background: #222; border-radius: 50%; }
-.dial-slot {
-  width: 60px; height: 60px; position: absolute; background-size: contain; background-repeat: no-repeat;
-  border: 2px solid white; border-radius: 8px; cursor: pointer;
+.dial {
+  position: relative;
+  width: 572px;
+  height: 572px;
 }
-.left1 { top: 20px; left: 30px; }
-.left2 { top: 120px; left: 0px; }
-.left3 { bottom: 20px; left: 30px; }
-.right1 { top: 20px; right: 30px; }
-.right2 { top: 120px; right: 0px; }
-.right3 { bottom: 20px; right: 30px; }
+.dial-background {
+  width: 100%;
+  height: 100%;
+}
+.dial-slot {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+}
+.left1 { top: 40px; left: 100px; }
+.left2 { top: 240px; left: 20px; }
+.left3 { bottom: 40px; left: 100px; }
+.right1 { top: 40px; right: 100px; }
+.right2 { top: 240px; right: 20px; }
+.right3 { bottom: 40px; right: 100px; }
 
 .symbol-popup {
   display: none;
   position: fixed;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  background: #222; padding: 20px; border: 2px solid #888;
+  background: #222;
+  padding: 20px;
+  border: 2px solid #888;
   z-index: 999;
 }
 .symbol-grid {
   display: grid;
-  grid-template-columns: repeat(4, 60px);
+  grid-template-columns: repeat(4, 72px);
   gap: 10px;
 }
 .symbol-option {
-  width: 60px; height: 60px;
-  background-size: contain; background-repeat: no-repeat;
-  border: 2px solid white; cursor: pointer;
+  width: 72px;
+  height: 72px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: 2px solid white;
+  cursor: pointer;
+}
+.btn-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.footer {
+  margin: 50px 0;
+  font-size: 0.9em;
+  opacity: 0.8;
 }

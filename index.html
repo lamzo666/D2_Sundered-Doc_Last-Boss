@@ -1,29 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Destiny 2 - Dial Interface</title>
-  <link rel="stylesheet" href="./css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kerrev, The Erased - Dial Helper</title>
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
+  <div class="top-bar">
+    <img id="instructionsIcon" src="./img/notepad-48.png" alt="Instructions" onclick="toggleInstructions()" />
+  </div>
+
   <h1>KERREV, THE ERASED</h1>
-  <h2>DIAL HELPER</h2>
+  <h2>Sundered Doctrine<br>DIAL HELPER</h2>
 
   <div id="instructionsBox">
     <ol>
       <li>Click each dial slot and choose a symbol.</li>
-      <li>Truth/Lie labels will update automatically.</li>
+      <li>Click Lock to enter illumination mode, then toggle the glowing ones.</li>
+      <li>Click Lock again to confirm and view map.</li>
+      <li>Click Reset to clear everything.</li>
     </ol>
   </div>
 
   <div id="truthLieLabel">
-    <div id="label-left"></div>
-    <div></div>
-    <div id="label-right"></div>
+    <div id="label-left" style="color: #00ff00;"></div>
+    <div id="label-right" style="color: #ff4444;"></div>
   </div>
 
   <div class="dial-wrapper">
     <div class="dial">
+      <img class="dial-background" src="./img/empty_dial.png" alt="Dial background" />
       <div class="dial-slot left1" data-position="left1" onclick="handleSlotClick(this)"></div>
       <div class="dial-slot left2" data-position="left2" onclick="handleSlotClick(this)"></div>
       <div class="dial-slot left3" data-position="left3" onclick="handleSlotClick(this)"></div>
@@ -33,10 +40,32 @@
     </div>
   </div>
 
+  <div class="btn-container">
+    <button class="btn-icon" id="lockButton" onclick="handleLock()">
+      <img src="./img/lock-50.png" alt="Lock" />
+    </button>
+    <button class="btn-icon btn-reset" onclick="resetDial()">
+      <img src="./img/reset-60.png" alt="Reset" />
+    </button>
+  </div>
+
   <div class="symbol-popup" id="symbolPopup">
     <div class="symbol-grid" id="popupGrid"></div>
   </div>
 
+  <div class="map-container">
+    <img src="./img/map.png" alt="Map" class="map-img" />
+    <div class="map-overlay" id="map-overlay"></div>
+  </div>
+
+  <div class="footer">MADE BY LAMZO<br>THANKS, AEQUORDE, FOR THE MAP</div>
+
+  <script>
+    function toggleInstructions() {
+      const box = document.getElementById('instructionsBox');
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+  </script>
   <script src="./js/logic.js"></script>
   <script src="./js/map_logic.js"></script>
 </body>

@@ -101,29 +101,30 @@ function resetDial() {
 let lockPhase = 0;
 
 function handleLock() {
+  const left = getSymbolsFromSlots('left').sort();
+  const right = getSymbolsFromSlots('right').sort();
+
+  const isLeftTruth = left.length === 3 && truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
+  const isLeftLie = left.length === 3 && lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
+  const isRightTruth = right.length === 3 && truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
+  const isRightLie = right.length === 3 && lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
+
+  updateTruthLieLabel();
+
   if (lockPhase === 0) {
-    const left = getSymbolsFromSlots('left').sort();
-    const right = getSymbolsFromSlots('right').sort();
-
-    const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
-    const isRightLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
-    const isRightTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
-    const isLeftLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
-
-    updateTruthLieLabel();
-
     if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
       document.getElementById('lockButton').classList.add('glow-phase');
       lockPhase = 1;
-      document.querySelectorAll('.dial-slot').forEach(slot => slot.classList.add('locked'));
+
       document.querySelectorAll('.dial-slot').forEach(slot => {
+        slot.classList.add('locked');
         slot.addEventListener('click', () => {
           slot.classList.toggle('active');
           slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
         });
       });
     } else {
-      alert('Invalid combination of truth and lie.');
+      alert('You must enter one full TRUTH and one full LIE combination before locking.');
     }
   } else if (lockPhase === 1) {
     lockPhase = 2;
@@ -132,10 +133,6 @@ function handleLock() {
     const leftIlluminated = ['left1','left2','left3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
     const rightIlluminated = ['right1','right2','right3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
 
-    const left = getSymbolsFromSlots('left').sort();
-    const right = getSymbolsFromSlots('right').sort();
-
-    const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
     const truthSymbols = isLeftTruth ? left : right;
     const lieSymbols = isLeftTruth ? right : left;
 

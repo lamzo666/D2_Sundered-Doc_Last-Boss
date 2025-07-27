@@ -87,15 +87,28 @@ function getSymbolsFromSlots(group) {
 
 function resetDial() {
   document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.style.backgroundImage = '';
-    slot.classList.remove('active', 'locked');
-    slot.removeAttribute('data-symbol');
-    slot.style.boxShadow = 'none';
+    const newSlot = slot.cloneNode(true);
+    newSlot.classList.remove('active', 'locked');
+    newSlot.removeAttribute('data-symbol');
+    newSlot.style.backgroundImage = '';
+    newSlot.style.boxShadow = 'none';
+
+    slot.replaceWith(newSlot);
   });
+
   document.getElementById('map-overlay').innerHTML = '';
   document.getElementById('lockButton').classList.remove('glow-phase');
   lockPhase = 0;
   updateTruthLieLabel();
+
+  // Rebind initial click handlers
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      if (!slot.classList.contains('locked') && lockPhase === 0) {
+        openSymbolPopup(slot);
+      }
+    });
+  });
 }
 
 let lockPhase = 0;

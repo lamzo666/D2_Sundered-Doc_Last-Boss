@@ -99,6 +99,7 @@ function resetDial() {
   document.getElementById('lockButton').classList.remove('glow-phase');
   lockPhase = 0;
 }
+
 let lockPhase = 0;
 
 function handleLock() {
@@ -110,10 +111,6 @@ function handleLock() {
     const isRightLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
     const isRightTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
     const isLeftLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
-
-    // ✅ Show label updates before entering phase 1
-    document.getElementById('label-left').textContent = isLeftTruth ? 'TRUTH' : isLeftLie ? 'LIE' : '';
-    document.getElementById('label-right').textContent = isRightTruth ? 'TRUTH' : isRightLie ? 'LIE' : '';
 
     if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
       document.getElementById('lockButton').classList.add('glow-phase');
@@ -128,7 +125,6 @@ function handleLock() {
     } else {
       alert('Invalid combination of truth and lie.');
     }
-  }
   } else if (lockPhase === 1) {
     lockPhase = 2;
     document.getElementById('lockButton').classList.remove('glow-phase');

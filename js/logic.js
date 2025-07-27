@@ -95,7 +95,8 @@ function resetDial() {
     slot.style.boxShadow = 'none';
   });
   document.getElementById('map-overlay').innerHTML = '';
-  document.getElementById('truthLieLabel').textContent = '';
+document.getElementById('label-left').textContent = '';
+document.getElementById('label-right').textContent = '';
   document.getElementById('lockButton').classList.remove('glow-phase');
   lockPhase = 0;
 }

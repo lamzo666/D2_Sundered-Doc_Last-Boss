@@ -162,26 +162,22 @@ function updateTruthLieLabel() {
   const rightLabel = document.getElementById('label-right');
 
   if (leftLabel && rightLabel) {
-    if (isLeftTruth) {
+    // Reset both first
+    leftLabel.textContent = '';
+    leftLabel.style.color = '';
+    rightLabel.textContent = '';
+    rightLabel.style.color = '';
+
+    if (isLeftTruth && isRightLie) {
       leftLabel.textContent = 'TRUTH';
       leftLabel.style.color = '#00ff00';
-    } else if (isLeftLie) {
-      leftLabel.textContent = 'LIE';
-      leftLabel.style.color = '#ff4444';
-    } else {
-      leftLabel.textContent = '';
-      leftLabel.style.color = '';
-    }
-
-    if (isRightTruth) {
-      rightLabel.textContent = 'TRUTH';
-      rightLabel.style.color = '#00ff00';
-    } else if (isRightLie) {
       rightLabel.textContent = 'LIE';
       rightLabel.style.color = '#ff4444';
-    } else {
-      rightLabel.textContent = '';
-      rightLabel.style.color = '';
+    } else if (isRightTruth && isLeftLie) {
+      leftLabel.textContent = 'LIE';
+      leftLabel.style.color = '#ff4444';
+      rightLabel.textContent = 'TRUTH';
+      rightLabel.style.color = '#00ff00';
     }
   }
 }

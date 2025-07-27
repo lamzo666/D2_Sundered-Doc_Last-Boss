@@ -44,6 +44,7 @@ function showSymbolPopup(slot) {
   let validSymbols = symbols.filter(s => !usedSymbols.includes(s));
 
   if (slotIndex === 0) {
+    // Filter to only valid first symbols
     const validFirsts = new Set(truthCombinations.concat(lieCombinations).map(c => c[0]));
     validSymbols = validSymbols.filter(sym => validFirsts.has(sym));
   } else {
@@ -56,7 +57,6 @@ function showSymbolPopup(slot) {
       const remaining = availableCombinations[0].filter(sym => !currentGroupSymbols.includes(sym));
       if (remaining.length === 1) {
         setSymbolToSlot(slot, remaining[0]);
-        updateTruthLieLabel();
         return;
       }
     }
@@ -69,7 +69,6 @@ function showSymbolPopup(slot) {
     div.onclick = () => {
       setSymbolToSlot(slot, sym);
       popup.style.display = 'none';
-      updateTruthLieLabel();
     };
     grid.appendChild(div);
   });
@@ -83,7 +82,6 @@ function setSymbolToSlot(slot, symbol) {
   slot.classList.remove('active');
   slot.style.boxShadow = 'none';
   document.getElementById('symbolPopup').style.display = 'none';
-  updateTruthLieLabel();
 }
 
 function getUsedSymbols() {
@@ -118,39 +116,12 @@ function arraysEqual(a, b) {
   return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.slice().sort().every((v, i) => v === b.slice().sort()[i]);
 }
 
-function updateTruthLieLabel() {
-  const left = getGroupSymbols('left');
-  const right = getGroupSymbols('right');
-
-  const isLeftTruth = left.length === 3 && truthCombinations.some(c => arraysEqual(c, left));
-  const isRightTruth = right.length === 3 && truthCombinations.some(c => arraysEqual(c, right));
-  const isLeftLie = left.length === 3 && lieCombinations.some(c => arraysEqual(c, left));
-  const isRightLie = right.length === 3 && lieCombinations.some(c => arraysEqual(c, right));
-
-  const labelLeft = document.getElementById('label-left');
-  const labelRight = document.getElementById('label-right');
-
-  if (!labelLeft || !labelRight) return;
-  labelLeft.textContent = '';
-  labelRight.textContent = '';
-
-  if (isLeftTruth && isRightLie) {
-    labelLeft.textContent = 'TRUTH';
-    labelRight.textContent = 'LIE';
-  } else if (isRightTruth && isLeftLie) {
-    labelLeft.textContent = 'LIE';
-    labelRight.textContent = 'TRUTH';
-  }
-}
-
 document.addEventListener('click', e => {
   if (!document.getElementById('symbolPopup').contains(e.target) && e.target.className !== 'dial-slot') {
     document.getElementById('symbolPopup').style.display = 'none';
   }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.addEventListener('click', () => handleSlotClick(slot));
-  });
+document.querySelectorAll('.dial-slot').forEach(slot => {
+  slot.addEventListener('click', () => handleSlotClick(slot));
 });

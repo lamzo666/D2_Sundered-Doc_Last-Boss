@@ -169,12 +169,13 @@ h2 {
   align-items: center;
   margin-top: 40px;
   filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7));
+  max-width: 100%;
 }
 
-.map-img {
-  width: 100%;
+.map-container img {
+  max-width: 100%;
   height: auto;
-  display: block;
+  border-radius: 4px;
 }
 
 .map-overlay {

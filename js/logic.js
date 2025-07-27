@@ -1,7 +1,9 @@
-// Full logic.js
+// logic.js
 
-const symbols = [
-  'guardian', 'hive', 'kill', 'light', 'darkness', 'drink', 'give', 'pyramid', 'savathun', 'stop',
+// Symbol list
+const allSymbols = [
+  'guardian', 'hive', 'kill', 'light', 'darkness',
+  'drink', 'give', 'pyramid', 'savathun', 'stop',
   'traveller', 'witness', 'worm', 'worship'
 ];
 
@@ -18,110 +20,144 @@ const lieCombinations = [
   ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
 ];
 
-let currentSlot = null;
-let lockPhase = 0;
+function openSymbolPopup(slot) {
+  const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
+  const slotId = slot.dataset.position;
+  const groupSlots = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
+  const slotIndex = groupSlots.indexOf(slotId);
 
-function handleSlotClick(slot) {
-  if (lockPhase > 0 || slot.classList.contains('locked')) return;
-  currentSlot = slot;
-  showSymbolPopup(slot);
-}
+  const currentSymbols = getSymbolsFromSlots(group).filter(s => s);
+  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
 
-function showSymbolPopup(slot) {
-  const popup = document.getElementById('symbolPopup');
-  const grid = document.getElementById('popupGrid');
-  grid.innerHTML = '';
+  let validSymbols = [];
 
-  const slotName = slot.dataset.position;
-  const slotGroup = slotName.includes('left') ? 'left' : 'right';
-  const slotIndex = ['left1', 'left2', 'left3', 'right1', 'right2', 'right3'].indexOf(slotName) % 3;
+  // Combine truth and lie combos
+  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
+    currentSymbols.every(sym => combo.includes(sym)) &&
+    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+  );
 
-  const usedSymbols = getUsedSymbols();
-  const oppositeGroup = slotGroup === 'left' ? 'right' : 'left';
-  const currentGroupSymbols = getGroupSymbols(slotGroup);
-  const otherGroupSymbols = getGroupSymbols(oppositeGroup);
-
-  let validSymbols = symbols.filter(s => !usedSymbols.includes(s));
-
-  if (slotIndex === 0) {
-    // Filter to only valid first symbols
-    const validFirsts = new Set(truthCombinations.concat(lieCombinations).map(c => c[0]));
-    validSymbols = validSymbols.filter(sym => validFirsts.has(sym));
+  // Only show valid starting symbols on the first slot
+  if (slotIndex === 0 && currentSymbols.length === 0) {
+    const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
+    validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
   } else {
-    const availableCombinations = getAvailableCombinations(slotGroup, currentGroupSymbols);
-    validSymbols = validSymbols.filter(sym =>
-      availableCombinations.some(c => c[slotIndex] === sym)
+    validSymbols = [...new Set(possibleCombos.map(c => c[slotIndex]))].filter(sym =>
+      !usedSymbols.includes(sym)
     );
-
-    if (availableCombinations.length === 1) {
-      const remaining = availableCombinations[0].filter(sym => !currentGroupSymbols.includes(sym));
-      if (remaining.length === 1) {
-        setSymbolToSlot(slot, remaining[0]);
-        return;
-      }
-    }
   }
 
-  validSymbols.forEach(sym => {
+  // Autocomplete if only one option
+  if (validSymbols.length === 1) {
+    const autoSymbol = validSymbols[0];
+    slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
+    slot.dataset.symbol = autoSymbol;
+    return;
+  }
+
+  if (validSymbols.length === 0) return;
+
+  // Render popup
+  const popup = document.getElementById('symbolPopup');
+  const grid = document.getElementById('popupGrid');
+  popup.style.display = 'block';
+  grid.innerHTML = '';
+
+  validSymbols.forEach(name => {
     const div = document.createElement('div');
     div.className = 'symbol-option';
-    div.style.backgroundImage = `url('./img/${sym}.png')`;
+    div.dataset.name = name;
+    div.style.backgroundImage = `url('./img/${name}.png')`;
     div.onclick = () => {
-      setSymbolToSlot(slot, sym);
+      slot.style.backgroundImage = `url('./img/${name}.png')`;
+      slot.dataset.symbol = name;
       popup.style.display = 'none';
     };
     grid.appendChild(div);
   });
-
-  popup.style.display = 'block';
 }
 
-function setSymbolToSlot(slot, symbol) {
-  slot.dataset.symbol = symbol;
-  slot.style.backgroundImage = `url('./img/${symbol}.png')`;
-  slot.classList.remove('active');
-  slot.style.boxShadow = 'none';
-  document.getElementById('symbolPopup').style.display = 'none';
+window.openSymbolPopup = openSymbolPopup;
+
+function getSymbolsFromSlots(group) {
+  const ids = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
+  return ids.map(id => {
+    const el = document.querySelector(`.dial-slot.${id}`);
+    return el.dataset.symbol || null;
+  });
 }
 
-function getUsedSymbols() {
-  return [...document.querySelectorAll('.dial-slot')]
-    .map(s => s.dataset.symbol)
-    .filter(Boolean);
+function resetDial() {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.style.backgroundImage = '';
+    slot.classList.remove('active', 'locked');
+    slot.removeAttribute('data-symbol');
+    slot.style.boxShadow = 'none';
+  });
+  document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('truthLieLabel').textContent = '';
+  document.getElementById('lockButton').classList.remove('glow-phase');
+  lockPhase = 0;
 }
 
-function getGroupSymbols(group) {
-  const ids = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
-  return ids.map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol).filter(Boolean);
-}
+let lockPhase = 0;
 
-function getAvailableCombinations(group, currentSymbols) {
-  const isOtherGroupTruth = isGroupTruth(group === 'left' ? 'right' : 'left');
-  const combinations = isOtherGroupTruth ? lieCombinations : (isGroupLie(group === 'left' ? 'right' : 'left') ? truthCombinations : truthCombinations.concat(lieCombinations));
+function handleLock() {
+  if (lockPhase === 0) {
+    const left = getSymbolsFromSlots('left').sort();
+    const right = getSymbolsFromSlots('right').sort();
 
-  return combinations.filter(c => currentSymbols.every(sym => c.includes(sym)));
-}
+    const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
+    const isRightLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
+    const isRightTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
+    const isLeftLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
 
-function isGroupTruth(group) {
-  const syms = getGroupSymbols(group);
-  return syms.length === 3 && truthCombinations.some(c => arraysEqual(c, syms));
-}
+    if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
+      document.getElementById('lockButton').classList.add('glow-phase');
+      lockPhase = 1;
+      document.querySelectorAll('.dial-slot').forEach(slot => slot.classList.add('locked'));
+      document.querySelectorAll('.dial-slot').forEach(slot => {
+        slot.addEventListener('click', () => {
+          slot.classList.toggle('active');
+          slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
+        });
+      });
+    } else {
+      alert('Invalid combination of truth and lie.');
+    }
+  } else if (lockPhase === 1) {
+    lockPhase = 2;
+    document.getElementById('lockButton').classList.remove('glow-phase');
 
-function isGroupLie(group) {
-  const syms = getGroupSymbols(group);
-  return syms.length === 3 && lieCombinations.some(c => arraysEqual(c, syms));
-}
+    const leftIlluminated = ['left1','left2','left3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
+    const rightIlluminated = ['right1','right2','right3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
 
-function arraysEqual(a, b) {
-  return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.slice().sort().every((v, i) => v === b.slice().sort()[i]);
-}
+    const left = getSymbolsFromSlots('left').sort();
+    const right = getSymbolsFromSlots('right').sort();
 
-document.addEventListener('click', e => {
-  if (!document.getElementById('symbolPopup').contains(e.target) && e.target.className !== 'dial-slot') {
-    document.getElementById('symbolPopup').style.display = 'none';
+    const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
+    const truthSymbols = isLeftTruth ? left : right;
+    const lieSymbols = isLeftTruth ? right : left;
+
+    const allIlluminated = [...leftIlluminated, ...rightIlluminated];
+    const truthToVisit = truthSymbols.filter(sym => allIlluminated.includes(sym));
+    const lieToVisit = lieSymbols.filter(sym => !allIlluminated.includes(sym));
+
+    if (typeof showMapHighlights === 'function') {
+      showMapHighlights(truthToVisit, lieToVisit, allIlluminated);
+    }
   }
-});
+}
 
-document.querySelectorAll('.dial-slot').forEach(slot => {
-  slot.addEventListener('click', () => handleSlotClick(slot));
+window.handleLock = handleLock;
+window.resetDial = resetDial;
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      if (!slot.classList.contains('locked') && lockPhase === 0) {
+        openSymbolPopup(slot);
+      }
+    });
+  });
 });

@@ -1,6 +1,5 @@
 // logic.js
 
-// Symbol list
 const allSymbols = [
   'guardian', 'hive', 'kill', 'light', 'darkness',
   'drink', 'give', 'pyramid', 'savathun', 'stop',
@@ -31,13 +30,11 @@ function openSymbolPopup(slot) {
 
   let validSymbols = [];
 
-  // Combine truth and lie combos
   const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
     currentSymbols.every(sym => combo.includes(sym)) &&
     combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
   );
 
-  // Only show valid starting symbols on the first slot
   if (slotIndex === 0 && currentSymbols.length === 0) {
     const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
     validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
@@ -47,17 +44,16 @@ function openSymbolPopup(slot) {
     );
   }
 
-  // Autocomplete if only one option
   if (validSymbols.length === 1) {
     const autoSymbol = validSymbols[0];
     slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
     slot.dataset.symbol = autoSymbol;
+    updateTruthLieLabel();
     return;
   }
 
   if (validSymbols.length === 0) return;
 
-  // Render popup
   const popup = document.getElementById('symbolPopup');
   const grid = document.getElementById('popupGrid');
   popup.style.display = 'block';
@@ -72,11 +68,11 @@ function openSymbolPopup(slot) {
       slot.style.backgroundImage = `url('./img/${name}.png')`;
       slot.dataset.symbol = name;
       popup.style.display = 'none';
+      updateTruthLieLabel();
     };
     grid.appendChild(div);
   });
 }
-
 window.openSymbolPopup = openSymbolPopup;
 
 function getSymbolsFromSlots(group) {
@@ -95,9 +91,9 @@ function resetDial() {
     slot.style.boxShadow = 'none';
   });
   document.getElementById('map-overlay').innerHTML = '';
-  document.getElementById('truthLieLabel').textContent = '';
   document.getElementById('lockButton').classList.remove('glow-phase');
   lockPhase = 0;
+  updateTruthLieLabel();
 }
 
 let lockPhase = 0;
@@ -111,6 +107,8 @@ function handleLock() {
     const isRightLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
     const isRightTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
     const isLeftLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
+
+    updateTruthLieLabel();
 
     if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
       document.getElementById('lockButton').classList.add('glow-phase');
@@ -149,6 +147,32 @@ function handleLock() {
   }
 }
 
+function updateTruthLieLabel() {
+  const left = getSymbolsFromSlots('left').sort();
+  const right = getSymbolsFromSlots('right').sort();
+
+  const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
+  const isLeftLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
+  const isRightTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
+  const isRightLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
+
+  const leftLabel = document.getElementById('label-left');
+  const rightLabel = document.getElementById('label-right');
+
+  if (leftLabel && rightLabel) {
+    leftLabel.textContent = isLeftTruth ? 'TRUTH' : isLeftLie ? 'LIE' : '';
+    rightLabel.textContent = isRightTruth ? 'TRUTH' : isRightLie ? 'LIE' : '';
+  }
+}
+
+function toggleInstructions() {
+  const box = document.getElementById('instructionsBox');
+  if (box) {
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+  }
+}
+
+window.toggleInstructions = toggleInstructions;
 window.handleLock = handleLock;
 window.resetDial = resetDial;
 
@@ -161,11 +185,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-function toggleInstructions() {
-  const box = document.getElementById('instructionsBox');
-  if (box) {
-    box.style.display = box.style.display === 'block' ? 'none' : 'block';
-  }
-}
-window.toggleInstructions = toggleInstructions;
-

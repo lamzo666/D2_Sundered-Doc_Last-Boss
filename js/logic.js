@@ -202,3 +202,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+document.addEventListener('click', (e) => {
+  const popup = document.getElementById('symbolPopup');
+  const grid = document.getElementById('popupGrid');
+  if (!popup || !grid) return;
+
+  const isInsidePopup = popup.contains(e.target);
+  const isDialSlot = e.target.classList.contains('dial-slot');
+
+  // Close popup if clicked outside both popup and a slot
+  if (!isInsidePopup && !isDialSlot) {
+    popup.style.display = 'none';
+  }
+});

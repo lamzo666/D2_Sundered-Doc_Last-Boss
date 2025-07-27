@@ -51,7 +51,7 @@ h2 {
   justify-content: center;
   align-items: center;
   margin-top: 20px;
-  width: 100%;
+  filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7));
 }
 
 .dial {
@@ -164,9 +164,11 @@ h2 {
 }
 
 .map-container {
-  position: relative;
-  max-width: 1000px;
-  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 40px;
+  filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7));
 }
 
 .map-img {

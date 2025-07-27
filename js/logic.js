@@ -161,3 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+function toggleInstructions() {
+  const box = document.getElementById('instructionsBox');
+  if (box) {
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+  }
+}
+window.toggleInstructions = toggleInstructions;
+

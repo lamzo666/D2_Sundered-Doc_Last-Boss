@@ -1,4 +1,3 @@
-
 const allSymbols = [
   'guardian', 'hive', 'kill', 'light', 'darkness',
   'drink', 'give', 'pyramid', 'savathun', 'stop',
@@ -63,10 +62,33 @@ function resetDial() {
   initSlotClicks();
 }
 
+function attemptAutoFillGroup(group) {
+  const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
+  const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
+  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
+
+  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
+    currentSymbols.every(sym => combo.includes(sym)) &&
+    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+  );
+
+  if (possibleCombos.length === 1) {
+    const fullCombo = possibleCombos[0];
+    groupSlots.forEach((id, i) => {
+      const slot = document.querySelector(`.dial-slot.${id}`);
+      if (!slot.dataset.symbol) {
+        slot.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
+        slot.dataset.symbol = fullCombo[i];
+      }
+    });
+    updateTruthLieLabel();
+  }
+}
+
 function openSymbolPopup(slot) {
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
   const slotId = slot.dataset.position;
-  const groupSlots = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
+  const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
   const slotIndex = groupSlots.indexOf(slotId);
 
   const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
@@ -87,19 +109,6 @@ function openSymbolPopup(slot) {
     );
   }
 
-  // Full auto-solve when only 1 valid combo
-  if (possibleCombos.length === 1) {
-    const [fullCombo] = possibleCombos;
-    const groupIds = groupSlots;
-    groupIds.forEach((id, i) => {
-      const el = document.querySelector(`.dial-slot.${id}`);
-      el.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
-      el.dataset.symbol = fullCombo[i];
-    });
-    updateTruthLieLabel();
-    return;
-  }
-
   if (validSymbols.length === 0) return;
 
   const popup = document.getElementById('symbolPopup');
@@ -117,6 +126,7 @@ function openSymbolPopup(slot) {
       slot.dataset.symbol = name;
       popup.style.display = 'none';
       updateTruthLieLabel();
+      attemptAutoFillGroup(group);  // Auto-complete rest immediately
     };
     grid.appendChild(div);
   });

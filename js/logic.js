@@ -169,7 +169,7 @@ function openSymbolPopup(slot) {
   );
 
   if (slotIndex === 0 && currentSymbols.length === 0) {
-    const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness'];
+    const validStartSymbols = ["pyramid", "guardian", "traveller", "hive", "darkness", "witness", "savathun", "light"];
     validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
   } else {
     validSymbols = [...new Set(possibleCombos.map(c => c[slotIndex]))].filter(sym =>

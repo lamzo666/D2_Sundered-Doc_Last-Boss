@@ -203,6 +203,34 @@ document.getElementById('label-right').style.color = '';
       slot.style.backgroundImage = `url('./img/${name}.png')`;
       slot.dataset.symbol = name;
       popup.style.display = 'none';
+
+      // Auto-fill any remaining slots in the same group if only one combo remains
+      const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
+      const groupSlots = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
+      const currentSymbols = getSymbolsFromSlots(group).filter(s => s);
+      const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
+
+      const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
+        currentSymbols.every(sym => combo.includes(sym)) &&
+        combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+      );
+
+      if (possibleCombos.length === 1) {
+        const remaining = possibleCombos[0].filter(sym => !currentSymbols.includes(sym));
+        remaining.forEach(sym => {
+          const emptySlot = groupSlots.find(id => {
+            const s = document.querySelector(`.dial-slot.${id}`);
+            return !s.dataset.symbol;
+          });
+          if (emptySlot) {
+            const s = document.querySelector(`.dial-slot.${emptySlot}`);
+            s.dataset.symbol = sym;
+            s.style.backgroundImage = `url('./img/${sym}.png')`;
+          }
+        });
+        updateTruthLieLabel();
+      }
+
       updateTruthLieLabel();
     };
     grid.appendChild(div);

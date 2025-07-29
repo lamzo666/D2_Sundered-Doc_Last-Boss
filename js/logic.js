@@ -1,3 +1,4 @@
+
 const allSymbols = [
   'guardian', 'hive', 'kill', 'light', 'darkness',
   'drink', 'give', 'pyramid', 'savathun', 'stop',
@@ -17,25 +18,14 @@ const lieCombinations = [
   ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
 ];
 
+let lockPhase = 0;
+
 function getSymbolsFromSlots(group) {
   const ids = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
   return ids.map(id => {
     const el = document.querySelector(`.dial-slot.${id}`);
     return el.dataset.symbol || null;
   });
-}
-
-function resetDial() {
-  document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.style.backgroundImage = '';
-    slot.classList.remove('active', 'locked');
-    slot.removeAttribute('data-symbol');
-    slot.style.boxShadow = 'none';
-  });
-  document.getElementById('map-overlay').innerHTML = '';
-  document.getElementById('lockButton').classList.remove('glow-phase');
-  lockPhase = 0;
-  updateTruthLieLabel();
 }
 
 function updateTruthLieLabel() {
@@ -58,37 +48,38 @@ function updateTruthLieLabel() {
   }
 }
 
+function resetDial() {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    slot.style.backgroundImage = '';
+    slot.classList.remove('active', 'locked');
+    slot.removeAttribute('data-symbol');
+    slot.replaceWith(slot.cloneNode(true)); // removes listeners
+  });
+  document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('lockButton').classList.remove('glow-phase');
+  document.getElementById('symbolPopup').style.display = 'none';
+  lockPhase = 0;
+  updateTruthLieLabel();
+  initSlotClicks();
+}
+
 function openSymbolPopup(slot) {
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
   const slotId = slot.dataset.position;
   const groupSlots = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
   const slotIndex = groupSlots.indexOf(slotId);
 
-  const currentSymbols = getSymbolsFromSlots(group).filter(s => s);
+  const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
   const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
 
+  let validSymbols = [];
   const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
     currentSymbols.every(sym => combo.includes(sym)) &&
     combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
   );
 
-  if (possibleCombos.length === 1) {
-    // Auto-fill all remaining slots
-    const combo = possibleCombos[0];
-    groupSlots.forEach(id => {
-      const s = document.querySelector(`.dial-slot.${id}`);
-      const sym = combo[groupSlots.indexOf(id)];
-      s.dataset.symbol = sym;
-      s.style.backgroundImage = `url('./img/${sym}.png')`;
-    });
-    updateTruthLieLabel();
-    return;
-  }
-
-  let validSymbols = [];
-
   if (slotIndex === 0 && currentSymbols.length === 0) {
-    const validStartSymbols = ['pyramid', 'guardian', 'traveller', 'hive', 'darkness', 'witness', 'savathun', 'light'];
+    const validStartSymbols = ['pyramid','guardian','traveller','hive','darkness','witness','savathun','light'];
     validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
   } else {
     validSymbols = [...new Set(possibleCombos.map(c => c[slotIndex]))].filter(sym =>
@@ -96,13 +87,20 @@ function openSymbolPopup(slot) {
     );
   }
 
-  if (validSymbols.length === 1) {
-    const autoSymbol = validSymbols[0];
-    slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
-    slot.dataset.symbol = autoSymbol;
+  // Full auto-solve when only 1 valid combo
+  if (possibleCombos.length === 1) {
+    const [fullCombo] = possibleCombos;
+    const groupIds = groupSlots;
+    groupIds.forEach((id, i) => {
+      const el = document.querySelector(`.dial-slot.${id}`);
+      el.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
+      el.dataset.symbol = fullCombo[i];
+    });
     updateTruthLieLabel();
     return;
   }
+
+  if (validSymbols.length === 0) return;
 
   const popup = document.getElementById('symbolPopup');
   const grid = document.getElementById('popupGrid');
@@ -124,58 +122,7 @@ function openSymbolPopup(slot) {
   });
 }
 
-let lockPhase = 0;
-
-function handleLock() {
-  if (lockPhase === 0) {
-    const left = getSymbolsFromSlots('left').sort();
-    const right = getSymbolsFromSlots('right').sort();
-
-    const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
-    const isRightLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
-    const isRightTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
-    const isLeftLie = lieCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
-
-    updateTruthLieLabel();
-
-    if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
-      document.getElementById('lockButton').classList.add('glow-phase');
-      lockPhase = 1;
-      document.querySelectorAll('.dial-slot').forEach(slot => slot.classList.add('locked'));
-      document.querySelectorAll('.dial-slot').forEach(slot => {
-        slot.addEventListener('click', () => {
-          slot.classList.toggle('active');
-          slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
-        });
-      });
-    } else {
-      alert('Invalid combination of truth and lie.');
-    }
-  } else if (lockPhase === 1) {
-    lockPhase = 2;
-    document.getElementById('lockButton').classList.remove('glow-phase');
-
-    const leftIlluminated = ['left1','left2','left3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
-    const rightIlluminated = ['right1','right2','right3'].filter(id => document.querySelector(`.dial-slot.${id}`).classList.contains('active')).map(id => document.querySelector(`.dial-slot.${id}`).dataset.symbol);
-
-    const left = getSymbolsFromSlots('left').sort();
-    const right = getSymbolsFromSlots('right').sort();
-
-    const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
-    const truthSymbols = isLeftTruth ? left : right;
-    const lieSymbols = isLeftTruth ? right : left;
-
-    const allIlluminated = [...leftIlluminated, ...rightIlluminated];
-    const truthToVisit = truthSymbols.filter(sym => allIlluminated.includes(sym));
-    const lieToVisit = lieSymbols.filter(sym => !allIlluminated.includes(sym));
-
-    if (typeof showMapHighlights === 'function') {
-      showMapHighlights(truthToVisit, lieToVisit, allIlluminated);
-    }
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
+function initSlotClicks() {
   document.querySelectorAll('.dial-slot').forEach(slot => {
     slot.addEventListener('click', () => {
       if (!slot.classList.contains('locked') && lockPhase === 0) {
@@ -183,14 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-});
+}
 
-window.toggleInstructions = function () {
-  const box = document.getElementById('instructionsBox');
-  if (box) {
-    box.style.display = box.style.display === 'block' ? 'none' : 'block';
-  }
-};
-window.handleLock = handleLock;
-window.resetDial = resetDial;
-window.openSymbolPopup = openSymbolPopup;
+document.addEventListener('DOMContentLoaded', initSlotClicks);

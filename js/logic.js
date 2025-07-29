@@ -7,16 +7,149 @@ const allSymbols = [
 ];
 
 const truthCombinations = [
-  ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
-  ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
-  ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
+  [
+    "pyramid",
+    "drink",
+    "worm"
+  ],
+  [
+    "pyramid",
+    "kill",
+    "worm"
+  ],
+  [
+    "pyramid",
+    "stop",
+    "savathun"
+  ],
+  [
+    "pyramid",
+    "give",
+    "darkness"
+  ],
+  [
+    "guardian",
+    "worship",
+    "light"
+  ],
+  [
+    "guardian",
+    "worship",
+    "traveller"
+  ],
+  [
+    "guardian",
+    "kill",
+    "witness"
+  ],
+  [
+    "traveller",
+    "give",
+    "guardian"
+  ],
+  [
+    "traveller",
+    "give",
+    "light"
+  ],
+  [
+    "hive",
+    "worship",
+    "darkness"
+  ],
+  [
+    "hive",
+    "worship",
+    "worm"
+  ],
+  [
+    "darkness",
+    "stop",
+    "savathun"
+  ]
 ];
 
 const lieCombinations = [
-  ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
-  ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
-  ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
-  ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
+  [
+    "hive",
+    "kill",
+    "worm"
+  ],
+  [
+    "hive",
+    "kill",
+    "light"
+  ],
+  [
+    "hive",
+    "give",
+    "darkness"
+  ],
+  [
+    "hive",
+    "stop",
+    "witness"
+  ],
+  [
+    "traveller",
+    "kill",
+    "guardian"
+  ],
+  [
+    "traveller",
+    "drink",
+    "worm"
+  ],
+  [
+    "traveller",
+    "give",
+    "hive"
+  ],
+  [
+    "traveller",
+    "stop",
+    "witness"
+  ],
+  [
+    "pyramid",
+    "stop",
+    "witness"
+  ],
+  [
+    "witness",
+    "drink",
+    "light"
+  ],
+  [
+    "witness",
+    "kill",
+    "pyramid"
+  ],
+  [
+    "guardian",
+    "worship",
+    "witness"
+  ],
+  [
+    "guardian",
+    "kill",
+    "traveller"
+  ],
+  [
+    "savathun",
+    "drink",
+    "darkness"
+  ],
+  [
+    "savathun",
+    "stop",
+    "darkness"
+  ],
+  [
+    "light",
+    "stop",
+    "savathun"
+  ]
 ];
 
 function openSymbolPopup(slot) {

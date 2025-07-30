@@ -88,6 +88,28 @@ function attemptAutoFillGroup(group) {
 
 function openSymbolPopup(slot) {
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
+  const slotIds = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
+  const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
+  const allCombos = truthCombinations.concat(lieCombinations);
+  const matchingCombos = allCombos.filter(combo =>
+    currentSymbols.every(sym => combo.includes(sym))
+  );
+
+  if (matchingCombos.length === 1 && currentSymbols.length === 1) {
+    const fullCombo = matchingCombos[0];
+    slotIds.forEach((id, i) => {
+      const slotEl = document.querySelector(`.dial-slot.${id}`);
+      if (!slotEl.dataset.symbol) {
+        const sym = fullCombo[i];
+        slotEl.style.backgroundImage = `url('./img/${sym}.png')`;
+        slotEl.dataset.symbol = sym;
+      }
+    });
+    updateTruthLieLabel();
+    return;
+  }
+
+  const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
   const slotId = slot.dataset.position;
   const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
   const slotIndex = groupSlots.indexOf(slotId);
@@ -117,14 +139,6 @@ function openSymbolPopup(slot) {
   popup.style.display = 'block';
   grid.innerHTML = '';
 
-if (validSymbols.length === 1) {
-  const autoSymbol = validSymbols[0];
-  slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
-  slot.dataset.symbol = autoSymbol;
-  updateTruthLieLabel();
-  attemptAutoFillGroup(group);
-  return;
-}
   validSymbols.forEach(name => {
     const div = document.createElement('div');
     div.className = 'symbol-option';

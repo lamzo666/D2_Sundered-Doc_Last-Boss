@@ -1,3 +1,4 @@
+// Updated: fixed autofill trigger for light/darkness
 const allSymbols = [
   'guardian', 'hive', 'kill', 'light', 'darkness',
   'drink', 'give', 'pyramid', 'savathun', 'stop',

@@ -95,10 +95,9 @@ function openSymbolPopup(slot) {
   const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
 
   let validSymbols = [];
-  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
-    currentSymbols.every(sym => combo.includes(sym)) &&
-    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
-  );
+const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
+  currentSymbols.every(sym => combo.includes(sym))
+);
 
   if (slotIndex === 0 && currentSymbols.length === 0) {
     const validStartSymbols = ['pyramid','guardian','traveller','hive','darkness','witness','savathun','light'];

@@ -117,6 +117,14 @@ function openSymbolPopup(slot) {
   popup.style.display = 'block';
   grid.innerHTML = '';
 
+if (validSymbols.length === 1) {
+  const autoSymbol = validSymbols[0];
+  slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
+  slot.dataset.symbol = autoSymbol;
+  updateTruthLieLabel();
+  attemptAutoFillGroup(group);
+  return;
+}
   validSymbols.forEach(name => {
     const div = document.createElement('div');
     div.className = 'symbol-option';

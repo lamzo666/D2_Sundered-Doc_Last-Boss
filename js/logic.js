@@ -88,48 +88,69 @@ function attemptAutoFillGroup(group) {
 
 function openSymbolPopup(slot) {
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
-  const slotIds = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
+  const slotId = slot.dataset.position;
+  const groupSlots = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
+  const slotIndex = groupSlots.indexOf(slotId);
+
   const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
+  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
+
   const allCombos = truthCombinations.concat(lieCombinations);
   const matchingCombos = allCombos.filter(combo =>
     currentSymbols.every(sym => combo.includes(sym))
   );
 
+  // ✅ Early autofill: If only one valid combo remains and only one symbol is selected
   if (matchingCombos.length === 1 && currentSymbols.length === 1) {
     const fullCombo = matchingCombos[0];
-    slotIds.forEach((id, i) => {
-      const slotEl = document.querySelector(`.dial-slot.${id}`);
-      if (!slotEl.dataset.symbol) {
-        const sym = fullCombo[i];
-        slotEl.style.backgroundImage = `url('./img/${sym}.png')`;
-        slotEl.dataset.symbol = sym;
+    groupSlots.forEach((id, i) => {
+      const el = document.querySelector(`.dial-slot.${id}`);
+      if (!el.dataset.symbol) {
+        el.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
+        el.dataset.symbol = fullCombo[i];
       }
     });
     updateTruthLieLabel();
     return;
   }
 
-  const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
-  const slotId = slot.dataset.position;
-  const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
-  const slotIndex = groupSlots.indexOf(slotId);
-
-  const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
-  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
-
+  // Filter valid symbols for the slot
   let validSymbols = [];
-  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
-    currentSymbols.every(sym => combo.includes(sym)) &&
-    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
-  );
 
   if (slotIndex === 0 && currentSymbols.length === 0) {
-    const validStartSymbols = ['pyramid','guardian','traveller','hive','darkness','witness','savathun','light'];
+    const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness', 'light'];
     validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
   } else {
+    const possibleCombos = allCombos.filter(combo =>
+      currentSymbols.every(sym => combo.includes(sym)) &&
+      combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+    );
     validSymbols = [...new Set(possibleCombos.map(c => c[slotIndex]))].filter(sym =>
       !usedSymbols.includes(sym)
     );
+
+    // ✅ Autofill remaining if only 1 combo left and at least 1 already filled
+    if (possibleCombos.length === 1 && currentSymbols.length > 0) {
+      const fullCombo = possibleCombos[0];
+      groupSlots.forEach((id, i) => {
+        const el = document.querySelector(`.dial-slot.${id}`);
+        if (!el.dataset.symbol) {
+          el.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
+          el.dataset.symbol = fullCombo[i];
+        }
+      });
+      updateTruthLieLabel();
+      return;
+    }
+  }
+
+  if (validSymbols.length === 1) {
+    const autoSymbol = validSymbols[0];
+    slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
+    slot.dataset.symbol = autoSymbol;
+    updateTruthLieLabel();
+    attemptAutoFillGroup(group);
+    return;
   }
 
   if (validSymbols.length === 0) return;
@@ -149,7 +170,7 @@ function openSymbolPopup(slot) {
       slot.dataset.symbol = name;
       popup.style.display = 'none';
       updateTruthLieLabel();
-      attemptAutoFillGroup(group);  // Auto-complete rest immediately
+      attemptAutoFillGroup(group);
     };
     grid.appendChild(div);
   });

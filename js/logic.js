@@ -89,25 +89,71 @@ function attemptAutoFillGroup(group) {
 function openSymbolPopup(slot) {
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
   const slotId = slot.dataset.position;
-  const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
+  const groupSlots = group === 'left' ? ['left1', 'left2', 'left3'] : ['right1', 'right2', 'right3'];
   const slotIndex = groupSlots.indexOf(slotId);
 
   const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
   const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
 
-  let validSymbols = [];
-  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
-    currentSymbols.every(sym => combo.includes(sym)) &&
-    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+  const allCombos = truthCombinations.concat(lieCombinations);
+  const matchingCombos = allCombos.filter(combo =>
+    currentSymbols.every(sym => combo.includes(sym))
   );
 
+  // Auto fill full group early if only one valid combo with 1 symbol
+  if (matchingCombos.length === 1 && currentSymbols.length === 1) {
+    const fullCombo = matchingCombos[0];
+    groupSlots.forEach((id, i) => {
+      const slotEl = document.querySelector(`.dial-slot.${id}`);
+      if (!slotEl.dataset.symbol) {
+        slotEl.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
+        slotEl.dataset.symbol = fullCombo[i];
+      }
+    });
+    updateTruthLieLabel();
+    return;
+  }
+
+  // Filter valid symbols for this slot
+  let validSymbols = [];
+
   if (slotIndex === 0 && currentSymbols.length === 0) {
-    const validStartSymbols = ['pyramid','guardian','traveller','hive','darkness','witness','savathun','light'];
+    const validStartSymbols = ['guardian', 'hive', 'traveller', 'pyramid', 'savathun', 'darkness', 'witness', 'light'];
     validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
   } else {
+    const possibleCombos = allCombos.filter(combo =>
+      currentSymbols.every(sym => combo.includes(sym)) &&
+      combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+    );
     validSymbols = [...new Set(possibleCombos.map(c => c[slotIndex]))].filter(sym =>
       !usedSymbols.includes(sym)
     );
+  }
+
+  // Auto place if only one valid symbol
+  if (validSymbols.length === 1) {
+    const autoSymbol = validSymbols[0];
+    slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
+    slot.dataset.symbol = autoSymbol;
+    updateTruthLieLabel();
+
+    // Final autofill: check again after this symbol was placed
+    const newSymbols = getSymbolsFromSlots(group).filter(Boolean);
+    const comboMatch = allCombos.filter(combo =>
+      newSymbols.every(sym => combo.includes(sym))
+    );
+    if (comboMatch.length === 1) {
+      const fullCombo = comboMatch[0];
+      groupSlots.forEach((id, i) => {
+        const el = document.querySelector(`.dial-slot.${id}`);
+        if (!el.dataset.symbol) {
+          el.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
+          el.dataset.symbol = fullCombo[i];
+        }
+      });
+      updateTruthLieLabel();
+    }
+    return;
   }
 
   if (validSymbols.length === 0) return;
@@ -127,7 +173,22 @@ function openSymbolPopup(slot) {
       slot.dataset.symbol = name;
       popup.style.display = 'none';
       updateTruthLieLabel();
-      attemptAutoFillGroup(group);  // Auto-complete rest immediately
+
+      const newSymbols = getSymbolsFromSlots(group).filter(Boolean);
+      const comboMatch = allCombos.filter(combo =>
+        newSymbols.every(sym => combo.includes(sym))
+      );
+      if (comboMatch.length === 1) {
+        const fullCombo = comboMatch[0];
+        groupSlots.forEach((id, i) => {
+          const el = document.querySelector(`.dial-slot.${id}`);
+          if (!el.dataset.symbol) {
+            el.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
+            el.dataset.symbol = fullCombo[i];
+          }
+        });
+        updateTruthLieLabel();
+      }
     };
     grid.appendChild(div);
   });

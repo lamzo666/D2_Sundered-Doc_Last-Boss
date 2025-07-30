@@ -62,14 +62,13 @@ function resetDial() {
   initSlotClicks();
 }
 
+
 function attemptAutoFillGroup(group) {
   const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
   const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
-  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
 
   const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
-    currentSymbols.every(sym => combo.includes(sym)) &&
-    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+    currentSymbols.every(sym => combo.includes(sym))
   );
 
   if (possibleCombos.length === 1 && currentSymbols.length > 0) {
@@ -85,6 +84,7 @@ function attemptAutoFillGroup(group) {
   }
 }
 
+
 function openSymbolPopup(slot) {
   const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
   const slotId = slot.dataset.position;
@@ -95,9 +95,10 @@ function openSymbolPopup(slot) {
   const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
 
   let validSymbols = [];
-const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
-  currentSymbols.every(sym => combo.includes(sym))
-);
+  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
+    currentSymbols.every(sym => combo.includes(sym)) &&
+    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
+  );
 
   if (slotIndex === 0 && currentSymbols.length === 0) {
     const validStartSymbols = ['pyramid','guardian','traveller','hive','darkness','witness','savathun','light'];

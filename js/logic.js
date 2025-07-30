@@ -144,14 +144,15 @@ function openSymbolPopup(slot) {
     }
   }
 
-  if (validSymbols.length === 1) {
-    const autoSymbol = validSymbols[0];
-    slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
-    slot.dataset.symbol = autoSymbol;
-    updateTruthLieLabel();
-    attemptAutoFillGroup(group);
-    return;
-  }
+if (validSymbols.length === 1) {
+  const autoSymbol = validSymbols[0];
+  slot.style.backgroundImage = `url('./img/${autoSymbol}.png')`;
+  slot.dataset.symbol = autoSymbol;
+  updateTruthLieLabel();
+  attemptAutoFillGroup(group);
+  openSymbolPopup(slot); // ✅ trigger self again to evaluate combos
+  return;
+}
 
   if (validSymbols.length === 0) return;
 

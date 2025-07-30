@@ -72,7 +72,7 @@ function attemptAutoFillGroup(group) {
     combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
   );
 
-  if (possibleCombos.length === 1) {
+  if (possibleCombos.length === 1 && currentSymbols.length > 0) {
     const fullCombo = possibleCombos[0];
     groupSlots.forEach((id, i) => {
       const slot = document.querySelector(`.dial-slot.${id}`);

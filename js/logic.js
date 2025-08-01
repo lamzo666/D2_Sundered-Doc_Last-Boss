@@ -188,7 +188,6 @@ function evaluateComboAutoFill(group) {
   }
 }
 
-
 function updateTruthLieLabel() {
   const left = getSymbolsFromSlots('left').sort();
   const right = getSymbolsFromSlots('right').sort();
@@ -201,11 +200,15 @@ function updateTruthLieLabel() {
   const leftLabel = document.getElementById('label-left');
   const rightLabel = document.getElementById('label-right');
 
-  if (leftLabel && rightLabel) {
-    leftLabel.textContent = isLeftTruth ? 'TRUTH' : isLeftLie ? 'LIE' : '';
-    leftLabel.style.color = isLeftTruth ? 'lime' : isLeftLie ? 'red' : '';
-    rightLabel.textContent = isRightTruth ? 'TRUTH' : isRightLie ? 'LIE' : '';
-    rightLabel.style.color = isRightTruth ? 'lime' : isRightLie ? 'red' : '';
+  if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
+    leftLabel.textContent = isLeftTruth ? 'TRUTH' : 'LIE';
+    leftLabel.style.color = isLeftTruth ? 'limegreen' : 'red';
+
+    rightLabel.textContent = isRightTruth ? 'TRUTH' : 'LIE';
+    rightLabel.style.color = isRightTruth ? 'limegreen' : 'red';
+  } else {
+    leftLabel.textContent = '';
+    rightLabel.textContent = '';
   }
 }
 

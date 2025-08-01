@@ -140,6 +140,19 @@ function openSymbolPopup(slot) {
       !usedSymbols.includes(sym)
     );
   }
+if (validSymbols.length === 1) {
+  const autoSymbol = validSymbols[0];
+  slot.style.backgroundImage = `url('./img/' + autoSymbol + '.png')`;
+  slot.dataset.symbol = autoSymbol;
+  updateTruthLieLabel();
+
+  setTimeout(() => {
+    evaluateComboAutoFill(group);
+    attemptAutoFillGroup(group);
+  }, 0);
+
+  return;
+}
 
   if (validSymbols.length === 0) return;
 

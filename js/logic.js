@@ -28,19 +28,30 @@ function getSymbolsFromSlots(group) {
   });
 }
 function evaluateComboAutoFill(group) {
-  const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
-  const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
+  const slotIds = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
+  const symbols = getSymbolsFromSlots(group);
+  const filled = symbols.filter(Boolean);
+  if (filled.length === 0) return;
+
   const allCombos = truthCombinations.concat(lieCombinations);
   const matchingCombos = allCombos.filter(combo =>
-    currentSymbols.every(sym => combo.includes(sym))
+    filled.every(sym => combo.includes(sym))
   );
-  if (matchingCombos.length === 1 && currentSymbols.length >= 1) {
-    const fullCombo = matchingCombos[0];
-    groupSlots.forEach((id, i) => {
-      const slotEl = document.querySelector(`.dial-slot.${id}`);
-      if (!slotEl.dataset.symbol) {
-        slotEl.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
-        slotEl.dataset.symbol = fullCombo[i];
+
+  if (matchingCombos.length === 1) {
+    const combo = matchingCombos[0];
+
+    slotIds.forEach((id, i) => {
+      const el = document.querySelector(`.dial-slot.${id}`);
+      if (!el.dataset.symbol) {
+        const missing = combo.find(sym =>
+          !symbols.includes(sym) || symbols.filter(x => x === sym).length < combo.filter(x => x === sym).length
+        );
+        if (missing) {
+          el.style.backgroundImage = `url('./img/${missing}.png')`;
+          el.dataset.symbol = missing;
+          symbols[i] = missing;
+        }
       }
     });
     updateTruthLieLabel();
@@ -142,18 +153,14 @@ function openSymbolPopup(slot) {
     div.className = 'symbol-option';
     div.dataset.name = name;
     div.style.backgroundImage = `url('./img/${name}.png')`;
-div.onclick = () => {
+    div.onclick = () => {
   slot.style.backgroundImage = `url('./img/${name}.png')`;
   slot.dataset.symbol = name;
   popup.style.display = 'none';
   updateTruthLieLabel();
-
-  // ✅ Delay the autofill so DOM updates are applied first
-  setTimeout(() => {
-    evaluateComboAutoFill(group);
-    attemptAutoFillGroup(group);
-  }, 0);
-};
+  evaluateComboAutoFill(group);
+      attemptAutoFillGroup(group);  // Auto-complete rest immediately
+    };
     grid.appendChild(div);
   });
 }

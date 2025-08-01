@@ -1,9 +1,4 @@
-// Updated: fixed autofill trigger for light/darkness
-const allSymbols = [
-  'guardian', 'hive', 'kill', 'light', 'darkness',
-  'drink', 'give', 'pyramid', 'savathun', 'stop',
-  'traveller', 'witness', 'worm', 'worship'
-];
+// Updated logic.js with refined autofill
 
 const truthCombinations = [
   [
@@ -67,7 +62,6 @@ const truthCombinations = [
     "savathun"
   ]
 ];
-
 const lieCombinations = [
   [
     "hive",
@@ -151,32 +145,28 @@ const lieCombinations = [
   ]
 ];
 
-let lockPhase = 0;
-
-function getSymbolsFromSlots(group) {
-  const ids = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
-  return ids.map(id => {
-    const el = document.querySelector(`.dial-slot.${id}`);
-    return el.dataset.symbol || null;
-  });
-}
+// Evaluate autofill only when exactly one symbol leads to one valid combo
 function evaluateComboAutoFill(group) {
   const slotIds = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
   const current = getSymbolsFromSlots(group);
   const filled = current.filter(Boolean);
-  if (filled.length === 0) return;
+  if (filled.length !== 1) return;
 
   const allCombos = truthCombinations.concat(lieCombinations);
-  const match = allCombos.find(combo =>
-    filled.every(sym => combo.includes(sym))
+  const matchingCombos = allCombos.filter(combo =>
+    combo.includes(filled[0])
   );
 
-  if (match) {
+  const uniqueCombo = matchingCombos.find(combo =>
+    combo.includes(filled[0]) && matchingCombos.filter(c => c.includes(filled[0])).length === 1
+  );
+
+  if (uniqueCombo) {
     const alreadyPlaced = new Set(filled);
-    slotIds.forEach((id, i) => {
+    slotIds.forEach((id) => {
       const el = document.querySelector(`.dial-slot.${id}`);
       if (!el.dataset.symbol) {
-        const next = match.find(sym => !alreadyPlaced.has(sym));
+        const next = uniqueCombo.find(sym => !alreadyPlaced.has(sym));
         if (next) {
           el.style.backgroundImage = `url('./img/${next}.png')`;
           el.dataset.symbol = next;
@@ -188,6 +178,14 @@ function evaluateComboAutoFill(group) {
   }
 }
 
+// Placeholder functions assumed defined elsewhere:
+function getSymbolsFromSlots(group) {
+  const ids = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
+  return ids.map(id => {
+    const el = document.querySelector(`.dial-slot.${id}`);
+    return el?.dataset.symbol || null;
+  });
+}
 
 function updateTruthLieLabel() {
   const left = getSymbolsFromSlots('left').sort();
@@ -201,108 +199,13 @@ function updateTruthLieLabel() {
   const leftLabel = document.getElementById('label-left');
   const rightLabel = document.getElementById('label-right');
 
-  if (leftLabel && rightLabel) {
-    leftLabel.textContent = isLeftTruth ? 'TRUTH' : isLeftLie ? 'LIE' : '';
-    leftLabel.style.color = isLeftTruth ? 'lime' : isLeftLie ? 'red' : '';
-    rightLabel.textContent = isRightTruth ? 'TRUTH' : isRightLie ? 'LIE' : '';
-    rightLabel.style.color = isRightTruth ? 'lime' : isRightLie ? 'red' : '';
-  }
-}
-
-function resetDial() {
-  document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.style.backgroundImage = '';
-    slot.classList.remove('active', 'locked');
-    slot.removeAttribute('data-symbol');
-    slot.replaceWith(slot.cloneNode(true)); // removes listeners
-  });
-  document.getElementById('map-overlay').innerHTML = '';
-  document.getElementById('lockButton').classList.remove('glow-phase');
-  document.getElementById('symbolPopup').style.display = 'none';
-  lockPhase = 0;
-  updateTruthLieLabel();
-  initSlotClicks();
-}
-
-
-function attemptAutoFillGroup(group) {
-  const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
-  const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
-
-  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
-    currentSymbols.every(sym => combo.includes(sym))
-  );
-
-  if (possibleCombos.length === 1 && currentSymbols.length > 0) {
-    const fullCombo = possibleCombos[0];
-    groupSlots.forEach((id, i) => {
-      const slot = document.querySelector(`.dial-slot.${id}`);
-      if (!slot.dataset.symbol) {
-        slot.style.backgroundImage = `url('./img/${fullCombo[i]}.png')`;
-        slot.dataset.symbol = fullCombo[i];
-      }
-    });
-    updateTruthLieLabel();
-  }
-}
-
-
-function openSymbolPopup(slot) {
-  const group = slot.dataset.position.startsWith('left') ? 'left' : 'right';
-  const slotId = slot.dataset.position;
-  const groupSlots = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
-  const slotIndex = groupSlots.indexOf(slotId);
-
-  const currentSymbols = getSymbolsFromSlots(group).filter(Boolean);
-  const usedSymbols = getSymbolsFromSlots('left').concat(getSymbolsFromSlots('right')).filter(Boolean);
-
-  let validSymbols = [];
-  const possibleCombos = truthCombinations.concat(lieCombinations).filter(combo =>
-    currentSymbols.every(sym => combo.includes(sym)) &&
-    combo.every(sym => !usedSymbols.includes(sym) || currentSymbols.includes(sym))
-  );
-
-  if (slotIndex === 0 && currentSymbols.length === 0) {
-    const validStartSymbols = ['pyramid','guardian','traveller','hive','darkness','witness','savathun','light'];
-    validSymbols = validStartSymbols.filter(sym => !usedSymbols.includes(sym));
+  if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
+    leftLabel.textContent = isLeftTruth ? 'TRUTH' : 'LIE';
+    leftLabel.style.color = isLeftTruth ? 'limegreen' : 'red';
+    rightLabel.textContent = isRightTruth ? 'TRUTH' : 'LIE';
+    rightLabel.style.color = isRightTruth ? 'limegreen' : 'red';
   } else {
-    validSymbols = [...new Set(possibleCombos.map(c => c[slotIndex]))].filter(sym =>
-      !usedSymbols.includes(sym)
-    );
+    leftLabel.textContent = '';
+    rightLabel.textContent = '';
   }
-
-  if (validSymbols.length === 0) return;
-
-  const popup = document.getElementById('symbolPopup');
-  const grid = document.getElementById('popupGrid');
-  popup.style.display = 'block';
-  grid.innerHTML = '';
-
-  validSymbols.forEach(name => {
-    const div = document.createElement('div');
-    div.className = 'symbol-option';
-    div.dataset.name = name;
-    div.style.backgroundImage = `url('./img/${name}.png')`;
-    div.onclick = () => {
-  slot.style.backgroundImage = `url('./img/${name}.png')`;
-  slot.dataset.symbol = name;
-  popup.style.display = 'none';
-  updateTruthLieLabel();
-  evaluateComboAutoFill(group);
-      attemptAutoFillGroup(group);  // Auto-complete rest immediately
-    };
-    grid.appendChild(div);
-  });
 }
-
-function initSlotClicks() {
-  document.querySelectorAll('.dial-slot').forEach(slot => {
-    slot.addEventListener('click', () => {
-      if (!slot.classList.contains('locked') && lockPhase === 0) {
-        openSymbolPopup(slot);
-      }
-    });
-  });
-}
-
-document.addEventListener('DOMContentLoaded', initSlotClicks);

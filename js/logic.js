@@ -7,9 +7,14 @@ const allSymbols = [
 
 const truthCombinations = [
   [
-    "guardian",
+    "pyramid",
+    "drink",
+    "worm"
+  ],
+  [
+    "pyramid",
     "kill",
-    "witness"
+    "worm"
   ],
   [
     "pyramid",
@@ -17,19 +22,9 @@ const truthCombinations = [
     "savathun"
   ],
   [
+    "pyramid",
     "give",
-    "pyramid",
     "darkness"
-  ],
-  [
-    "drink",
-    "pyramid",
-    "worm"
-  ],
-  [
-    "kill",
-    "pyramid",
-    "worm"
   ],
   [
     "guardian",
@@ -40,6 +35,11 @@ const truthCombinations = [
     "guardian",
     "worship",
     "traveller"
+  ],
+  [
+    "guardian",
+    "kill",
+    "witness"
   ],
   [
     "traveller",
@@ -70,14 +70,29 @@ const truthCombinations = [
 
 const lieCombinations = [
   [
-    "traveller",
+    "hive",
     "kill",
-    "guardian"
+    "worm"
+  ],
+  [
+    "hive",
+    "kill",
+    "light"
+  ],
+  [
+    "hive",
+    "give",
+    "darkness"
+  ],
+  [
+    "hive",
+    "stop",
+    "witness"
   ],
   [
     "traveller",
-    "give",
-    "hive"
+    "kill",
+    "guardian"
   ],
   [
     "traveller",
@@ -86,18 +101,28 @@ const lieCombinations = [
   ],
   [
     "traveller",
+    "give",
+    "hive"
+  ],
+  [
+    "traveller",
+    "stop",
+    "witness"
+  ],
+  [
+    "pyramid",
     "stop",
     "witness"
   ],
   [
     "witness",
-    "kill",
-    "pyramid"
+    "drink",
+    "light"
   ],
   [
     "witness",
-    "drink",
-    "light"
+    "kill",
+    "pyramid"
   ],
   [
     "guardian",
@@ -110,44 +135,19 @@ const lieCombinations = [
     "traveller"
   ],
   [
-    "hive",
-    "give",
+    "savathun",
+    "drink",
     "darkness"
   ],
   [
-    "hive",
-    "kill",
-    "light"
-  ],
-  [
-    "hive",
-    "kill",
-    "worm"
-  ],
-  [
-    "hive",
+    "savathun",
     "stop",
-    "witness"
-  ],
-  [
-    "pyramid",
-    "stop",
-    "witness"
+    "darkness"
   ],
   [
     "light",
     "stop",
     "savathun"
-  ],
-  [
-    "savathun",
-    "stop",
-    "darkness"
-  ],
-  [
-    "savathun",
-    "drink",
-    "darkness"
   ]
 ];
 

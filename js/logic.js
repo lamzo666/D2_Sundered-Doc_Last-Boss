@@ -29,28 +29,25 @@ function getSymbolsFromSlots(group) {
 }
 function evaluateComboAutoFill(group) {
   const slotIds = group === 'left' ? ['left1','left2','left3'] : ['right1','right2','right3'];
-  const symbols = getSymbolsFromSlots(group);
-  const filled = symbols.filter(Boolean);
+  const current = getSymbolsFromSlots(group);
+  const filled = current.filter(Boolean);
   if (filled.length === 0) return;
 
   const allCombos = truthCombinations.concat(lieCombinations);
-  const matchingCombos = allCombos.filter(combo =>
+  const match = allCombos.find(combo =>
     filled.every(sym => combo.includes(sym))
   );
 
-  if (matchingCombos.length === 1) {
-    const combo = matchingCombos[0];
-
+  if (match) {
+    const alreadyPlaced = new Set(filled);
     slotIds.forEach((id, i) => {
       const el = document.querySelector(`.dial-slot.${id}`);
       if (!el.dataset.symbol) {
-        const missing = combo.find(sym =>
-          !symbols.includes(sym) || symbols.filter(x => x === sym).length < combo.filter(x => x === sym).length
-        );
-        if (missing) {
-          el.style.backgroundImage = `url('./img/${missing}.png')`;
-          el.dataset.symbol = missing;
-          symbols[i] = missing;
+        const next = match.find(sym => !alreadyPlaced.has(sym));
+        if (next) {
+          el.style.backgroundImage = `url('./img/${next}.png')`;
+          el.dataset.symbol = next;
+          alreadyPlaced.add(next);
         }
       }
     });
@@ -140,19 +137,6 @@ function openSymbolPopup(slot) {
       !usedSymbols.includes(sym)
     );
   }
-if (validSymbols.length === 1) {
-  const autoSymbol = validSymbols[0];
-  slot.style.backgroundImage = `url('./img/' + autoSymbol + '.png')`;
-  slot.dataset.symbol = autoSymbol;
-  updateTruthLieLabel();
-
-  setTimeout(() => {
-    evaluateComboAutoFill(group);
-    attemptAutoFillGroup(group);
-  }, 0);
-
-  return;
-}
 
   if (validSymbols.length === 0) return;
 

@@ -142,14 +142,18 @@ function openSymbolPopup(slot) {
     div.className = 'symbol-option';
     div.dataset.name = name;
     div.style.backgroundImage = `url('./img/${name}.png')`;
-    div.onclick = () => {
+div.onclick = () => {
   slot.style.backgroundImage = `url('./img/${name}.png')`;
   slot.dataset.symbol = name;
   popup.style.display = 'none';
   updateTruthLieLabel();
-  evaluateComboAutoFill(group);
-      attemptAutoFillGroup(group);  // Auto-complete rest immediately
-    };
+
+  // ✅ Delay the autofill so DOM updates are applied first
+  setTimeout(() => {
+    evaluateComboAutoFill(group);
+    attemptAutoFillGroup(group);
+  }, 0);
+};
     grid.appendChild(div);
   });
 }

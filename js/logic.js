@@ -6,16 +6,149 @@ const allSymbols = [
 ];
 
 const truthCombinations = [
-  ['pyramid','drink','worm'], ['pyramid','kill','worm'], ['pyramid','stop','savathun'], ['pyramid','give','darkness'],
-  ['guardian','worship','light'], ['guardian','worship','traveller'], ['guardian','kill','witness'], ['traveller','give','guardian'],
-  ['traveller','give','light'], ['hive','worship','darkness'], ['hive','worship','worm'], ['darkness','stop','savathun']
+  [
+    "guardian",
+    "kill",
+    "witness"
+  ],
+  [
+    "pyramid",
+    "stop",
+    "savathun"
+  ],
+  [
+    "give",
+    "pyramid",
+    "darkness"
+  ],
+  [
+    "drink",
+    "pyramid",
+    "worm"
+  ],
+  [
+    "kill",
+    "pyramid",
+    "worm"
+  ],
+  [
+    "guardian",
+    "worship",
+    "light"
+  ],
+  [
+    "guardian",
+    "worship",
+    "traveller"
+  ],
+  [
+    "traveller",
+    "give",
+    "guardian"
+  ],
+  [
+    "traveller",
+    "give",
+    "light"
+  ],
+  [
+    "hive",
+    "worship",
+    "darkness"
+  ],
+  [
+    "hive",
+    "worship",
+    "worm"
+  ],
+  [
+    "darkness",
+    "stop",
+    "savathun"
+  ]
 ];
 
 const lieCombinations = [
-  ['hive','kill','worm'], ['hive','kill','light'], ['hive','give','darkness'], ['hive','stop','witness'],
-  ['traveller','kill','guardian'], ['traveller','drink','worm'], ['traveller','give','hive'], ['traveller','stop','witness'],
-  ['pyramid','stop','witness'], ['witness','drink','light'], ['witness','kill','pyramid'], ['guardian','worship','witness'],
-  ['guardian','kill','traveller'], ['savathun','drink','darkness'], ['savathun','stop','darkness'], ['light','stop','savathun']
+  [
+    "traveller",
+    "kill",
+    "guardian"
+  ],
+  [
+    "traveller",
+    "give",
+    "hive"
+  ],
+  [
+    "traveller",
+    "drink",
+    "worm"
+  ],
+  [
+    "traveller",
+    "stop",
+    "witness"
+  ],
+  [
+    "witness",
+    "kill",
+    "pyramid"
+  ],
+  [
+    "witness",
+    "drink",
+    "light"
+  ],
+  [
+    "guardian",
+    "worship",
+    "witness"
+  ],
+  [
+    "guardian",
+    "kill",
+    "traveller"
+  ],
+  [
+    "hive",
+    "give",
+    "darkness"
+  ],
+  [
+    "hive",
+    "kill",
+    "light"
+  ],
+  [
+    "hive",
+    "kill",
+    "worm"
+  ],
+  [
+    "hive",
+    "stop",
+    "witness"
+  ],
+  [
+    "pyramid",
+    "stop",
+    "witness"
+  ],
+  [
+    "light",
+    "stop",
+    "savathun"
+  ],
+  [
+    "savathun",
+    "stop",
+    "darkness"
+  ],
+  [
+    "savathun",
+    "drink",
+    "darkness"
+  ]
 ];
 
 let lockPhase = 0;

@@ -40,28 +40,21 @@ let lockedType = null; // 'truth' or 'lie'
 export function getValidSymbols(selectedSymbols, side) {
   const allCombinations = getAllowedCombinations(side);
   const filled = selectedSymbols.filter(Boolean);
-  if (filled.length === 0) return getAllSymbols();
-  
-  const matches = allCombinations.filter(combo => filled.every(sym => combo.includes(sym)));
-  
-  const alreadySelected = new Set(filled);
-  const remainingSymbols = new Set();
-  matches.forEach(combo => {
-    combo.forEach(sym => {
-      if (!alreadySelected.has(sym)) remainingSymbols.add(sym);
-    });
-  });
+  const slotIndex = selectedSymbols.findIndex(s => !s);
 
-  return [...remainingSymbols];
+  const matching = allCombinations.filter(combo =>
+    combo.slice(0, filled.length).every((sym, i) => sym === filled[i])
+  );
+
+  if (slotIndex < 0) return []; // no available slots left
+  return [...new Set(matching.map(combo => combo[slotIndex]))];
 }
 
 export function validateGroup(symbols) {
-  const sorted = [...symbols].sort();
-  const isTruth = truthCombinations.some(c => arraysEqual(c.sort(), sorted));
-  const isLie = lieCombinations.some(c => arraysEqual(c.sort(), sorted));
-
-  if (isTruth) return 'truth';
-  if (isLie) return 'lie';
+  const matchTruth = truthCombinations.find(c => arraysEqual(c, symbols));
+  if (matchTruth) return 'truth';
+  const matchLie = lieCombinations.find(c => arraysEqual(c, symbols));
+  if (matchLie) return 'lie';
   return null;
 }
 

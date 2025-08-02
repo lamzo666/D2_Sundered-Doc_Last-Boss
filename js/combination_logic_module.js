@@ -1,4 +1,4 @@
-// combination_logic_module.js
+// combination_logic_module.js (enforces strict position matching for each slot)
 
 const truthCombinations = [
   ["pyramid", "drink", "worm"],
@@ -39,15 +39,17 @@ let lockedType = null; // 'truth' or 'lie'
 
 export function getValidSymbols(selectedSymbols, side) {
   const allCombinations = getAllowedCombinations(side);
-  const filled = selectedSymbols.filter(Boolean);
   const slotIndex = selectedSymbols.findIndex(s => !s);
+  if (slotIndex < 0) return [];
 
-  const matching = allCombinations.filter(combo =>
-    combo.slice(0, filled.length).every((sym, i) => sym === filled[i])
-  );
+  const matches = allCombinations.filter(combo => {
+    return selectedSymbols.every((sym, i) => {
+      if (!sym) return true;
+      return combo[i] === sym;
+    });
+  });
 
-  if (slotIndex < 0) return []; // no available slots left
-  return [...new Set(matching.map(combo => combo[slotIndex]))];
+  return [...new Set(matches.map(combo => combo[slotIndex]))];
 }
 
 export function validateGroup(symbols) {

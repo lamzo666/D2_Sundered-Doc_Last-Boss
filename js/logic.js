@@ -1,4 +1,4 @@
-// logic.js (updated to use combination_logic_module)
+// logic.js (fully aligned with combination_logic_module.js)
 
 import {
   getValidSymbols,
@@ -6,21 +6,6 @@ import {
   lockGroup,
   getAllowedCombinations
 } from './combination_logic_module.js';
-
-const truthCombinations = [
-  ["pyramid", "drink", "worm"],
-  ["pyramid", "kill", "worm"],
-  ["pyramid", "stop", "savathun"],
-  ["pyramid", "give", "darkness"],
-  ["guardian", "worship", "light"],
-  ["guardian", "worship", "traveller"],
-  ["guardian", "kill", "witness"],
-  ["traveller", "give", "guardian"],
-  ["traveller", "give", "light"],
-  ["hive", "worship", "darkness"],
-  ["hive", "worship", "worm"],
-  ["darkness", "stop", "savathun"]
-];
 
 const popup = document.getElementById("symbolPopup");
 const popupGrid = document.getElementById("popupGrid");
@@ -40,26 +25,29 @@ function getSymbolsFromSlots(group) {
 }
 
 function updateTruthLieLabel() {
-  const left = getSymbolsFromSlots('left').sort();
-  const right = getSymbolsFromSlots('right').sort();
+  const left = getSymbolsFromSlots('left');
+  const right = getSymbolsFromSlots('right');
 
-  const isLeftTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(left));
-  const isLeftLie = !isLeftTruth && left.every(Boolean);
-  const isRightTruth = truthCombinations.some(c => JSON.stringify([...c].sort()) === JSON.stringify(right));
-  const isRightLie = !isRightTruth && right.every(Boolean);
+  const leftType = validateGroup(left);
+  const rightType = validateGroup(right);
 
   const leftLabel = document.getElementById('label-left');
   const rightLabel = document.getElementById('label-right');
 
-  if ((isLeftTruth && isRightLie) || (isRightTruth && isLeftLie)) {
-    leftLabel.textContent = isLeftTruth ? 'TRUTH' : 'LIE';
-    leftLabel.style.color = isLeftTruth ? 'limegreen' : 'red';
-    rightLabel.textContent = isRightTruth ? 'TRUTH' : 'LIE';
-    rightLabel.style.color = isRightTruth ? 'limegreen' : 'red';
+  if ((leftType === 'truth' && rightType === 'lie') || (leftType === 'lie' && rightType === 'truth')) {
+    leftLabel.textContent = leftType.toUpperCase();
+    leftLabel.style.color = leftType === 'truth' ? 'limegreen' : 'red';
+    rightLabel.textContent = rightType.toUpperCase();
+    rightLabel.style.color = rightType === 'truth' ? 'limegreen' : 'red';
   } else {
     leftLabel.textContent = '';
     rightLabel.textContent = '';
   }
+}
+
+function getUsedSymbols() {
+  const all = [...getSymbolsFromSlots('left'), ...getSymbolsFromSlots('right')];
+  return new Set(all.filter(Boolean));
 }
 
 function openSymbolPopup(slot) {
@@ -67,15 +55,28 @@ function openSymbolPopup(slot) {
   activeSlot = slot;
   const side = slot.classList.contains('left') ? 'left' : 'right';
   const selected = getSymbolsFromSlots(side);
+  const usedSymbols = getUsedSymbols();
   const validOptions = getValidSymbols(selected, side);
 
   popupGrid.innerHTML = '';
+
+  const slotIndex = parseInt(slot.classList[1].replace(side, '')) - 1;
+
+  let restrictedOptions;
+  if (slotIndex === 0) {
+    const allCombos = getAllowedCombinations(side);
+    restrictedOptions = [...new Set(allCombos.map(c => c[0]))];
+  } else {
+    restrictedOptions = validOptions;
+  }
+
+  const finalOptions = restrictedOptions.filter(sym => !usedSymbols.has(sym));
 
   symbolList.forEach(sym => {
     const div = document.createElement("div");
     div.className = "symbol-option";
     div.style.backgroundImage = `url('./img/${sym}.png')`;
-    if (!validOptions.includes(sym)) {
+    if (!finalOptions.includes(sym)) {
       div.style.opacity = '0.2';
       div.style.pointerEvents = 'none';
     } else {
@@ -83,14 +84,13 @@ function openSymbolPopup(slot) {
         slot.style.backgroundImage = `url('./img/${sym}.png')`;
         slot.dataset.symbol = sym;
 
-        const group = side;
-        const current = getSymbolsFromSlots(group);
+        const current = getSymbolsFromSlots(side);
 
         if (current.every(Boolean)) {
           const result = validateGroup(current);
           if (result) {
-            lockGroup(group, result);
-            lockSlots(group);
+            lockGroup(side, result);
+            lockSlots(side);
             updateTruthLieLabel();
           }
         }

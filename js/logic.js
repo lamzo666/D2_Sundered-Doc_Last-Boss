@@ -1,4 +1,4 @@
-// logic.js (fully aligned with combination_logic_module.js)
+// logic.js (updated to remove grayed-out symbols and only show available ones for slot 1)
 
 import {
   getValidSymbols,
@@ -72,32 +72,27 @@ function openSymbolPopup(slot) {
 
   const finalOptions = restrictedOptions.filter(sym => !usedSymbols.has(sym));
 
-  symbolList.forEach(sym => {
+  finalOptions.forEach(sym => {
     const div = document.createElement("div");
     div.className = "symbol-option";
     div.style.backgroundImage = `url('./img/${sym}.png')`;
-    if (!finalOptions.includes(sym)) {
-      div.style.opacity = '0.2';
-      div.style.pointerEvents = 'none';
-    } else {
-      div.onclick = () => {
-        slot.style.backgroundImage = `url('./img/${sym}.png')`;
-        slot.dataset.symbol = sym;
+    div.onclick = () => {
+      slot.style.backgroundImage = `url('./img/${sym}.png')`;
+      slot.dataset.symbol = sym;
 
-        const current = getSymbolsFromSlots(side);
+      const current = getSymbolsFromSlots(side);
 
-        if (current.every(Boolean)) {
-          const result = validateGroup(current);
-          if (result) {
-            lockGroup(side, result);
-            lockSlots(side);
-            updateTruthLieLabel();
-          }
+      if (current.every(Boolean)) {
+        const result = validateGroup(current);
+        if (result) {
+          lockGroup(side, result);
+          lockSlots(side);
+          updateTruthLieLabel();
         }
+      }
 
-        popup.style.display = "none";
-      };
-    }
+      popup.style.display = "none";
+    };
     popupGrid.appendChild(div);
   });
 

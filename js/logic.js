@@ -1,4 +1,4 @@
-// logic.js (updated to remove grayed-out symbols and only show available ones for slot 1)
+// logic.js (ensures slot 1 for BOTH groups filters to first-position symbols only)
 
 import {
   getValidSymbols,
@@ -56,21 +56,21 @@ function openSymbolPopup(slot) {
   const side = slot.classList.contains('left') ? 'left' : 'right';
   const selected = getSymbolsFromSlots(side);
   const usedSymbols = getUsedSymbols();
-  const validOptions = getValidSymbols(selected, side);
+
+  const slotClass = slot.classList[1];
+  const slotIndex = parseInt(slotClass.replace(side, '')) - 1;
 
   popupGrid.innerHTML = '';
 
-  const slotIndex = parseInt(slot.classList[1].replace(side, '')) - 1;
-
-  let restrictedOptions;
+  let allowedSymbols;
   if (slotIndex === 0) {
     const allCombos = getAllowedCombinations(side);
-    restrictedOptions = [...new Set(allCombos.map(c => c[0]))];
+    allowedSymbols = [...new Set(allCombos.map(c => c[0]))];
   } else {
-    restrictedOptions = validOptions;
+    allowedSymbols = getValidSymbols(selected, side);
   }
 
-  const finalOptions = restrictedOptions.filter(sym => !usedSymbols.has(sym));
+  const finalOptions = allowedSymbols.filter(sym => !usedSymbols.has(sym));
 
   finalOptions.forEach(sym => {
     const div = document.createElement("div");

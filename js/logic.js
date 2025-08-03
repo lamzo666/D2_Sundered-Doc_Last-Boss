@@ -1,5 +1,5 @@
 
-// logic.js (slot 1 always shows 8 valid options if not used)
+// logic.js (stable version that mirrors original working logic)
 
 import {
   getValidSymbols,
@@ -48,36 +48,35 @@ function updateTruthLieLabel() {
 }
 
 function getUsedSymbols() {
-  const all = [...getSymbolsFromSlots('left'), ...getSymbolsFromSlots('right')];
-  return new Set(all.filter(Boolean));
+  return [...getSymbolsFromSlots('left'), ...getSymbolsFromSlots('right')].filter(Boolean);
 }
 
 function openSymbolPopup(slot) {
   if (slot.classList.contains('locked')) return;
   activeSlot = slot;
   const side = slot.classList.contains('left') ? 'left' : 'right';
-  const selected = getSymbolsFromSlots(side);
   const usedSymbols = getUsedSymbols();
-
+  const selected = getSymbolsFromSlots(side);
   const slotClass = slot.classList[1];
   const slotIndex = parseInt(slotClass.replace(side, '')) - 1;
 
   popupGrid.innerHTML = '';
 
-  let restrictedSymbols = getSlotRestrictedSymbols(slotIndex, side);
-  let displayOptions = [];
+  const allCombos = getAllowedCombinations(side).filter(
+    combo => combo.every(sym => !usedSymbols.includes(sym) || selected.includes(sym))
+  );
 
-  if (slotIndex === 0) {
-    displayOptions = getAllowedCombinations(side)
-      .map(c => c[0])
-      .filter(sym => !usedSymbols.has(sym));
-    displayOptions = [...new Set(displayOptions)];
+  let validSymbols = [];
+
+  if (slotIndex === 0 && selected.filter(Boolean).length === 0) {
+    validSymbols = [...new Set(allCombos.map(c => c[0]))];
   } else {
-    const validSymbols = getValidSymbols(selected, side);
-    displayOptions = restrictedSymbols.filter(sym => validSymbols.includes(sym) && !usedSymbols.has(sym));
+    validSymbols = [...new Set(allCombos.map(c => c[slotIndex]))];
   }
 
-  if (displayOptions.length === 0) {
+  validSymbols = validSymbols.filter(sym => !usedSymbols.includes(sym));
+
+  if (validSymbols.length === 0) {
     const msg = document.createElement("div");
     msg.textContent = "No valid combinations remain — reset required.";
     msg.style.color = "#aaa";
@@ -86,7 +85,7 @@ function openSymbolPopup(slot) {
     popupGrid.appendChild(msg);
   }
 
-  displayOptions.forEach(sym => {
+  validSymbols.forEach(sym => {
     const div = document.createElement("div");
     div.className = "symbol-option";
     div.style.backgroundImage = `url('./img/${sym}.png')`;
@@ -95,7 +94,6 @@ function openSymbolPopup(slot) {
       slot.dataset.symbol = sym;
 
       const current = getSymbolsFromSlots(side);
-
       if (current.every(Boolean)) {
         const result = validateGroup(current);
         if (result) {

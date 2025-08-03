@@ -67,7 +67,9 @@ function openSymbolPopup(slot) {
   let displayOptions = [];
 
   if (slotIndex === 0) {
-    displayOptions = restrictedSymbols.filter(sym => !usedSymbols.has(sym));
+    const otherSide = side === 'left' ? 'right' : 'left';
+    const otherUsed = new Set(getSymbolsFromSlots(otherSide).filter(Boolean));
+    displayOptions = restrictedSymbols.filter(sym => !otherUsed.has(sym));
   } else {
     const validSymbols = getValidSymbols(selected, side);
     displayOptions = restrictedSymbols.filter(sym => validSymbols.includes(sym) && !usedSymbols.has(sym));

@@ -1,4 +1,4 @@
-// logic.js (final rules fully applied, with fallback message for blocked group)
+// logic.js (slot 1 always shows 8 valid options if not used)
 
 import {
   getValidSymbols,
@@ -64,22 +64,27 @@ function openSymbolPopup(slot) {
   popupGrid.innerHTML = '';
 
   let restrictedSymbols = getSlotRestrictedSymbols(slotIndex, side);
-  let validSymbols = getValidSymbols(selected, side);
-  let displayOptions = restrictedSymbols.filter(sym => validSymbols.includes(sym) && !usedSymbols.has(sym));
+  let displayOptions = [];
+
+  if (slotIndex === 0) {
+    displayOptions = restrictedSymbols.filter(sym => !usedSymbols.has(sym));
+  } else {
+    const validSymbols = getValidSymbols(selected, side);
+    displayOptions = restrictedSymbols.filter(sym => validSymbols.includes(sym) && !usedSymbols.has(sym));
+  }
 
   console.log(`Slot ${slotClass}:`, {
     side,
     slotIndex,
     selected,
     restrictedSymbols,
-    validSymbols,
     usedSymbols: Array.from(usedSymbols),
     displayOptions
   });
 
   if (displayOptions.length === 0) {
     const msg = document.createElement("div");
-    msg.textContent = (restrictedSymbols.length && validSymbols.length)
+    msg.textContent = (restrictedSymbols.length)
       ? "No valid symbols"
       : "No valid combinations remain — reset required.";
     msg.style.color = "#aaa";

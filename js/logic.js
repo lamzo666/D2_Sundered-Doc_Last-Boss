@@ -1,5 +1,5 @@
 
-// logic.js (safe version with undefined guard for display)
+// logic.js (final working version for slot 1 logic)
 
 import {
   getValidSymbols,
@@ -58,19 +58,19 @@ function openSymbolPopup(slot) {
 
   popupGrid.innerHTML = '';
 
-  const allCombos = getAllowedCombinations(side).filter(
-    combo => combo.every(sym => !usedSymbols.includes(sym) || selected.includes(sym))
-  );
-
   let validSymbols = [];
 
-  if (slotIndex === 0 && selected.filter(Boolean).length === 0) {
-    validSymbols = [...new Set(allCombos.map(c => c[0]))];
+  if (slotIndex === 0) {
+    // Slot 1: only filter based on c[0] and usage
+    validSymbols = getAllowedCombinations(side)
+      .map(c => c[0])
+      .filter(sym => !usedSymbols.includes(sym));
+    validSymbols = [...new Set(validSymbols)];
   } else {
-    validSymbols = [...new Set(allCombos.map(c => c[slotIndex]))];
+    const restricted = getSlotRestrictedSymbols(slotIndex, side);
+    const filtered = getValidSymbols(selected, side);
+    validSymbols = restricted.filter(sym => filtered.includes(sym) && !usedSymbols.includes(sym));
   }
-
-  validSymbols = validSymbols.filter(sym => sym && !usedSymbols.includes(sym));
 
   if (validSymbols.length === 0) {
     const msg = document.createElement("div");

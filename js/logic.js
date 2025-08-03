@@ -1,5 +1,5 @@
 
-// logic.js (stable version that mirrors original working logic)
+// logic.js (safe version with undefined guard for display)
 
 import {
   getValidSymbols,
@@ -11,10 +11,6 @@ import {
 
 const popup = document.getElementById("symbolPopup");
 const popupGrid = document.getElementById("popupGrid");
-const symbolList = [
-  "worship", "witness", "light", "guardian", "worm", "traveller", "savathun",
-  "stop", "darkness", "hive", "drink", "pyramid", "kill", "give"
-];
 
 let activeSlot = null;
 
@@ -74,7 +70,7 @@ function openSymbolPopup(slot) {
     validSymbols = [...new Set(allCombos.map(c => c[slotIndex]))];
   }
 
-  validSymbols = validSymbols.filter(sym => !usedSymbols.includes(sym));
+  validSymbols = validSymbols.filter(sym => sym && !usedSymbols.includes(sym));
 
   if (validSymbols.length === 0) {
     const msg = document.createElement("div");

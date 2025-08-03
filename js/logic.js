@@ -30,7 +30,7 @@ function openSymbolPopup(slot) {
 
   const side = slot.classList.contains('left') ? 'left' : 'right';
   const selected = getSymbolsFromSlots(side);
-  const usedSymbols = getUsedSymbols();
+  const usedSymbols = getSymbolsFromSlots(side).filter(Boolean);
 
   const slotClass = slot.dataset.position;
   const slotIndex = parseInt(slotClass.replace(/[^123]/g, '')) - 1;

@@ -98,8 +98,8 @@ function handleLock() {
     const truthSymbols = leftType === 'truth' ? activeLeft : activeRight;
     const lieSymbols = leftType === 'truth' ? activeRight : activeLeft;
 
-    if (typeof showMapHighlights === 'function') {
-      showMapHighlights(truthSymbols, lieSymbols, [...new Set([...activeLeft, ...activeRight])]);
+    if (window.showMapHighlights) {
+      window.showMapHighlights(truthSymbols, lieSymbols, [...new Set([...activeLeft, ...activeRight])]);
     }
   }
 }

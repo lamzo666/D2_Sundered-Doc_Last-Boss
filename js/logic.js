@@ -1,3 +1,4 @@
+
 // logic.js (slot 1 always shows 8 valid options if not used)
 
 import {
@@ -67,28 +68,18 @@ function openSymbolPopup(slot) {
   let displayOptions = [];
 
   if (slotIndex === 0) {
-    const otherSide = side === 'left' ? 'right' : 'left';
-    const otherUsed = new Set(getSymbolsFromSlots(otherSide).filter(Boolean));
-    displayOptions = restrictedSymbols.filter(sym => !otherUsed.has(sym));
+    displayOptions = getAllowedCombinations(side)
+      .map(c => c[0])
+      .filter(sym => !usedSymbols.has(sym));
+    displayOptions = [...new Set(displayOptions)];
   } else {
     const validSymbols = getValidSymbols(selected, side);
     displayOptions = restrictedSymbols.filter(sym => validSymbols.includes(sym) && !usedSymbols.has(sym));
   }
 
-  console.log(`Slot ${slotClass}:`, {
-    side,
-    slotIndex,
-    selected,
-    restrictedSymbols,
-    usedSymbols: Array.from(usedSymbols),
-    displayOptions
-  });
-
   if (displayOptions.length === 0) {
     const msg = document.createElement("div");
-    msg.textContent = (restrictedSymbols.length)
-      ? "No valid symbols"
-      : "No valid combinations remain — reset required.";
+    msg.textContent = "No valid combinations remain — reset required.";
     msg.style.color = "#aaa";
     msg.style.textAlign = "center";
     msg.style.padding = "10px";

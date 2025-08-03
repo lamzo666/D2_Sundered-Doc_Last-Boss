@@ -1,7 +1,8 @@
-// logic.js (ensures slot 1 for BOTH groups filters to first-position symbols only)
+// logic.js (final rules fully applied)
 
 import {
   getValidSymbols,
+  getSlotRestrictedSymbols,
   validateGroup,
   lockGroup,
   getAllowedCombinations
@@ -62,17 +63,11 @@ function openSymbolPopup(slot) {
 
   popupGrid.innerHTML = '';
 
-  let allowedSymbols;
-  if (slotIndex === 0) {
-    const allCombos = getAllowedCombinations(side);
-    allowedSymbols = [...new Set(allCombos.map(c => c[0]))];
-  } else {
-    allowedSymbols = getValidSymbols(selected, side);
-  }
+  let restrictedSymbols = getSlotRestrictedSymbols(slotIndex, side);
+  let validSymbols = getValidSymbols(selected, side);
+  let displayOptions = restrictedSymbols.filter(sym => validSymbols.includes(sym) && !usedSymbols.has(sym));
 
-  const finalOptions = allowedSymbols.filter(sym => !usedSymbols.has(sym));
-
-  finalOptions.forEach(sym => {
+  displayOptions.forEach(sym => {
     const div = document.createElement("div");
     div.className = "symbol-option";
     div.style.backgroundImage = `url('./img/${sym}.png')`;

@@ -1,4 +1,4 @@
-// logic.js (final rules fully applied)
+// logic.js (final rules fully applied, with debug for empty options)
 
 import {
   getValidSymbols,
@@ -66,6 +66,24 @@ function openSymbolPopup(slot) {
   let restrictedSymbols = getSlotRestrictedSymbols(slotIndex, side);
   let validSymbols = getValidSymbols(selected, side);
   let displayOptions = restrictedSymbols.filter(sym => validSymbols.includes(sym) && !usedSymbols.has(sym));
+
+  console.log(`Slot ${slotClass}:`, {
+    side,
+    slotIndex,
+    selected,
+    restrictedSymbols,
+    validSymbols,
+    usedSymbols: Array.from(usedSymbols),
+    displayOptions
+  });
+
+  if (displayOptions.length === 0) {
+    const msg = document.createElement("div");
+    msg.textContent = "No valid symbols";
+    msg.style.color = "#aaa";
+    msg.style.textAlign = "center";
+    popupGrid.appendChild(msg);
+  }
 
   displayOptions.forEach(sym => {
     const div = document.createElement("div");

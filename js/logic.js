@@ -1,18 +1,16 @@
 
-// logic.js (final working version for slot 1 logic)
+// logic.js (final: no filtering until manual lock phase is triggered)
 
 import {
   getValidSymbols,
-  getSlotRestrictedSymbols,
-  validateGroup,
-  lockGroup,
-  getAllowedCombinations
+  validateGroup
 } from './combination_logic_module.js';
 
 const popup = document.getElementById("symbolPopup");
 const popupGrid = document.getElementById("popupGrid");
 
 let activeSlot = null;
+let lockPhase = 0;
 
 function getSymbolsFromSlots(group) {
   const ids = [`${group}1`, `${group}2`, `${group}3`];
@@ -51,26 +49,19 @@ function openSymbolPopup(slot) {
   if (slot.classList.contains('locked')) return;
   activeSlot = slot;
   const side = slot.classList.contains('left') ? 'left' : 'right';
-  const usedSymbols = getUsedSymbols();
   const selected = getSymbolsFromSlots(side);
-  const slotClass = slot.classList[1];
-  const slotIndex = parseInt(slotClass.replace(side, '')) - 1;
+  const usedSymbols = getUsedSymbols();
+  const slotClass = slot.dataset.position;
+  const slotIndex = ['1', '2', '3'].indexOf(slotClass.slice(-1));
 
   popupGrid.innerHTML = '';
 
-  let validSymbols = [];
+  const allSymbols = [
+    "worship", "witness", "light", "guardian", "worm", "traveller", "savathun",
+    "stop", "darkness", "hive", "drink", "pyramid", "kill", "give"
+  ];
 
-  if (slotIndex === 0) {
-    // Slot 1: only filter based on c[0] and usage
-    validSymbols = getAllowedCombinations(side)
-      .map(c => c[0])
-      .filter(sym => !usedSymbols.includes(sym));
-    validSymbols = [...new Set(validSymbols)];
-  } else {
-    const restricted = getSlotRestrictedSymbols(slotIndex, side);
-    const filtered = getValidSymbols(selected, side);
-    validSymbols = restricted.filter(sym => filtered.includes(sym) && !usedSymbols.includes(sym));
-  }
+  let validSymbols = allSymbols.filter(sym => !usedSymbols.includes(sym));
 
   if (validSymbols.length === 0) {
     const msg = document.createElement("div");
@@ -88,18 +79,8 @@ function openSymbolPopup(slot) {
     div.onclick = () => {
       slot.style.backgroundImage = `url('./img/${sym}.png')`;
       slot.dataset.symbol = sym;
-
-      const current = getSymbolsFromSlots(side);
-      if (current.every(Boolean)) {
-        const result = validateGroup(current);
-        if (result) {
-          lockGroup(side, result);
-          lockSlots(side);
-          updateTruthLieLabel();
-        }
-      }
-
       popup.style.display = "none";
+      updateTruthLieLabel();
     };
     popupGrid.appendChild(div);
   });
@@ -108,26 +89,81 @@ function openSymbolPopup(slot) {
 }
 
 function lockSlots(side) {
-  ['1','2','3'].forEach(n => {
+  ['1', '2', '3'].forEach(n => {
     const slot = document.querySelector(`.dial-slot.${side}${n}`);
     slot.classList.add('locked');
     slot.style.cursor = 'not-allowed';
   });
 }
 
-window.addEventListener("click", (e) => {
-  if (!popup.contains(e.target) && e.target !== activeSlot) {
-    popup.style.display = "none";
+function handleLock() {
+  const left = getSymbolsFromSlots('left');
+  const right = getSymbolsFromSlots('right');
+  const isLeftTruth = validateGroup(left) === 'truth';
+  const isRightTruth = validateGroup(right) === 'truth';
+  const isLeftLie = validateGroup(left) === 'lie';
+  const isRightLie = validateGroup(right) === 'lie';
+
+  if (lockPhase === 0) {
+    if ((isLeftTruth && isRightLie) || (isLeftLie && isRightTruth)) {
+      document.getElementById('lockButton').classList.add('glow-phase');
+      lockPhase = 1;
+
+      ['left1','left2','left3','right1','right2','right3'].forEach(id => {
+        const slot = document.querySelector(`.dial-slot.${id}`);
+        slot.classList.add('locked');
+        slot.addEventListener('click', () => {
+          slot.classList.toggle('active');
+          slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
+        });
+      });
+    } else {
+      alert('You must enter one TRUTH and one LIE combination before locking.');
+    }
+  } else if (lockPhase === 1) {
+    lockPhase = 2;
+    document.getElementById('lockButton').classList.remove('glow-phase');
+    // Future illumination handling...
   }
-});
+}
 
 function bindDialClickHandlers() {
-  const dialSlots = document.querySelectorAll('.dial-slot');
-  dialSlots.forEach(slot => {
+  const slots = document.querySelectorAll('.dial-slot');
+  slots.forEach(slot => {
     slot.addEventListener('click', () => {
-      openSymbolPopup(slot);
+      if (!slot.classList.contains('locked') && lockPhase === 0) {
+        openSymbolPopup(slot);
+      }
     });
   });
 }
 
-window.addEventListener('DOMContentLoaded', bindDialClickHandlers);
+function resetDial() {
+  document.querySelectorAll('.dial-slot').forEach(slot => {
+    const newSlot = slot.cloneNode(true);
+    newSlot.classList.remove('active', 'locked');
+    newSlot.removeAttribute('data-symbol');
+    newSlot.style.backgroundImage = '';
+    newSlot.style.boxShadow = 'none';
+    slot.replaceWith(newSlot);
+  });
+  document.getElementById('map-overlay').innerHTML = '';
+  document.getElementById('lockButton').classList.remove('glow-phase');
+  lockPhase = 0;
+  updateTruthLieLabel();
+  bindDialClickHandlers();
+}
+
+window.handleLock = handleLock;
+window.resetDial = resetDial;
+
+document.addEventListener('DOMContentLoaded', () => {
+  bindDialClickHandlers();
+});
+
+document.addEventListener('click', (e) => {
+  const popup = document.getElementById('symbolPopup');
+  if (!popup.contains(e.target) && e.target !== activeSlot) {
+    popup.style.display = 'none';
+  }
+});

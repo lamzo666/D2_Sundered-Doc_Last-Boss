@@ -1,4 +1,4 @@
-// logic.js (final rules fully applied, with debug for empty options)
+// logic.js (final rules fully applied, with fallback message for blocked group)
 
 import {
   getValidSymbols,
@@ -79,9 +79,12 @@ function openSymbolPopup(slot) {
 
   if (displayOptions.length === 0) {
     const msg = document.createElement("div");
-    msg.textContent = "No valid symbols";
+    msg.textContent = (restrictedSymbols.length && validSymbols.length)
+      ? "No valid symbols"
+      : "No valid combinations remain — reset required.";
     msg.style.color = "#aaa";
     msg.style.textAlign = "center";
+    msg.style.padding = "10px";
     popupGrid.appendChild(msg);
   }
 

@@ -45,12 +45,16 @@ export function getValidSymbols(selectedSymbols, side, slotIndex) {
   ]);
 
   const pool = getAllowedCombinations(side);
+
   const matches = pool.filter(combo =>
     selectedSymbols.every((sym, i) => !sym || combo[i] === sym)
   );
 
-  const rawSymbols = matches.map(c => c[slotIndex]);
-  return [...new Set(rawSymbols.filter(sym => !usedSymbols.has(sym)))];
+  const validAtSlot = matches
+    .map(c => c[slotIndex])
+    .filter(sym => !usedSymbols.has(sym));
+
+  return [...new Set(validAtSlot)];
 }
 
 function leftGroupUsedSymbols() {

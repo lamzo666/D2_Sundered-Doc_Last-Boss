@@ -48,9 +48,6 @@ export function getValidSymbols(selectedSymbols, side, slotIndex) {
   return [...new Set(matches.map(c => c[slotIndex]))];
 }
 
-  return [...new Set(matches.map(combo => combo[slotIndex]))];
-}
-
 export function getSlotRestrictedSymbols(slotIndex, side) {
   const combos = getAllowedCombinations(side);
   return [...new Set(combos.map(c => c[slotIndex]))];

@@ -51,16 +51,15 @@ export function getValidSymbols(selectedSymbols, side, slotIndex) {
   for (const combo of pool) {
     let match = true;
     for (let i = 0; i < 3; i++) {
-      if (i !== slotIndex && selectedSymbols[i] && combo[i] !== selectedSymbols[i]) {
+      if (i === slotIndex) continue;
+      if (selectedSymbols[i] && combo[i] !== selectedSymbols[i]) {
         match = false;
         break;
       }
     }
-    if (match) {
-      const candidate = combo[slotIndex];
-      if (!usedSymbols.has(candidate)) {
-        valid.add(candidate);
-      }
+
+    if (match && !usedSymbols.has(combo[slotIndex])) {
+      valid.add(combo[slotIndex]);
     }
   }
 

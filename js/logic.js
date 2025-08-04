@@ -1,4 +1,3 @@
-// logic.js (aligned with locked combination rules — no truth/lie filtering until both groups filled)
 
 import {
   getValidSymbols,
@@ -20,8 +19,8 @@ function getSymbolsFromSlots(group) {
   });
 }
 
-function getUsedSymbols() {
-  return [...getSymbolsFromSlots('left'), ...getSymbolsFromSlots('right')].filter(Boolean);
+function getUsedSymbols(group) {
+  return getSymbolsFromSlots(group).filter(Boolean);
 }
 
 function openSymbolPopup(slot) {
@@ -32,34 +31,30 @@ function openSymbolPopup(slot) {
   const selected = getSymbolsFromSlots(side);
   const usedSymbols = getSymbolsFromSlots(side).filter(Boolean);
 
-const slotClasses = Array.from(slot.classList);
-const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
-const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
+  const slotClasses = Array.from(slot.classList);
+  const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
+  const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
 
   popupGrid.innerHTML = '';
 
-  const allSymbols = [
-    "worship", "witness", "light", "guardian", "worm", "traveller", "savathun",
-    "stop", "darkness", "hive", "drink", "pyramid", "kill", "give"
-  ];
-
-  let validSymbols = [...new Set(getValidSymbols(selected, side, slotIndex))].filter(sym => !usedSymbols.includes(sym));
+  const validSymbols = [...new Set(getValidSymbols(selected, side, slotIndex))].filter(sym => !usedSymbols.includes(sym));
 
   if (validSymbols.length === 0) {
-    popupGrid.innerHTML = '<div style="text-align:center; color:#aaa">No valid combinations remain — reset required.</div>';
-  } else {
-    validSymbols.forEach(sym => {
-      const div = document.createElement("div");
-      div.className = "symbol-option";
-      div.style.backgroundImage = `url('./img/${sym}.png')`;
-      div.onclick = () => {
-        slot.style.backgroundImage = `url('./img/${sym}.png')`;
-        slot.dataset.symbol = sym;
-        popup.style.display = "none";
-      };
-      popupGrid.appendChild(div);
-    });
+    popup.style.display = "none"; // silently close
+    return;
   }
+
+  validSymbols.forEach(sym => {
+    const div = document.createElement("div");
+    div.className = "symbol-option";
+    div.style.backgroundImage = `url('./img/${sym}.png')`;
+    div.onclick = () => {
+      slot.style.backgroundImage = `url('./img/${sym}.png')`;
+      slot.dataset.symbol = sym;
+      popup.style.display = "none";
+    };
+    popupGrid.appendChild(div);
+  });
 
   popup.style.display = "block";
 }

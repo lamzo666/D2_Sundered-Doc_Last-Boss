@@ -30,6 +30,8 @@ function openSymbolPopup(slot) {
   const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
   const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
 
+  selected[slotIndex] = null; // ✨ Prevent self-match during filtering
+
   popupGrid.innerHTML = '';
 
   const validSymbols = getValidSymbols(selected, side, slotIndex);

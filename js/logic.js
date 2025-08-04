@@ -32,9 +32,8 @@ function openSymbolPopup(slot) {
   const selected = getSymbolsFromSlots(side);
   const usedSymbols = getSymbolsFromSlots(side).filter(Boolean);
 
-const slotClasses = Array.from(slot.classList);
-const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
-const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
+  const slotClass = slot.dataset.position;
+  const slotIndex = parseInt(slotClass.replace(/[^123]/g, '')) - 1;
 
   popupGrid.innerHTML = '';
 
@@ -43,7 +42,7 @@ const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
     "stop", "darkness", "hive", "drink", "pyramid", "kill", "give"
   ];
 
-  let validSymbols = getValidSymbols(selected, side).filter(sym => !usedSymbols.includes(sym));
+  let validSymbols = [...new Set(getValidSymbols(selected, side))].filter(sym => !usedSymbols.includes(sym));
 
   if (validSymbols.length === 0) {
     popupGrid.innerHTML = '<div style="text-align:center; color:#aaa">No valid combinations remain — reset required.</div>';

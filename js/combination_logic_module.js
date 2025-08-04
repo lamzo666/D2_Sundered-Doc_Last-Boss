@@ -1,4 +1,3 @@
-// combination_logic_module.js (final logic applied)
 
 const truthCombinations = [
   ["pyramid", "drink", "worm"],
@@ -40,12 +39,33 @@ let lockedType = null;
 export function getValidSymbols(selectedSymbols, side, slotIndex) {
   if (slotIndex < 0 || slotIndex > 2) return [];
 
+  const usedSymbols = new Set([
+    ...selectedSymbols.filter(Boolean),
+    ...(side === 'left' ? rightGroupUsedSymbols() : leftGroupUsedSymbols())
+  ]);
+
   const pool = getAllowedCombinations(side);
   const matches = pool.filter(combo =>
     selectedSymbols.every((sym, i) => !sym || combo[i] === sym)
   );
 
-  return [...new Set(matches.map(c => c[slotIndex]))];
+  const rawSymbols = matches.map(c => c[slotIndex]);
+  return [...new Set(rawSymbols.filter(sym => !usedSymbols.has(sym)))];
+}
+
+function leftGroupUsedSymbols() {
+  return getSymbolsFromGroup(['left1', 'left2', 'left3']);
+}
+
+function rightGroupUsedSymbols() {
+  return getSymbolsFromGroup(['right1', 'right2', 'right3']);
+}
+
+function getSymbolsFromGroup(classList) {
+  return classList.map(c => {
+    const el = document.querySelector(`.dial-slot.${c}`);
+    return el?.dataset.symbol || null;
+  }).filter(Boolean);
 }
 
 export function getSlotRestrictedSymbols(slotIndex, side) {

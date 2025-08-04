@@ -19,17 +19,12 @@ function getSymbolsFromSlots(group) {
   });
 }
 
-function getUsedSymbols(group) {
-  return getSymbolsFromSlots(group).filter(Boolean);
-}
-
 function openSymbolPopup(slot) {
   if (slot.classList.contains('locked') || lockPhase > 0) return;
   activeSlot = slot;
 
   const side = slot.classList.contains('left') ? 'left' : 'right';
   const selected = getSymbolsFromSlots(side);
-  const usedSymbols = getSymbolsFromSlots(side).filter(Boolean);
 
   const slotClasses = Array.from(slot.classList);
   const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
@@ -37,10 +32,9 @@ function openSymbolPopup(slot) {
 
   popupGrid.innerHTML = '';
 
-  const validSymbols = [...new Set(getValidSymbols(selected, side, slotIndex))].filter(sym => !usedSymbols.includes(sym));
-
+  const validSymbols = getValidSymbols(selected, side, slotIndex);
   if (validSymbols.length === 0) {
-    popup.style.display = "none"; // silently close
+    popup.style.display = "none";
     return;
   }
 

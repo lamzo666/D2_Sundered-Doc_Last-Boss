@@ -37,10 +37,10 @@ const lieCombinations = [
 let lockedSide = null;
 let lockedType = null;
 
-export function getValidSymbols(selectedSymbols, side) {
+export function getValidSymbols(selectedSymbols, side, slotIndex) {
+  if (slotIndex < 0 || slotIndex > 2) return [];
   const allCombinations = getAllowedCombinations(side);
-  const slotIndex = selectedSymbols.findIndex(s => !s);
-  if (slotIndex < 0) return [];
+  return [...new Set(matches.map(c => c[slotIndex]))];
 
   const matches = allCombinations.filter(combo => {
     return selectedSymbols.every((sym, i) => {

@@ -43,7 +43,7 @@ const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
     "stop", "darkness", "hive", "drink", "pyramid", "kill", "give"
   ];
 
-  let validSymbols = [...new Set(getValidSymbols(selected, side))].filter(sym => !usedSymbols.includes(sym));
+  let validSymbols = [...new Set(getValidSymbols(selected, side, slotIndex))].filter(sym => !usedSymbols.includes(sym));
 
   if (validSymbols.length === 0) {
     popupGrid.innerHTML = '<div style="text-align:center; color:#aaa">No valid combinations remain — reset required.</div>';

@@ -32,9 +32,8 @@ function openSymbolPopup(slot) {
   const selected = getSymbolsFromSlots(side);
   const usedSymbols = getSymbolsFromSlots(side).filter(Boolean);
 
-const slotClasses = Array.from(slot.classList);
-const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
-const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
+  const slotClass = slot.dataset.position;
+  const slotIndex = parseInt(slotClass.replace(/[^123]/g, '')) - 1;
 
   popupGrid.innerHTML = '';
 

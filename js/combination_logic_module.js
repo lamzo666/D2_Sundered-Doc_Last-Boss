@@ -39,15 +39,14 @@ let lockedType = null;
 
 export function getValidSymbols(selectedSymbols, side, slotIndex) {
   if (slotIndex < 0 || slotIndex > 2) return [];
-  const allCombinations = getAllowedCombinations(side);
-  return [...new Set(matches.map(c => c[slotIndex]))];
 
-  const matches = allCombinations.filter(combo => {
-    return selectedSymbols.every((sym, i) => {
-      if (!sym) return true;
-      return combo[i] === sym;
-    });
-  });
+  const pool = getAllowedCombinations(side);
+  const matches = pool.filter(combo =>
+    selectedSymbols.every((sym, i) => !sym || combo[i] === sym)
+  );
+
+  return [...new Set(matches.map(c => c[slotIndex]))];
+}
 
   return [...new Set(matches.map(combo => combo[slotIndex]))];
 }

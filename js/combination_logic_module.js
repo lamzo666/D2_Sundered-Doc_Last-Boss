@@ -36,9 +36,31 @@ const lieCombinations = [
 let lockedSide = null;
 let lockedType = null;
 
-export function lockGroup(side, type) {
-  lockedSide = side;
-  lockedType = type;
+export function getValidSymbols(selectedSymbols, side, slotIndex) {
+  if (slotIndex < 0 || slotIndex > 2) return [];
+
+  let pool = getAllowedCombinations(side);
+  const oppositeUsed = new Set(getSymbolsFromOtherSide(side));
+
+  // 🔒 Filter out any combo containing symbols already used on the opposite side
+  pool = pool.filter(combo => combo.every(sym => !oppositeUsed.has(sym)));
+
+  const matches = pool.filter(combo =>
+    combo.every((val, i) =>
+      i === slotIndex || !selectedSymbols[i] || selectedSymbols[i] === val
+    )
+  );
+
+  const ownUsed = new Set(selectedSymbols.filter(Boolean));
+  return [...new Set(matches.map(c => c[slotIndex]))].filter(sym => !ownUsed.has(sym));
+}
+
+function getSymbolsFromOtherSide(side) {
+  const classes = [`${side === 'left' ? 'right' : 'left'}1`, `${side === 'left' ? 'right' : 'left'}2`, `${side === 'left' ? 'right' : 'left'}3`];
+  return classes.map(cls => {
+    const el = document.querySelector(`.dial-slot.${cls}`);
+    return el?.dataset.symbol || null;
+  }).filter(Boolean);
 }
 
 export function validateGroup(symbols) {
@@ -49,47 +71,23 @@ export function validateGroup(symbols) {
   return null;
 }
 
-export function getValidSymbols(selected, side, slotIndex) {
-  const isGroup1Filled = getSymbols("left").filter(Boolean).length === 3;
-  const isGroup2Filled = getSymbols("right").filter(Boolean).length === 3;
-
-  const opposite = side === "left" ? "right" : "left";
-  const used = new Set([...getSymbols(opposite), ...selected.filter(Boolean)]);
-
-  const pool = (!lockedSide && (!isGroup1Filled || !isGroup2Filled))
-    ? [...truthCombinations, ...lieCombinations]
-    : lockedSide === side
-      ? (lockedType === 'truth' ? truthCombinations : lieCombinations)
-      : (lockedType === 'truth' ? lieCombinations : truthCombinations);
-
-  const matches = pool.filter(combo =>
-    combo.every((sym, i) =>
-      i === slotIndex || !selected[i] || selected[i] === sym
-    ) &&
-    combo.every(sym => !used.has(sym))
-  );
-
-  return [...new Set(matches.map(c => c[slotIndex]))];
+export function lockGroup(side, type) {
+  lockedSide = side;
+  lockedType = type;
 }
 
 export function getAllowedCombinations(forSide) {
-  const left = getSymbols("left");
-  const right = getSymbols("right");
+  const left = getSymbolsFromOtherSide('left');
+  const right = getSymbolsFromOtherSide('right');
   const isLeftComplete = left.length === 3;
   const isRightComplete = right.length === 3;
 
-  if (!lockedSide || !isLeftComplete || !isRightComplete)
+  if (!isLeftComplete || !isRightComplete || !lockedSide)
     return [...truthCombinations, ...lieCombinations];
 
   return lockedSide === forSide
     ? (lockedType === 'truth' ? truthCombinations : lieCombinations)
     : (lockedType === 'truth' ? lieCombinations : truthCombinations);
-}
-
-function getSymbols(side) {
-  return [`${side}1`, `${side}2`, `${side}3`].map(id =>
-    document.querySelector(`.dial-slot.${id}`)?.dataset.symbol || null
-  ).filter(Boolean);
 }
 
 function arraysEqual(a, b) {

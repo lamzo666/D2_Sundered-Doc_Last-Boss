@@ -18,21 +18,23 @@ slots.forEach(slot => {
 
     currentSlot = slot;
 
-    const side = slot.classList.contains("left1") || slot.classList.contains("left2") || slot.classList.contains("left3")
-      ? "left"
-      : slot.classList.contains("right1") || slot.classList.contains("right2") || slot.classList.contains("right3")
-        ? "right"
+    const classList = Array.from(slot.classList);
+    const leftMatch = classList.find(cls => /^left[123]$/.test(cls));
+    const rightMatch = classList.find(cls => /^right[123]$/.test(cls));
+    const side = leftMatch ? "left" : rightMatch ? "right" : null;
+    const slotIndex = leftMatch
+      ? parseInt(leftMatch.replace("left", "")) - 1
+      : rightMatch
+        ? parseInt(rightMatch.replace("right", "")) - 1
         : null;
 
-    if (!side) {
-      console.error("Unable to determine slot side.");
+    if (!side || slotIndex === null) {
+      console.error("Unable to determine slot side or index.");
       return;
     }
 
-    const slotIndex = parseInt(slot.classList[1].replace(/\D/g, "")) - 1;
-
     const selected = Array.from(slots)
-      .filter(s => s.classList.contains(side + "1") || s.classList.contains(side + "2") || s.classList.contains(side + "3"))
+      .filter(s => s.classList.contains(`${side}1`) || s.classList.contains(`${side}2`) || s.classList.contains(`${side}3`))
       .map(s => s.dataset.symbol || null);
 
     const validSymbols = [...new Set(getValidSymbols(selected, side, slotIndex))].filter(sym => !selected.includes(sym));

@@ -47,7 +47,9 @@ export function getValidSymbols(selectedSymbols, side, slotIndex) {
   ]);
 
   const matches = pool.filter(combo =>
-    selectedSymbols.every((sym, i) => !sym || combo[i] === sym)
+    combo.every((val, i) =>
+      i === slotIndex || !selectedSymbols[i] || selectedSymbols[i] === val
+    )
   );
 
   return [...new Set(matches.map(c => c[slotIndex]))].filter(sym => !usedSymbols.has(sym));

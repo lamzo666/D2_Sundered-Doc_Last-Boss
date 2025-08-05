@@ -7,6 +7,7 @@ import {
 
 window.addEventListener('DOMContentLoaded', () => {
   const slots = document.querySelectorAll('.dial-slot');
+  console.log("Slot count:", slots.length); // ✅ debug log
   const symbolPopup = document.getElementById('symbolPopup');
   const lockButton = document.getElementById('lock-button');
   const resetButton = document.getElementById('reset-button');

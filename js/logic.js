@@ -6,7 +6,7 @@ import {
 } from './js/combination_logic_module.js';
 
 const slots = document.querySelectorAll('.dial-slot');
-const symbolPopup = document.getElementById('symbol-popup');
+const symbolPopup = document.getElementById('symbolPopup'); // ✅ fixed here
 const lockButton = document.getElementById('lock-button');
 const resetButton = document.getElementById('reset-button');
 

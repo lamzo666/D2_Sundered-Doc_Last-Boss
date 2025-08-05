@@ -77,7 +77,15 @@ export function lockGroup(side, type) {
 }
 
 export function getAllowedCombinations(forSide) {
-  if (!lockedSide) return [...truthCombinations, ...lieCombinations];
+  const left = getSymbolsFromOtherSide('left');
+  const right = getSymbolsFromOtherSide('right');
+
+  const isLeftComplete = left.length === 3;
+  const isRightComplete = right.length === 3;
+
+  if (!isLeftComplete || !isRightComplete || !lockedSide)
+    return [...truthCombinations, ...lieCombinations];
+
   return lockedSide === forSide
     ? (lockedType === 'truth' ? truthCombinations : lieCombinations)
     : (lockedType === 'truth' ? lieCombinations : truthCombinations);

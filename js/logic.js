@@ -6,7 +6,7 @@ import {
 } from './js/combination_logic_module.js';
 
 const slots = document.querySelectorAll('.dial-slot');
-const symbolPopup = document.getElementById('symbolPopup'); // ✅ fixed here
+const symbolPopup = document.getElementById('symbolPopup');
 const lockButton = document.getElementById('lock-button');
 const resetButton = document.getElementById('reset-button');
 
@@ -18,14 +18,15 @@ slots.forEach(slot => {
 
     currentSlot = slot;
 
+    // ✅ SAFE side + index detection (no DOMContentLoaded, no structure changes)
     const classList = Array.from(slot.classList);
-    const leftMatch = classList.find(cls => /^left[123]$/.test(cls));
-    const rightMatch = classList.find(cls => /^right[123]$/.test(cls));
-    const side = leftMatch ? "left" : rightMatch ? "right" : null;
-    const slotIndex = leftMatch
-      ? parseInt(leftMatch.replace("left", "")) - 1
-      : rightMatch
-        ? parseInt(rightMatch.replace("right", "")) - 1
+    const leftClass = classList.find(cls => /^left[123]$/.test(cls));
+    const rightClass = classList.find(cls => /^right[123]$/.test(cls));
+    const side = leftClass ? "left" : rightClass ? "right" : null;
+    const slotIndex = leftClass
+      ? parseInt(leftClass.replace("left", "")) - 1
+      : rightClass
+        ? parseInt(rightClass.replace("right", "")) - 1
         : null;
 
     if (!side || slotIndex === null) {

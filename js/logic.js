@@ -2,8 +2,7 @@
 import {
   getValidSymbols,
   validateGroup,
-  lockGroup,
-  getAllowedCombinations
+  lockGroup
 } from './combination_logic_module.js';
 
 const popup = document.getElementById("symbolPopup");
@@ -29,8 +28,6 @@ function openSymbolPopup(slot) {
   const slotClasses = Array.from(slot.classList);
   const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
   const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
-
-  selected[slotIndex] = null; // ✨ Prevent self-match during filtering
 
   popupGrid.innerHTML = '';
 
@@ -75,6 +72,10 @@ function handleLock() {
           slot.style.boxShadow = slot.classList.contains('active') ? '0 0 12px 6px yellow' : 'none';
         });
       });
+
+      if (isLeftTruth || isLeftLie) lockGroup('left', isLeftTruth ? 'truth' : 'lie');
+      if (isRightTruth || isRightLie) lockGroup('right', isRightTruth ? 'truth' : 'lie');
+
     } else {
       alert("You must enter one TRUTH and one LIE combination before locking.");
     }

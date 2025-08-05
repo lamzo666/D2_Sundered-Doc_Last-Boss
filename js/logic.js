@@ -23,11 +23,12 @@ function openSymbolPopup(slot) {
   activeSlot = slot;
 
   const side = slot.classList.contains('left') ? 'left' : 'right';
-  const selected = getSymbolsFromSlots(side);
-
   const slotClasses = Array.from(slot.classList);
   const match = slotClasses.find(c => /(?:left|right)[123]/.test(c));
   const slotIndex = match ? parseInt(match.replace(/[^123]/g, '')) - 1 : 0;
+
+  const selected = getSymbolsFromSlots(side);
+  selected[slotIndex] = null; // 🛠️ prevent self-filtering
 
   popupGrid.innerHTML = '';
 

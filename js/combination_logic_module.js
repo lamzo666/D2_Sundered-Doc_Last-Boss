@@ -39,10 +39,14 @@ let lockedType = null;
 export function getValidSymbols(selectedSymbols, side, slotIndex) {
   if (slotIndex < 0 || slotIndex > 2) return [];
 
+  console.log(`\n--- getValidSymbols ---`);
+  console.log(`side: ${side}, slotIndex: ${slotIndex}`);
+  console.log(`selectedSymbols:`, selectedSymbols);
+
   let pool = getAllowedCombinations(side);
   const oppositeUsed = new Set(getSymbolsFromOtherSide(side));
+  console.log(`oppositeUsed symbols (${side === 'left' ? 'right' : 'left'}):`, [...oppositeUsed]);
 
-  // 🔒 Filter out any combo containing symbols already used on the opposite side
   pool = pool.filter(combo => combo.every(sym => !oppositeUsed.has(sym)));
 
   const matches = pool.filter(combo =>
@@ -51,16 +55,25 @@ export function getValidSymbols(selectedSymbols, side, slotIndex) {
     )
   );
 
+  const result = [...new Set(matches.map(c => c[slotIndex]))];
   const ownUsed = new Set(selectedSymbols.filter(Boolean));
-  return [...new Set(matches.map(c => c[slotIndex]))].filter(sym => !ownUsed.has(sym));
+  const filtered = result.filter(sym => !ownUsed.has(sym));
+
+  console.log(`validSymbols (raw):`, result);
+  console.log(`ownUsed:`, [...ownUsed]);
+  console.log(`validSymbols (final):`, filtered);
+  return filtered;
 }
 
 function getSymbolsFromOtherSide(side) {
-  const classes = [`${side === 'left' ? 'right' : 'left'}1`, `${side === 'left' ? 'right' : 'left'}2`, `${side === 'left' ? 'right' : 'left'}3`];
-  return classes.map(cls => {
+  const otherSide = side === 'left' ? 'right' : 'left';
+  const classes = [`${otherSide}1`, `${otherSide}2`, `${otherSide}3`];
+  const symbols = classes.map(cls => {
     const el = document.querySelector(`.dial-slot.${cls}`);
     return el?.dataset.symbol || null;
   }).filter(Boolean);
+
+  return symbols;
 }
 
 export function validateGroup(symbols) {
@@ -82,7 +95,7 @@ export function getAllowedCombinations(forSide) {
   const isLeftComplete = left.length === 3;
   const isRightComplete = right.length === 3;
 
-  if (!isLeftComplete || !isRightComplete || !lockedSide)
+  if (!lockedSide || !isLeftComplete || !isRightComplete)
     return [...truthCombinations, ...lieCombinations];
 
   return lockedSide === forSide

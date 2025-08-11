@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>Kerrev, The Erased — Dial Helper</title>
+  <link rel="stylesheet" href="/src/css/styles.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Manrope:wght@300;700;800&display=swap"
+    rel="preload"
+    as="style"
+    onload="this.rel='stylesheet'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Manrope:wght@300;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
+</head>
+<body>
+  <!-- Toggles (persisted) -->
+  <div id="tooltip-toggle">
+    <div class="toggle-item">
+      <input type="checkbox" id="tooltipCheckbox" />
+      <label for="tooltipCheckbox">Show guide</label>
+    </div>
+    <div class="toggle-item">
+      <input type="checkbox" id="symbolNamesCheckbox" />
+      <label for="symbolNamesCheckbox">Show symbol names</label>
+    </div>
+  </div>
+
+  <h1>KERREV, THE ERASED</h1>
+  <h2>Sundered Doctrine — DIAL HELPER</h2>
+
+  <!-- Collapsible tooltip -->
+  <div id="tooltip">Enter the symbols you see in‑game</div>
+
+  <!-- Truth/Lie banner -->
+  <div id="truthLieLabel" class="truth-lie-label">
+    <div id="label-left"></div>
+    <div></div>
+    <div id="label-right"></div>
+  </div>
+
+  <!-- Dial -->
+  <div class="dial-wrapper">
+    <div class="dial">
+      <img class="dial-background" src="/img/empty_dial.png" alt="Dial" />
+      <div class="dial-slot left1"></div>
+      <div class="dial-slot left2"></div>
+      <div class="dial-slot left3"></div>
+      <div class="dial-slot right1"></div>
+      <div class="dial-slot right2"></div>
+      <div class="dial-slot right3"></div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-container">
+    <button class="btn-icon" id="lockButton" title="Lock / Show Map">
+      <img src="/img/lock-50.png" alt="Lock" />
+    </button>
+    <button class="btn-icon btn-reset" title="Reset" onclick="resetDial()">
+      <img src="/img/reset-60.png" alt="Reset" />
+    </button>
+  </div>
+
+  <!-- Symbol picker -->
+  <div class="symbol-popup" id="symbolPopup">
+    <div class="symbol-grid" id="popupGrid"></div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-container">
+    <img src="/img/map.jpg" alt="Map" class="map-img" />
+    <div class="map-overlay" id="map-overlay"></div>
+  </div>
+
+  <div class="footer">
+    MADE BY LAMZO<br />
+    <span class="map-credit">THANKS, AEQUORDE, FOR THE MAP</span>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="/src/js/combination_logic_module.js"></script>
+  <script type="module" src="/src/js/map_logic.js"></script>
+  <script type="module" src="/src/js/logic.js"></script>
+</body>
+</html>

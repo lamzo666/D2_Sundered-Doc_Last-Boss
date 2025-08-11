@@ -1,4 +1,3 @@
-// src/js/logic.js
 import {
   getValidSymbols,
   validateGroup,
@@ -7,7 +6,6 @@ import {
 } from './combination_logic_module.js';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // ---------- Elements ----------
   const slots = document.querySelectorAll('.dial-slot');
   const symbolPopup = document.getElementById('symbolPopup');
   const popupGrid = document.getElementById('popupGrid');
@@ -17,70 +15,48 @@ window.addEventListener('DOMContentLoaded', () => {
   const tooltipCheckbox = document.getElementById('tooltipCheckbox');
   const symbolNamesCheckbox = document.getElementById('symbolNamesCheckbox');
 
-  // ---------- First-visit defaults + persistent toggles ----------
-  function getBoolPref(key, defaultTrue) {
-    const v = localStorage.getItem(key);
-    if (v === null) {
-      localStorage.setItem(key, defaultTrue ? 'true' : 'false');
-      return !!defaultTrue;
-    }
-    return v === 'true';
-  }
-
-  // First time on site: both ON by default
-  const tooltipOn = getBoolPref('tooltipVisible', true);
-  const namesOn   = getBoolPref('showSymbolNames', true);
-
-  // Apply tooltip state + checkbox
-  if (tooltipOn) tooltip?.classList.remove('hidden');
-  else tooltip?.classList.add('hidden');
-  if (tooltipCheckbox) tooltipCheckbox.checked = tooltipOn;
-
-  // Show/hide labels (dial + map)
-  function applyNamesVisibility(show) {
-    document
-      .querySelectorAll('.dial-slot .symbol-name, .map-label')
-      .forEach(el => el.style.display = show ? 'block' : 'none');
-  }
-  applyNamesVisibility(namesOn);
-  if (symbolNamesCheckbox) symbolNamesCheckbox.checked = namesOn;
-
-  // Persist on change
-  tooltipCheckbox?.addEventListener('change', () => {
-    const show = tooltipCheckbox.checked;
-    tooltip?.classList.toggle('hidden', !show);
-    localStorage.setItem('tooltipVisible', show ? 'true' : 'false');
-  });
-  symbolNamesCheckbox?.addEventListener('change', () => {
-    const show = symbolNamesCheckbox.checked;
-    localStorage.setItem('showSymbolNames', show ? 'true' : 'false');
-    applyNamesVisibility(show);
-  });
-
-  const tell = (msg) => { if (tooltip) tooltip.textContent = msg; };
-
-  // ---------- State ----------
-  let phase = 'entry';          // 'entry' -> 'illumination' -> 'final'
+  let phase = 'entry';
   let allowedGlowSlots = [];
   let truthGroup = [];
   let lieGroup = [];
 
-  // ---------- Mobile landscape full-map mode ----------
-  function updateLandscapeMapMode() {
-    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-    const smallScreen = window.innerWidth <= 900;
-    const body = document.body;
-
-    if (phase === 'final' && isLandscape && smallScreen) {
-      body.classList.add('map-full');
-      document.getElementById('tooltip-toggle')?.classList.add('hidden-on-map');
-    } else {
-      body.classList.remove('map-full');
-      document.getElementById('tooltip-toggle')?.classList.remove('hidden-on-map');
-    }
+  // ---------- First-visit defaults ----------
+  if (localStorage.getItem('firstVisitDone') !== 'true') {
+    localStorage.setItem('tooltipVisible', 'true');
+    localStorage.setItem('showSymbolNames', 'true');
+    localStorage.setItem('firstVisitDone', 'true');
   }
-  window.addEventListener('resize', updateLandscapeMapMode);
-  window.addEventListener('orientationchange', updateLandscapeMapMode);
+
+  // ---------- Tooltip toggle (persist) ----------
+  const tooltipVisible = localStorage.getItem('tooltipVisible');
+  const tooltipOn = tooltipVisible !== 'false';
+  tooltipCheckbox.checked = tooltipOn;
+  tooltip.classList.toggle('hidden', !tooltipOn);
+
+  tooltipCheckbox.addEventListener('change', () => {
+    const show = tooltipCheckbox.checked;
+    tooltip.classList.toggle('hidden', !show);
+    localStorage.setItem('tooltipVisible', show ? 'true' : 'false');
+  });
+  const tell = (msg) => { if (tooltip) tooltip.textContent = msg; };
+
+  // ---------- Symbol names toggle (persist) ----------
+  const storedNamesPref = localStorage.getItem('showSymbolNames');
+  const showNames = storedNamesPref === null ? true : storedNamesPref === 'true';
+  symbolNamesCheckbox.checked = showNames;
+
+  function applyNamesVisibility(show) {
+    document.querySelectorAll('.dial-slot .symbol-name, .map-label').forEach(el => {
+      el.style.display = show ? 'block' : 'none';
+    });
+  }
+  applyNamesVisibility(showNames);
+
+  symbolNamesCheckbox.addEventListener('change', () => {
+    const on = symbolNamesCheckbox.checked;
+    localStorage.setItem('showSymbolNames', on ? 'true' : 'false');
+    applyNamesVisibility(on);
+  });
 
   // ---------- Helpers ----------
   const trio = (side) => ([
@@ -100,22 +76,10 @@ window.addEventListener('DOMContentLoaded', () => {
       slot.appendChild(label);
     }
     label.textContent = name;
-    label.style.display = (symbolNamesCheckbox?.checked ?? true) ? 'block' : 'none';
+    label.style.display = symbolNamesCheckbox.checked ? 'block' : 'none';
   }
 
-  function setLabel(which, type) {
-    const L = document.getElementById('label-left');
-    const R = document.getElementById('label-right');
-    const apply = (el, t) => {
-      if (!el) return;
-      el.textContent = t ? t.toUpperCase() : '';
-      el.className = t === 'truth' ? 'truth-label' : (t === 'lie' ? 'lie-label' : '');
-    };
-    if (which === 'left') { apply(L, type); if (R) apply(R, ''); }
-    else { apply(R, type); if (L) apply(L, ''); }
-  }
-
-  // As soon as one side forms a valid trio, pre-lock that side/type
+  // As soon as one side forms a valid trio, pre-lock that side/type.
   const maybePrelock = () => {
     if (phase !== 'entry') return;
     const L = trio('left'), R = trio('right');
@@ -129,11 +93,23 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  function setLabel(which, type) {
+    const L = document.getElementById('label-left');
+    const R = document.getElementById('label-right');
+    const apply = (el, t) => {
+      if (!el) return;
+      el.textContent = t ? t.toUpperCase() : '';
+      el.className = t === 'truth' ? 'truth-label' : (t === 'lie' ? 'lie-label' : '');
+    };
+    if (which === 'left') { apply(L, type); if (R) apply(R, ''); }
+    else { apply(R, type); if (L) apply(L, ''); }
+  }
+
   // ----- Autofill helpers -----
   const sideSlots = (side) => [1,2,3].map(i => document.querySelector(`.dial-slot.${side}${i}`));
   const pickSymbol = (slot, symbol) => {
     slot.dataset.symbol = symbol;
-    slot.style.backgroundImage = `url('/img/${symbol}.png')`;
+    slot.style.backgroundImage = `url('img/${symbol}.png')`; // relative path
     updateSlotLabel(slot);
   };
   const validFor = (side, index) => {
@@ -200,7 +176,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         options.forEach(symbol => {
           const img = document.createElement('img');
-          img.src = `/img/${symbol}.png`;
+          img.src = `img/${symbol}.png`;
           img.alt = symbol;
           img.addEventListener('click', () => {
             pickSymbol(slot, symbol);
@@ -227,7 +203,7 @@ window.addEventListener('DOMContentLoaded', () => {
     phase = 'illumination';
     lockButton.classList.add('glow-phase');
     symbolPopup.style.display = 'none';
-    tell('Now select the symbols that are illuminated in‑game');
+    tell('Now select the symbols that are illuminated in-game');
 
     const L = document.getElementById('label-left');
     const R = document.getElementById('label-right');
@@ -243,31 +219,26 @@ window.addEventListener('DOMContentLoaded', () => {
     truthGroup = (leftType === 'truth') ? left : right;
     lieGroup   = (leftType === 'truth') ? right : left;
 
-    // Only these can glow
     allowedGlowSlots = [];
     [...truthGroup, ...lieGroup].forEach(sym => {
       const slot = [...slots].find(s => s.dataset.symbol === sym);
-      if (slot) {
-        slot.classList.remove('glow'); // ensure clean slate
-        allowedGlowSlots.push(slot);
-      }
+      if (slot) allowedGlowSlots.push(slot);
     });
   }
 
   function handleLock() {
     if (phase !== 'illumination') return;
-    const glowingSyms = [...document.querySelectorAll('.dial-slot.glow')].map(s => s.dataset.symbol);
-    const truthToVisit = truthGroup.filter(sym => glowingSyms.includes(sym)); // illuminated truths
-    const lieToVisit   = lieGroup.filter(sym => !glowingSyms.includes(sym));  // non‑illuminated lies
+    const glowing = [...document.querySelectorAll('.dial-slot.glow')].map(s => s.dataset.symbol);
+    const truthToVisit = truthGroup.filter(sym => glowing.includes(sym));
+    const lieToVisit   = lieGroup.filter(sym => !glowing.includes(sym));
     lockButton.classList.remove('glow-phase');
     phase = 'final';
-    window.showMapHighlights(truthToVisit, lieToVisit, true);
-    updateLandscapeMapMode();
+    tell('Follow the map to interact with the marked symbols. Click Reset to start again.');
+    window.showMapHighlights(truthToVisit, lieToVisit);
 
-    if (window.innerWidth <= 900) {
-      tell('Follow the map to interact with the marked symbols. Tip: rotate your phone to landscape for a full‑map view.');
-    } else {
-      tell('Follow the map to interact with the marked symbols. Click Reset to start again.');
+    // Mobile: if user rotates to landscape, show full map
+    if (window.matchMedia('(orientation: landscape)').matches && window.innerWidth <= 900) {
+      document.body.classList.add('map-full');
     }
   }
 
@@ -288,13 +259,11 @@ window.addEventListener('DOMContentLoaded', () => {
     truthGroup = [];
     lieGroup = [];
     clearLock();
-    tell('Enter the symbols you see in‑game');
+    tell('Enter the symbols you see in-game');
     const overlay = document.getElementById('map-overlay');
     if (overlay) overlay.innerHTML = '';
+    applyNamesVisibility(symbolNamesCheckbox.checked);
     document.body.classList.remove('map-full');
-    document.getElementById('tooltip-toggle')?.classList.remove('hidden-on-map');
-    updateLandscapeMapMode();
-    applyNamesVisibility(symbolNamesCheckbox?.checked ?? true);
   }
 
   window.handleLock = handleLock;
@@ -302,7 +271,7 @@ window.addEventListener('DOMContentLoaded', () => {
   lockButton.addEventListener('click', handleLock);
   resetButton.addEventListener('click', resetUI);
 
-  // When both trios are set, only proceed if they’re opposite types AND disjoint
+  // When both trios are set, only proceed if opposite types AND disjoint
   function checkProgress() {
     if (!bothComplete()) return;
 
@@ -321,4 +290,14 @@ window.addEventListener('DOMContentLoaded', () => {
       tell('Both sides must be opposite types with no duplicate symbols across the dial.');
     }
   }
+
+  // Orientation change -> if in final phase and landscape on small screens: full map
+  window.addEventListener('orientationchange', () => {
+    if (phase === 'final' && window.innerWidth <= 900 &&
+        window.matchMedia('(orientation: landscape)').matches) {
+      document.body.classList.add('map-full');
+    } else {
+      document.body.classList.remove('map-full');
+    }
+  });
 });

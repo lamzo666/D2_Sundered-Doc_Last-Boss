@@ -1,7 +1,7 @@
 /* ====== PAGE / BACKDROP ====== */
 body {
   background-color: #111;
-  background-image: url('/img/blur_fix.jpg');
+  background-image: url('img/blur_fix.jpg'); /* relative path for Pages */
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -68,12 +68,7 @@ h2 {
   overflow: hidden;
   opacity: 1;
   transform: translateY(0);
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease,
-    max-height 0.25s ease,
-    padding 0.25s ease,
-    margin 0.25s ease;
+  transition: opacity .25s, transform .25s, max-height .25s, padding .25s, margin .25s;
 }
 #tooltip.hidden {
   opacity: 0;
@@ -135,7 +130,7 @@ h2 {
   will-change: filter;
 }
 
-/* Your precise positions (UPDATED) */
+/* Your precise positions (your latest) */
 .dial-slot.left1  { top: 17.4%; left: 22.6%; }
 .dial-slot.left2  { top: 42.3%; left: 11.1%; }
 .dial-slot.left3  { top: 64.9%; left: 21.8%; }
@@ -149,43 +144,23 @@ h2 {
           drop-shadow(0 0 20px rgba(255,166,0,0.75));
 }
 
-/* ====== LABEL PARITY: Dial & Map names identical look ====== */
-.dial-slot .symbol-name,
-.map-label {
+/* Dial symbol name (you tuned these values) */
+.dial-slot .symbol-name {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  /* Dial uses bottom; map uses top below */
   bottom: -35%;
-  top: auto;
   white-space: nowrap;
-
   font-family: 'Manrope', sans-serif;
   font-weight: 700;
   font-size: 1.0em;
   letter-spacing: 0.04em;
   color: #e6e6e6;
-
-  /* Clean, readable stroke/glow stack */
-  text-shadow:
-    0 0 1px rgba(0,0,0,0.95),
-    0 0 2px rgba(0,0,0,0.95),
-    0 2px 3px rgba(0,0,0,0.8),
-    0 0 6px rgba(0,0,0,0.9);
+  text-shadow: 0 1px 2px #000, 0 0 6px #000;
   pointer-events: none;
   user-select: none;
   z-index: 3;
 }
-
-/* Map label sits below image */
-.map-label {
-  top: 115%;
-  bottom: auto;
-  text-transform: uppercase;
-  color: #e6e6e6;
-}
-.symbol-wrap.truth .map-label { color: #c9ffd0; }
-.symbol-wrap.lie   .map-label { color: #ffc9c9; }
 
 /* ====== BUTTONS ====== */
 .btn-container {
@@ -233,7 +208,7 @@ h2 {
   pointer-events: none;
 }
 
-/* Map symbol wrapper (top-left anchored; no centering transform) */
+/* Map symbol wrapper (top-left anchor) */
 .symbol-wrap {
   position: absolute;
   width: 5%;
@@ -242,7 +217,7 @@ h2 {
   z-index: 2;
 }
 
-/* Image stroke + truth/lie glow */
+/* Map image stroke + truth/lie glow */
 .symbol-overlay {
   position: absolute;
   inset: 0;
@@ -266,6 +241,26 @@ h2 {
     drop-shadow(0 0 4px rgba(0,0,0,0.85))
     drop-shadow(0 0 10px #f44336);
 }
+
+/* Map text label (you wanted 115%) */
+.map-label {
+  position: absolute;
+  left: 50%;
+  top: 115%;
+  transform: translateX(-50%);
+  text-transform: uppercase;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #e6e6e6;
+  text-shadow: 0 1px 2px #000, 0 0 6px #000;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+}
+.symbol-wrap.truth .map-label { color: #c9ffd0; }
+.symbol-wrap.lie   .map-label { color: #ffc9c9; }
 
 /* Pulse for map symbols only */
 .pulse { animation: pulse 1.5s infinite; }
@@ -304,7 +299,7 @@ h2 {
   box-shadow: none;
 }
 
-/* ====== FOOTER / CREDIT ====== */
+/* ====== FOOTER ====== */
 .footer {
   font-family: 'Open Sans', sans-serif;
   font-size: 1em;
@@ -320,7 +315,7 @@ h2 {
   margin-top: 2px;
 }
 
-/* ========= MOBILE TWEAKS ========= */
+/* ========= MOBILE ========= */
 @media (max-width: 640px) {
   #tooltip-toggle{
     position: fixed;
@@ -341,11 +336,9 @@ h2 {
   .dial { width: 94vw; }
 
   .map-container { margin: 18px auto 8px; }
-
-  .map-label { top: 135%; font-size: 1.0em; }
 }
 
-/* ========== MOBILE LANDSCAPE: Full-map view after completion ========== */
+/* ========== MOBILE LANDSCAPE FULL MAP ========== */
 @media (max-width: 900px) and (orientation: landscape) {
   body.map-full h1,
   body.map-full h2,
@@ -353,9 +346,8 @@ h2 {
   body.map-full .dial-wrapper,
   body.map-full .btn-container,
   body.map-full #tooltip,
-  body.map-full #tooltip-toggle {
-    display: none !important;
-  }
+  body.map-full #tooltip-toggle { display: none !important; }
+
   body.map-full .map-container {
     margin: 0 !important;
     max-width: none !important;

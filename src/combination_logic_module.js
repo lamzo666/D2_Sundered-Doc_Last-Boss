@@ -25,7 +25,7 @@ export const lieCombinations = Object.freeze([
   ["traveller","drink","worm"],
   ["traveller","give","hive"],
   ["traveller","stop","witness"],
-  ["pyramid","drink","guardian"],   // ← included per your list
+  ["pyramid","drink","guardian"],    // per your list
   ["pyramid","stop","witness"],
   ["witness","drink","light"],
   ["witness","kill","pyramid"],
@@ -42,20 +42,21 @@ let lockedType = null;
 export function getValidSymbols(selectedSymbols, side, slotIndex) {
   if (slotIndex < 0 || slotIndex > 2) return [];
 
+  // Start from the allowed pool given current lock
   let pool = getAllowedCombinations(side);
-  const oppositeUsed = new Set(getSymbolsFromOtherSide(side));
 
-  // ban any combo containing a symbol already used on the opposite side
+  // Ban any combo that uses a symbol already chosen on the opposite side
+  const oppositeUsed = new Set(getSymbolsFromOtherSide(side));
   pool = pool.filter(combo => combo.every(sym => !oppositeUsed.has(sym)));
 
-  // must match already-chosen symbols on this side
+  // Must match already-chosen symbols on the same side
   const matches = pool.filter(combo =>
     combo.every((val, i) =>
       i === slotIndex || !selectedSymbols[i] || selectedSymbols[i] === val
     )
   );
 
-  // candidates for this slot, no repeats on same side
+  // Candidates for this slot, excluding repeats on this side
   const ownUsed = new Set(selectedSymbols.filter(Boolean));
   return [...new Set(matches.map(c => c[slotIndex]))].filter(sym => !ownUsed.has(sym));
 }
@@ -76,34 +77,28 @@ export function validateGroup(symbols) {
 export function lockGroup(side, type) { lockedSide = side; lockedType = type; }
 export function clearLock() { lockedSide = null; lockedType = null; }
 
+// ❗ FIX: enforce the lock immediately — do NOT wait for both sides to be complete
 export function getAllowedCombinations(forSide) {
-  const left = getSymbolsFromOtherSide('left');
-  const right = getSymbolsFromOtherSide('right');
-  const isLeftComplete = left.length === 3;
-  const isRightComplete = right.length === 3;
+  if (!lockedSide) return [...truthCombinations, ...lieCombinations];
 
-  if (!lockedSide || !isLeftComplete || !isRightComplete)
-    return [...truthCombinations, ...lieCombinations];
-
-  return lockedSide === forSide
-    ? (lockedType === 'truth' ? truthCombinations : lieCombinations)
-    : (lockedType === 'truth' ? lieCombinations : truthCombinations);
+  const lockedIsTruth = lockedType === 'truth';
+  if (forSide === lockedSide) {
+    return lockedIsTruth ? truthCombinations : lieCombinations;
+  } else {
+    return lockedIsTruth ? lieCombinations : truthCombinations;
+  }
 }
 
 function arraysEqual(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
-/* ---- Dev-time sanity check (optional; shows in console while running vite dev) ---- */
+// Dev aid (safe to keep)
 if (import.meta?.env?.DEV) {
   const asKey = c => c.join(',');
   const sTruth = new Set(truthCombinations.map(asKey));
   const sLie   = new Set(lieCombinations.map(asKey));
   const overlap = [...sTruth].filter(k => sLie.has(k));
-  if (overlap.length) {
-    // eslint-disable-next-line no-console
-    console.warn('Overlap between TRUTH and LIE combos:', overlap);
-  }
-  // eslint-disable-next-line no-console
-  console.log(`Combos loaded → TRUTH: ${sTruth.size}, LIE: ${sLie.size}`);
+  if (overlap.length) console.warn('Overlap TRUTH/LIE:', overlap);
+  console.log(`Combos → TRUTH: ${sTruth.size}, LIE: ${sLie.size}`);
 }

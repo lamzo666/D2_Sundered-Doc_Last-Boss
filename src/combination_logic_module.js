@@ -1,38 +1,40 @@
-// ===== Truth & Lie combinations (12 truth, 17 lie) =====
-export const truthCombinations = [
-  ["pyramid", "drink", "worm"],
-  ["pyramid", "kill", "worm"],
-  ["pyramid", "stop", "savathun"],
-  ["pyramid", "give", "darkness"],
-  ["guardian", "worship", "light"],
-  ["guardian", "worship", "traveller"],
-  ["guardian", "kill", "witness"],
-  ["traveller", "give", "guardian"],
-  ["traveller", "give", "light"],
-  ["hive", "worship", "darkness"],
-  ["hive", "worship", "worm"],
-  ["darkness", "stop", "savathun"]
-];
+// src/combination_logic_module.js
 
-export const lieCombinations = [
-  ["hive", "kill", "worm"],
-  ["hive", "kill", "light"],
-  ["hive", "give", "darkness"],
-  ["hive", "stop", "witness"],
-  ["traveller", "kill", "guardian"],
-  ["traveller", "drink", "worm"],
-  ["traveller", "give", "hive"],
-  ["traveller", "stop", "witness"],
-  ["pyramid", "drink", "guardian"],
-  ["pyramid", "stop", "witness"],
-  ["witness", "drink", "light"],
-  ["witness", "kill", "pyramid"],
-  ["guardian", "worship", "witness"],
-  ["guardian", "kill", "traveller"],
-  ["savathun", "drink", "darkness"],
-  ["savathun", "stop", "darkness"],
-  ["light", "stop", "savathun"]
-];
+// ===== Canonical combos: 12 TRUTH, 17 LIE =====
+export const truthCombinations = Object.freeze([
+  ["pyramid","drink","worm"],
+  ["pyramid","kill","worm"],
+  ["pyramid","stop","savathun"],
+  ["pyramid","give","darkness"],
+  ["guardian","worship","light"],
+  ["guardian","worship","traveller"],
+  ["guardian","kill","witness"],
+  ["traveller","give","guardian"],
+  ["traveller","give","light"],
+  ["hive","worship","darkness"],
+  ["hive","worship","worm"],
+  ["darkness","stop","savathun"]
+]);
+
+export const lieCombinations = Object.freeze([
+  ["hive","kill","worm"],
+  ["hive","kill","light"],
+  ["hive","give","darkness"],
+  ["hive","stop","witness"],
+  ["traveller","kill","guardian"],
+  ["traveller","drink","worm"],
+  ["traveller","give","hive"],
+  ["traveller","stop","witness"],
+  ["pyramid","drink","guardian"],   // ← included per your list
+  ["pyramid","stop","witness"],
+  ["witness","drink","light"],
+  ["witness","kill","pyramid"],
+  ["guardian","worship","witness"],
+  ["guardian","kill","traveller"],
+  ["savathun","drink","darkness"],
+  ["savathun","stop","darkness"],
+  ["light","stop","savathun"]
+]);
 
 let lockedSide = null;
 let lockedType = null;
@@ -43,34 +45,26 @@ export function getValidSymbols(selectedSymbols, side, slotIndex) {
   let pool = getAllowedCombinations(side);
   const oppositeUsed = new Set(getSymbolsFromOtherSide(side));
 
-  // Remove combos that contain any symbol already used on the opposite side
+  // ban any combo containing a symbol already used on the opposite side
   pool = pool.filter(combo => combo.every(sym => !oppositeUsed.has(sym)));
 
-  // Must match already chosen symbols on the same side
+  // must match already-chosen symbols on this side
   const matches = pool.filter(combo =>
     combo.every((val, i) =>
       i === slotIndex || !selectedSymbols[i] || selectedSymbols[i] === val
     )
   );
 
-  // Unique candidates for this position
-  const result = [...new Set(matches.map(c => c[slotIndex]))];
-
-  // No repeats within the same side
+  // candidates for this slot, no repeats on same side
   const ownUsed = new Set(selectedSymbols.filter(Boolean));
-  const filtered = result.filter(sym => !ownUsed.has(sym));
-
-  return filtered;
+  return [...new Set(matches.map(c => c[slotIndex]))].filter(sym => !ownUsed.has(sym));
 }
 
 function getSymbolsFromOtherSide(side) {
   const otherSide = side === 'left' ? 'right' : 'left';
-  const classes = [`${otherSide}1`, `${otherSide}2`, `${otherSide}3`];
-  const symbols = classes.map(cls => {
-    const el = document.querySelector(`.dial-slot.${cls}`);
-    return el?.dataset.symbol || null;
-  }).filter(Boolean);
-  return symbols;
+  return [1,2,3]
+    .map(i => document.querySelector(`.dial-slot.${otherSide}${i}`)?.dataset.symbol || null)
+    .filter(Boolean);
 }
 
 export function validateGroup(symbols) {
@@ -98,4 +92,18 @@ export function getAllowedCombinations(forSide) {
 
 function arraysEqual(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+/* ---- Dev-time sanity check (optional; shows in console while running vite dev) ---- */
+if (import.meta?.env?.DEV) {
+  const asKey = c => c.join(',');
+  const sTruth = new Set(truthCombinations.map(asKey));
+  const sLie   = new Set(lieCombinations.map(asKey));
+  const overlap = [...sTruth].filter(k => sLie.has(k));
+  if (overlap.length) {
+    // eslint-disable-next-line no-console
+    console.warn('Overlap between TRUTH and LIE combos:', overlap);
+  }
+  // eslint-disable-next-line no-console
+  console.log(`Combos loaded → TRUTH: ${sTruth.size}, LIE: ${sLie.size}`);
 }

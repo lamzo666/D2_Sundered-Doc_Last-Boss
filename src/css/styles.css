@@ -1,7 +1,8 @@
 /* ====== PAGE / BACKDROP ====== */
+/* src/css/styles.css */
 body {
   background-color: #111;
-  background-image: url('img/blur_fix.jpg'); /* relative path for Pages */
+  background-image: url('../img/blur_fix.jpg'); /* go up from /assets to /img */
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;

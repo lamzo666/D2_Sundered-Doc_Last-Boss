@@ -5,6 +5,9 @@ import {
   clearLock
 } from './combination_logic_module.js';
 
+// NEW: ensure map functions are bundled
+import './map_logic.js';
+
 window.addEventListener('DOMContentLoaded', () => {
   const slots = document.querySelectorAll('.dial-slot');
   const symbolPopup = document.getElementById('symbolPopup');

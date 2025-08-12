@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Kerrev, The Erased - Dial Helper</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Manrope:wght@300;700;800&display=swap" rel="stylesheet" />
-  <!-- CSS (relative path for GitHub Pages) -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <!-- Tiny toggle panel -->
   <div id="tooltip-toggle">
     <label class="toggle-item">
       <input id="tooltipCheckbox" type="checkbox" checked />
@@ -26,17 +23,14 @@
   <h1>KERREV, THE ERASED</h1>
   <h2>Sundered Doctrine - DIAL HELPER</h2>
 
-  <!-- collapsible helper text -->
   <div id="tooltip">Enter the symbols you see in-game</div>
 
-  <!-- Truth / Lie labels -->
   <div id="truthLieLabel">
     <div id="label-left" class=""></div>
     <div></div>
     <div id="label-right" class=""></div>
   </div>
 
-  <!-- Dial -->
   <div class="dial-wrapper">
     <div class="dial">
       <img class="dial-background" src="img/empty_dial.png" alt="Dial background" />
@@ -49,7 +43,6 @@
     </div>
   </div>
 
-  <!-- Buttons -->
   <div class="btn-container">
     <button class="btn-icon" id="lockButton" title="Lock / Confirm">
       <img src="img/lock-50.png" alt="Lock" />
@@ -59,12 +52,10 @@
     </button>
   </div>
 
-  <!-- Popup picker -->
   <div class="symbol-popup" id="symbolPopup">
     <div class="symbol-grid" id="popupGrid"></div>
   </div>
 
-  <!-- Map -->
   <div class="map-container">
     <img src="img/map.jpg" alt="Map" class="map-img" />
     <div class="map-overlay" id="map-overlay"></div>
@@ -75,9 +66,7 @@
     <span class="map-credit">THANKS, AEQUORDE, FOR THE MAP</span>
   </div>
 
-  <!-- JS (module; relative paths) -->
-  <script type="module" src="js/combination_logic_module.js"></script>
-  <script type="module" src="js/map_logic.js"></script>
-  <script type="module" src="js/logic.js"></script>
+  <!-- Single entry for Vite -->
+  <script type="module" src="./logic.js"></script>
 </body>
 </html>

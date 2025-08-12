@@ -5,7 +5,7 @@ import {
   clearLock
 } from './combination_logic_module.js';
 
-// NEW: ensure map functions are bundled
+// Ensure map functions are bundled
 import './map_logic.js';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -82,7 +82,6 @@ window.addEventListener('DOMContentLoaded', () => {
     label.style.display = symbolNamesCheckbox.checked ? 'block' : 'none';
   }
 
-  // As soon as one side forms a valid trio, pre-lock that side/type.
   const maybePrelock = () => {
     if (phase !== 'entry') return;
     const L = trio('left'), R = trio('right');
@@ -108,11 +107,10 @@ window.addEventListener('DOMContentLoaded', () => {
     else { apply(R, type); if (L) apply(L, ''); }
   }
 
-  // ----- Autofill helpers -----
   const sideSlots = (side) => [1,2,3].map(i => document.querySelector(`.dial-slot.${side}${i}`));
   const pickSymbol = (slot, symbol) => {
     slot.dataset.symbol = symbol;
-    slot.style.backgroundImage = `url('img/${symbol}.png')`; // relative path
+    slot.style.backgroundImage = `url('img/${symbol}.png')`;
     updateSlotLabel(slot);
   };
   const validFor = (side, index) => {
@@ -142,7 +140,6 @@ window.addEventListener('DOMContentLoaded', () => {
     checkProgress();
   };
 
-  // ----- Slot click -----
   slots.forEach(slot => {
     slot.addEventListener('click', () => {
       if (phase === 'final') return;
@@ -161,7 +158,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const options = validFor(side, idx);
 
-      // Autofill if only one feasible choice
       if (options.length === 1) {
         pickSymbol(slot, options[0]);
         maybePrelock();
@@ -170,7 +166,6 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Otherwise show popup
       popupGrid.innerHTML = '';
       if (options.length === 0) {
         const div = document.createElement('div');
@@ -201,7 +196,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ----- Phases -----
   function enterIllumination(leftType, rightType) {
     phase = 'illumination';
     lockButton.classList.add('glow-phase');
@@ -239,7 +233,6 @@ window.addEventListener('DOMContentLoaded', () => {
     tell('Follow the map to interact with the marked symbols. Click Reset to start again.');
     window.showMapHighlights(truthToVisit, lieToVisit);
 
-    // Mobile: if user rotates to landscape, show full map
     if (window.matchMedia('(orientation: landscape)').matches && window.innerWidth <= 900) {
       document.body.classList.add('map-full');
     }
@@ -274,7 +267,6 @@ window.addEventListener('DOMContentLoaded', () => {
   lockButton.addEventListener('click', handleLock);
   resetButton.addEventListener('click', resetUI);
 
-  // When both trios are set, only proceed if opposite types AND disjoint
   function checkProgress() {
     if (!bothComplete()) return;
 
@@ -294,7 +286,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Orientation change -> if in final phase and landscape on small screens: full map
   window.addEventListener('orientationchange', () => {
     if (phase === 'final' && window.innerWidth <= 900 &&
         window.matchMedia('(orientation: landscape)').matches) {

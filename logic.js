@@ -5,7 +5,7 @@ import {
   clearLock
 } from './combination_logic_module.js';
 
-// Ensure map functions are bundled
+// Make sure map logic is bundled (provides window.showMapHighlights)
 import './map_logic.js';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -69,7 +69,6 @@ window.addEventListener('DOMContentLoaded', () => {
   ]);
   const bothComplete = () => trio('left').every(Boolean) && trio('right').every(Boolean);
 
-  // Create/update the text label under a dial slot
   function updateSlotLabel(slot) {
     const name = (slot.dataset.symbol || '').toUpperCase();
     let label = slot.querySelector('.symbol-name');
@@ -82,6 +81,7 @@ window.addEventListener('DOMContentLoaded', () => {
     label.style.display = symbolNamesCheckbox.checked ? 'block' : 'none';
   }
 
+  // Pre-lock whichever side finishes first
   const maybePrelock = () => {
     if (phase !== 'entry') return;
     const L = trio('left'), R = trio('right');
@@ -140,6 +140,7 @@ window.addEventListener('DOMContentLoaded', () => {
     checkProgress();
   };
 
+  // ----- Slot click -----
   slots.forEach(slot => {
     slot.addEventListener('click', () => {
       if (phase === 'final') return;
@@ -158,6 +159,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const options = validFor(side, idx);
 
+      // Autofill if only one feasible choice
       if (options.length === 1) {
         pickSymbol(slot, options[0]);
         maybePrelock();
@@ -166,6 +168,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Otherwise show popup
       popupGrid.innerHTML = '';
       if (options.length === 0) {
         const div = document.createElement('div');
@@ -196,6 +199,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ----- Phases -----
   function enterIllumination(leftType, rightType) {
     phase = 'illumination';
     lockButton.classList.add('glow-phase');
@@ -233,6 +237,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tell('Follow the map to interact with the marked symbols. Click Reset to start again.');
     window.showMapHighlights(truthToVisit, lieToVisit);
 
+    // Mobile: if user rotates to landscape, show full map
     if (window.matchMedia('(orientation: landscape)').matches && window.innerWidth <= 900) {
       document.body.classList.add('map-full');
     }
@@ -267,6 +272,7 @@ window.addEventListener('DOMContentLoaded', () => {
   lockButton.addEventListener('click', handleLock);
   resetButton.addEventListener('click', resetUI);
 
+  // When both trios are set, only proceed if opposite types AND disjoint
   function checkProgress() {
     if (!bothComplete()) return;
 
@@ -286,6 +292,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Orientation change → full map on small landscape in final phase
   window.addEventListener('orientationchange', () => {
     if (phase === 'final' && window.innerWidth <= 900 &&
         window.matchMedia('(orientation: landscape)').matches) {

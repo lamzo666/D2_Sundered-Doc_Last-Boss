@@ -1,7 +1,8 @@
-// src/combination_logic_module.js
+// combination_logic_module.js
+// Deep-simulation validator for the Sundered-Doc dial
+// Canonical lists: TRUTH x12, LIE x17
 
-// ===== Canonical combos: 12 TRUTH, 17 LIE =====
-export const truthCombinations = Object.freeze([
+const TRUTH = Object.freeze([
   ["pyramid","drink","worm"],
   ["pyramid","kill","worm"],
   ["pyramid","stop","savathun"],
@@ -16,7 +17,7 @@ export const truthCombinations = Object.freeze([
   ["darkness","stop","savathun"]
 ]);
 
-export const lieCombinations = Object.freeze([
+const LIE = Object.freeze([
   ["hive","kill","worm"],
   ["hive","kill","light"],
   ["hive","give","darkness"],
@@ -25,7 +26,7 @@ export const lieCombinations = Object.freeze([
   ["traveller","drink","worm"],
   ["traveller","give","hive"],
   ["traveller","stop","witness"],
-  ["pyramid","drink","guardian"],    // per your list
+  ["pyramid","drink","guardian"],
   ["pyramid","stop","witness"],
   ["witness","drink","light"],
   ["witness","kill","pyramid"],
@@ -36,69 +37,96 @@ export const lieCombinations = Object.freeze([
   ["light","stop","savathun"]
 ]);
 
-let lockedSide = null;
-let lockedType = null;
+let lockedSide = null; // 'left' | 'right' | null
+let lockedType = null; // 'truth' | 'lie'   | null
 
+// ---------- helpers ----------
+const eq = (a,b) => a.length===b.length && a.every((v,i)=>v===b[i]);
+const groupTypeOf = (t) =>
+  TRUTH.some(c=>eq(c,t)) ? 'truth' :
+  LIE.some(c=>eq(c,t))   ? 'lie'   : null;
+
+const getSidePartial = (side) =>
+  [1,2,3].map(i => document.querySelector(`.dial-slot.${side}${i}`)?.dataset.symbol || null);
+
+const matchingCombos = (pool, partial) =>
+  pool.filter(c => c.every((val,i)=> !partial[i] || partial[i]===val));
+
+const disjoint = (a,b) => {
+  const s = new Set(a);
+  return !b.some(x => s.has(x));
+};
+
+// pools allowed for a given side under current lock
+function poolsFor(side) {
+  if (!lockedSide) return [TRUTH, LIE];
+  if (lockedSide === side) return lockedType === 'truth' ? [TRUTH] : [LIE];
+  // opposite side must be the opposite type
+  return lockedType === 'truth' ? [LIE] : [TRUTH];
+}
+
+// Is there at least one complete (left,right) pair remaining that:
+// - matches both partials
+// - respects the lock (opposite types when locked)
+// - uses disjoint symbols across sides
+function feasiblePairExists(leftPartial, rightPartial) {
+  const leftMatches = [...new Set(
+    poolsFor('left').flatMap(p => matchingCombos(p, leftPartial).map(c=>c.join('|')))
+  )].map(s=>s.split('|'));
+
+  const rightMatches = [...new Set(
+    poolsFor('right').flatMap(p => matchingCombos(p, rightPartial).map(c=>c.join('|')))
+  )].map(s=>s.split('|'));
+
+  if (!leftMatches.length || !rightMatches.length) return false;
+
+  for (const L of leftMatches) {
+    for (const R of rightMatches) {
+      if (disjoint(L,R)) return true;
+    }
+  }
+  return false;
+}
+
+// ---------- public API used by logic.js ----------
 export function getValidSymbols(selectedSymbols, side, slotIndex) {
   if (slotIndex < 0 || slotIndex > 2) return [];
 
-  // Start from the allowed pool given current lock
-  let pool = getAllowedCombinations(side);
+  const other = side === 'left' ? 'right' : 'left';
+  const leftPartial  = side === 'left'  ? [...selectedSymbols] : getSidePartial('left');
+  const rightPartial = side === 'right' ? [...selectedSymbols] : getSidePartial('right');
 
-  // Ban any combo that uses a symbol already chosen on the opposite side
-  const oppositeUsed = new Set(getSymbolsFromOtherSide(side));
-  pool = pool.filter(combo => combo.every(sym => !oppositeUsed.has(sym)));
-
-  // Must match already-chosen symbols on the same side
-  const matches = pool.filter(combo =>
-    combo.every((val, i) =>
-      i === slotIndex || !selectedSymbols[i] || selectedSymbols[i] === val
-    )
+  // Candidates = symbols at this slot from combos that match this side's partial,
+  // restricted to currently allowed pool(s) for this side.
+  const baseMatches = matchingCombos(
+    poolsFor(side).flat(),
+    side === 'left' ? leftPartial : rightPartial
   );
+  const candidates = [...new Set(baseMatches.map(c => c[slotIndex]))];
 
-  // Candidates for this slot, excluding repeats on this side
-  const ownUsed = new Set(selectedSymbols.filter(Boolean));
-  return [...new Set(matches.map(c => c[slotIndex]))].filter(sym => !ownUsed.has(sym));
-}
-
-function getSymbolsFromOtherSide(side) {
-  const otherSide = side === 'left' ? 'right' : 'left';
-  return [1,2,3]
-    .map(i => document.querySelector(`.dial-slot.${otherSide}${i}`)?.dataset.symbol || null)
-    .filter(Boolean);
+  // Try each candidate; keep only the ones that can still lead to a valid (truth, lie) pair
+  const usedOnThisSide = new Set(selectedSymbols.filter(Boolean));
+  const valid = [];
+  for (const cand of candidates) {
+    if (usedOnThisSide.has(cand)) continue; // no repeats within the trio
+    if (side === 'left') {
+      const lp = [...leftPartial]; lp[slotIndex] = cand;
+      if (feasiblePairExists(lp, rightPartial)) valid.push(cand);
+    } else {
+      const rp = [...rightPartial]; rp[slotIndex] = cand;
+      if (feasiblePairExists(leftPartial, rp)) valid.push(cand);
+    }
+  }
+  return valid;
 }
 
 export function validateGroup(symbols) {
-  if (truthCombinations.find(c => arraysEqual(c, symbols))) return 'truth';
-  if (lieCombinations.find(c => arraysEqual(c, symbols))) return 'lie';
-  return null;
+  return groupTypeOf(symbols); // 'truth' | 'lie' | null
 }
-
 export function lockGroup(side, type) { lockedSide = side; lockedType = type; }
 export function clearLock() { lockedSide = null; lockedType = null; }
 
-// ❗ FIX: enforce the lock immediately — do NOT wait for both sides to be complete
-export function getAllowedCombinations(forSide) {
-  if (!lockedSide) return [...truthCombinations, ...lieCombinations];
-
-  const lockedIsTruth = lockedType === 'truth';
-  if (forSide === lockedSide) {
-    return lockedIsTruth ? truthCombinations : lieCombinations;
-  } else {
-    return lockedIsTruth ? lieCombinations : truthCombinations;
-  }
-}
-
-function arraysEqual(a, b) {
-  return a.length === b.length && a.every((v, i) => v === b[i]);
-}
-
-// Dev aid (safe to keep)
+// Dev aid (seen in console during `npm run dev`)
 if (import.meta?.env?.DEV) {
-  const asKey = c => c.join(',');
-  const sTruth = new Set(truthCombinations.map(asKey));
-  const sLie   = new Set(lieCombinations.map(asKey));
-  const overlap = [...sTruth].filter(k => sLie.has(k));
-  if (overlap.length) console.warn('Overlap TRUTH/LIE:', overlap);
-  console.log(`Combos → TRUTH: ${sTruth.size}, LIE: ${sLie.size}`);
+  console.log(`Combos loaded → TRUTH: ${TRUTH.length}, LIE: ${LIE.length}`);
 }

@@ -7,28 +7,22 @@ import {
 import './map_logic.js';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // ---- Force TRUTH/LIE label size from CSS vars, inline + !important ----
-  const setTruthLieFontFromVars = () => {
-    const calcExpr = 'calc(var(--truthlie-font-base) * var(--dial-scale) * var(--truthlie-mult))';
-
-    // Let the browser resolve calc(var(--...)) → px
-    const probe = document.createElement('div');
-    probe.style.position = 'absolute';
-    probe.style.visibility = 'hidden';
-    probe.style.fontSize = calcExpr;
-    document.body.appendChild(probe);
-    const resolvedPx = getComputedStyle(probe).fontSize; // e.g. "42px"
-    probe.remove();
-
+  /* ---------- Force TRUTH/LIE label size from the dial's width ---------- */
+  const sizeTruthLieFromDial = () => {
+    const dial = document.querySelector('.dial');
+    if (!dial) return;
+    const dialWidth = dial.getBoundingClientRect().width; // current pixels
+    const coef = parseFloat(getComputedStyle(document.documentElement)
+                  .getPropertyValue('--truthlie-coef')) || 0.085;
+    const px = Math.max(10, Math.round(dialWidth * coef)) + 'px';
     const L = document.getElementById('label-left');
     const R = document.getElementById('label-right');
-    if (L) L.style.setProperty('font-size', resolvedPx, 'important');
-    if (R) R.style.setProperty('font-size', resolvedPx, 'important');
+    if (L) L.style.setProperty('font-size', px, 'important');
+    if (R) R.style.setProperty('font-size', px, 'important');
   };
-  setTruthLieFontFromVars();
-
-  // Re-apply if something hot-reloads the CSS or you change the dial size
-  window.addEventListener('resize', setTruthLieFontFromVars);
+  // Run once after layout paints, then on resize
+  requestAnimationFrame(sizeTruthLieFromDial);
+  window.addEventListener('resize', sizeTruthLieFromDial);
 
   const slots = document.querySelectorAll('.dial-slot');
   const symbolPopup = document.getElementById('symbolPopup');
@@ -97,6 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
     label.style.display = symbolNamesCheckbox.checked ? 'block' : 'none';
   }
 
+  // Pre-lock whichever side finishes first
   const maybePrelock = () => {
     if (phase !== 'entry') return;
     const L = trio('left'), R = trio('right');
@@ -120,6 +115,8 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     if (which === 'left') { apply(L, type); if (R) apply(R, ''); }
     else { apply(R, type); if (L) apply(L, ''); }
+    // ensure size persists if classes changed
+    sizeTruthLieFromDial();
   }
 
   const sideSlots = (side) => [1,2,3].map(i => document.querySelector(`.dial-slot.${side}${i}`));
@@ -227,8 +224,7 @@ window.addEventListener('DOMContentLoaded', () => {
       R.textContent = rightType.toUpperCase();
       L.className = leftType === 'truth' ? 'truth-label' : 'lie-label';
       R.className = rightType === 'truth' ? 'truth-label' : 'lie-label';
-      // keep size correct in case classes changed
-      setTruthLieFontFromVars();
+      sizeTruthLieFromDial();
     }
 
     const left = trio('left');
@@ -280,8 +276,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (overlay) overlay.innerHTML = '';
     applyNamesVisibility(symbolNamesCheckbox.checked);
     document.body.classList.remove('map-full');
-    // re-apply size if vars changed
-    setTruthLieFontFromVars();
+    sizeTruthLieFromDial();
   }
 
   window.handleLock = handleLock;
@@ -289,7 +284,7 @@ window.addEventListener('DOMContentLoaded', () => {
   lockButton.addEventListener('click', handleLock);
   resetButton.addEventListener('click', resetUI);
 
-  // Valid pair check
+  // When both trios are set, only proceed if opposite types AND disjoint
   function checkProgress() {
     if (!bothComplete()) return;
 

@@ -4,11 +4,32 @@ import {
   lockGroup,
   clearLock
 } from './combination_logic_module.js';
-
-// Make sure map logic is bundled (provides window.showMapHighlights)
 import './map_logic.js';
 
 window.addEventListener('DOMContentLoaded', () => {
+  // ---- Force TRUTH/LIE label size from CSS vars, inline + !important ----
+  const setTruthLieFontFromVars = () => {
+    const calcExpr = 'calc(var(--truthlie-font-base) * var(--dial-scale) * var(--truthlie-mult))';
+
+    // Let the browser resolve calc(var(--...)) → px
+    const probe = document.createElement('div');
+    probe.style.position = 'absolute';
+    probe.style.visibility = 'hidden';
+    probe.style.fontSize = calcExpr;
+    document.body.appendChild(probe);
+    const resolvedPx = getComputedStyle(probe).fontSize; // e.g. "42px"
+    probe.remove();
+
+    const L = document.getElementById('label-left');
+    const R = document.getElementById('label-right');
+    if (L) L.style.setProperty('font-size', resolvedPx, 'important');
+    if (R) R.style.setProperty('font-size', resolvedPx, 'important');
+  };
+  setTruthLieFontFromVars();
+
+  // Re-apply if something hot-reloads the CSS or you change the dial size
+  window.addEventListener('resize', setTruthLieFontFromVars);
+
   const slots = document.querySelectorAll('.dial-slot');
   const symbolPopup = document.getElementById('symbolPopup');
   const popupGrid = document.getElementById('popupGrid');
@@ -31,11 +52,9 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------- Tooltip toggle (persist) ----------
-  const tooltipVisible = localStorage.getItem('tooltipVisible');
-  const tooltipOn = tooltipVisible !== 'false';
+  const tooltipOn = (localStorage.getItem('tooltipVisible') ?? 'true') === 'true';
   tooltipCheckbox.checked = tooltipOn;
   tooltip.classList.toggle('hidden', !tooltipOn);
-
   tooltipCheckbox.addEventListener('change', () => {
     const show = tooltipCheckbox.checked;
     tooltip.classList.toggle('hidden', !show);
@@ -44,17 +63,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const tell = (msg) => { if (tooltip) tooltip.textContent = msg; };
 
   // ---------- Symbol names toggle (persist) ----------
-  const storedNamesPref = localStorage.getItem('showSymbolNames');
-  const showNames = storedNamesPref === null ? true : storedNamesPref === 'true';
+  const showNames = (localStorage.getItem('showSymbolNames') ?? 'true') === 'true';
   symbolNamesCheckbox.checked = showNames;
-
   function applyNamesVisibility(show) {
     document.querySelectorAll('.dial-slot .symbol-name, .map-label').forEach(el => {
       el.style.display = show ? 'block' : 'none';
     });
   }
   applyNamesVisibility(showNames);
-
   symbolNamesCheckbox.addEventListener('change', () => {
     const on = symbolNamesCheckbox.checked;
     localStorage.setItem('showSymbolNames', on ? 'true' : 'false');
@@ -81,7 +97,6 @@ window.addEventListener('DOMContentLoaded', () => {
     label.style.display = symbolNamesCheckbox.checked ? 'block' : 'none';
   }
 
-  // Pre-lock whichever side finishes first
   const maybePrelock = () => {
     if (phase !== 'entry') return;
     const L = trio('left'), R = trio('right');
@@ -141,7 +156,8 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   // ----- Slot click -----
-  slots.forEach(slot => {
+  const slotsArr = [...slots];
+  slotsArr.forEach(slot => {
     slot.addEventListener('click', () => {
       if (phase === 'final') return;
 
@@ -159,7 +175,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const options = validFor(side, idx);
 
-      // Autofill if only one feasible choice
       if (options.length === 1) {
         pickSymbol(slot, options[0]);
         maybePrelock();
@@ -168,7 +183,6 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Otherwise show popup
       popupGrid.innerHTML = '';
       if (options.length === 0) {
         const div = document.createElement('div');
@@ -194,7 +208,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('click', e => {
-    if (!symbolPopup.contains(e.target) && ![...slots].includes(e.target)) {
+    if (!symbolPopup.contains(e.target) && !slotsArr.includes(e.target)) {
       symbolPopup.style.display = 'none';
     }
   });
@@ -213,6 +227,8 @@ window.addEventListener('DOMContentLoaded', () => {
       R.textContent = rightType.toUpperCase();
       L.className = leftType === 'truth' ? 'truth-label' : 'lie-label';
       R.className = rightType === 'truth' ? 'truth-label' : 'lie-label';
+      // keep size correct in case classes changed
+      setTruthLieFontFromVars();
     }
 
     const left = trio('left');
@@ -222,7 +238,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     allowedGlowSlots = [];
     [...truthGroup, ...lieGroup].forEach(sym => {
-      const slot = [...slots].find(s => s.dataset.symbol === sym);
+      const slot = slotsArr.find(s => s.dataset.symbol === sym);
       if (slot) allowedGlowSlots.push(slot);
     });
   }
@@ -237,7 +253,6 @@ window.addEventListener('DOMContentLoaded', () => {
     tell('Follow the map to interact with the marked symbols. Click Reset to start again.');
     window.showMapHighlights(truthToVisit, lieToVisit);
 
-    // Mobile: if user rotates to landscape, show full map
     if (window.matchMedia('(orientation: landscape)').matches && window.innerWidth <= 900) {
       document.body.classList.add('map-full');
     }
@@ -265,6 +280,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (overlay) overlay.innerHTML = '';
     applyNamesVisibility(symbolNamesCheckbox.checked);
     document.body.classList.remove('map-full');
+    // re-apply size if vars changed
+    setTruthLieFontFromVars();
   }
 
   window.handleLock = handleLock;
@@ -272,7 +289,7 @@ window.addEventListener('DOMContentLoaded', () => {
   lockButton.addEventListener('click', handleLock);
   resetButton.addEventListener('click', resetUI);
 
-  // When both trios are set, only proceed if opposite types AND disjoint
+  // Valid pair check
   function checkProgress() {
     if (!bothComplete()) return;
 
@@ -292,7 +309,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Orientation change → full map on small landscape in final phase
   window.addEventListener('orientationchange', () => {
     if (phase === 'final' && window.innerWidth <= 900 &&
         window.matchMedia('(orientation: landscape)').matches) {

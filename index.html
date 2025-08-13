@@ -6,6 +6,8 @@
   <title>Kerrev, The Erased - Dial Helper</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Manrope:wght@300;700;800&display=swap" rel="stylesheet" />
+  <!-- point to the file you actually have -->
+  <link rel="stylesheet" href="/src/css/styles.css" />
 </head>
 <body>
   <div id="tooltip-toggle">
@@ -25,9 +27,9 @@
   <div id="tooltip">Enter the symbols you see in-game</div>
 
   <div id="truthLieLabel">
-    <div id="label-left" class=""></div>
+    <div id="label-left"></div>
     <div></div>
-    <div id="label-right" class=""></div>
+    <div id="label-right"></div>
   </div>
 
   <div class="dial-wrapper">
@@ -65,7 +67,7 @@
     <span class="map-credit">THANKS, AEQUORDE, FOR THE MAP</span>
   </div>
 
-  <!-- Single Vite entry (now under /src) -->
-  <script type="module" src="/src/main.js"></script>
+  <!-- Only this module; it imports the others from /src -->
+  <script type="module" src="/src/logic.js"></script>
 </body>
 </html>

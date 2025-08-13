@@ -1,208 +1,116 @@
-/* ========= ONE KNOB TO RULE THEM ALL ========= */
 :root{
-  /* ONE knob */
-  --dial-max: 450px;          /* ← set this to your target dial size */
-  --dial-base: 572px;         /* reference size (don’t change) */
+  --dial-max: 450px;
+  --dial-base: 572px;
   --dial-scale: calc(var(--dial-max) / var(--dial-base));
 
-  /* Internals */
-  --slot-size: 14%;           /* dial icon size (kept proportional) */
-  --name-font-base: 1.0rem;   /* base size for icon labels */
+  --slot-size: 14%;
+  --name-font-base: 1.0rem;
 
-  /* TRUTH/LIE label sizing (bump this to make labels bigger) */
+  /* TRUTH/LIE label knob — change this to resize labels */
   --truthlie-font-base: 2.2rem;
-  --truthlie-mult: 5;       /* ↑ increase/decrease to taste */
+  --truthlie-mult: 5.5;
 }
 
-/* ====== PAGE / BACKDROP ====== */
-/* This path hits Vite's public/img folder */
+/* PAGE / BACKDROP */
 body{
-  background-color:#111;
-  background-image: url('/img/blur_fix.jpg');
-  background-position:center;
-  background-size:cover;
-  background-repeat:no-repeat;
-  background-attachment:fixed;
-  color:#fff;
-  font-family:'Open Sans', sans-serif;
-  text-align:center;
-  margin:0;
+  background:#111 url('/img/blur_fix.jpg') center/cover fixed no-repeat;
+  color:#fff; font-family:'Open Sans', sans-serif; text-align:center; margin:0;
 }
 
 /* Titles */
-h1{
-  font-family:'Manrope', sans-serif;
-  font-weight:700;
-  font-size:2.2em;
-  text-shadow:0 0 10px #ff0044,0 0 20px #ff0044,0 0 40px #ff0044;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  margin:32px 0 4px;
-}
-h2{
-  font-family:'Manrope', sans-serif;
-  font-weight:300;
-  font-size:1.1em;
-  letter-spacing:1px;
-  margin:0 0 10px;
-}
+h1{ font-family:'Manrope',sans-serif; font-weight:700; font-size:2.2em;
+    text-shadow:0 0 10px #ff0044,0 0 20px #ff0044,0 0 40px #ff0044;
+    letter-spacing:1px; text-transform:uppercase; margin:32px 0 4px; }
+h2{ font-family:'Manrope',sans-serif; font-weight:300; font-size:1.1em; letter-spacing:1px; margin:0 0 10px; }
 
-/* ====== TOOLTIP TOGGLE + TOOLTIP ====== */
-#tooltip-toggle{
-  position:fixed; top:10px; left:10px;
-  background:rgba(0,0,0,.6);
-  backdrop-filter:blur(6px);
-  padding:4px 8px; border-radius:6px;
-  font-size:.9em; z-index:2000;
-  box-shadow:0 2px 6px rgba(0,0,0,.4);
-}
+/* Toggle + Tooltip */
+#tooltip-toggle{ position:fixed; top:10px; left:10px; background:rgba(0,0,0,.6); backdrop-filter:blur(6px);
+  padding:4px 8px; border-radius:6px; font-size:.9em; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,.4); }
 #tooltip-toggle .toggle-item{ display:flex; align-items:center; gap:6px; margin:4px 0; }
 #tooltip-toggle label{ color:#fff; cursor:pointer; }
 #tooltip-toggle input{ margin-right:4px; }
 
-#tooltip{
-  font-family:'Manrope', sans-serif;
-  font-size:1em; color:#fff; text-align:center;
-  background:rgba(0,0,0,.6); backdrop-filter:blur(8px);
-  border-radius:8px; padding:8px 14px;
+#tooltip{ font-family:'Manrope',sans-serif; font-size:1em; color:#fff; text-align:center;
+  background:rgba(0,0,0,.6); backdrop-filter:blur(8px); border-radius:8px; padding:8px 14px;
   max-width:420px; margin:0 auto 8px; box-shadow:0 4px 12px rgba(0,0,0,.4);
   max-height:140px; overflow:hidden; opacity:1; transform:translateY(0);
-  transition:opacity .25s, transform .25s, max-height .25s, padding .25s, margin .25s;
-}
-#tooltip.hidden{
-  opacity:0; transform:translateY(-8px); max-height:0; padding:0; margin:0 auto; pointer-events:none;
-}
+  transition:opacity .25s, transform .25s, max-height .25s, padding .25s, margin .25s; }
+#tooltip.hidden{ opacity:0; transform:translateY(-8px); max-height:0; padding:0; margin:0 auto; pointer-events:none; }
 
-/* ====== TRUTH / LIE LABELS ====== */
-/* container width follows dial; font is applied on child labels below */
+/* TRUTH / LIE LABELS */
 #truthLieLabel{
   min-height: calc(40px * var(--dial-scale));
-  margin: 4px auto 0;
-  width: 100%;
-  max-width: var(--dial-max);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;  /* pins left/right labels to edges */
-  align-items: center;
-  text-transform: uppercase;
-  font-weight: bold;
-  text-shadow: 0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
+  margin:4px auto 0; width:100%; max-width:var(--dial-max);
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
+  text-transform:uppercase; font-weight:bold;
+  text-shadow:0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
 }
-
-/* force the variable-driven font size onto the actual label elements */
 #truthLieLabel > #label-left,
 #truthLieLabel > #label-right{
   font-size: calc(var(--truthlie-font-base) * var(--dial-scale) * var(--truthlie-mult)) !important;
-  line-height: 1.05;
-  white-space: nowrap;
+  line-height:1.05; white-space:nowrap;
 }
+.truth-label{ color:#4caf50; } .lie-label{ color:#f44336; }
 
-.truth-label{ color:#4caf50; }
-.lie-label{  color:#f44336; }
-
-/* ====== DIAL ====== */
-.dial-wrapper{
-  display:flex; justify-content:center; align-items:center;
-  margin-top: calc(-36px * var(--dial-scale));
-  filter: drop-shadow(0 0 15px rgba(0,0,0,.7));
-}
-.dial{
-  position:relative;
-  width:90vw;
-  max-width:var(--dial-max);
-  aspect-ratio:1 / 1;
-}
+/* DIAL */
+.dial-wrapper{ display:flex; justify-content:center; align-items:center;
+  margin-top: calc(-36px * var(--dial-scale)); filter: drop-shadow(0 0 15px rgba(0,0,0,.7)); }
+.dial{ position:relative; width:90vw; max-width:var(--dial-max); aspect-ratio:1/1; }
 .dial img.dial-background{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
 
-/* Dial slots (size scales with dial via %) */
-.dial-slot{
-  position:absolute;
-  width:var(--slot-size);
-  height:var(--slot-size);
+.dial-slot{ position:absolute; width:var(--slot-size); height:var(--slot-size);
   background-size:contain; background-repeat:no-repeat; background-position:center;
-  cursor:pointer; z-index:2; will-change:filter;
-}
-
-/* Slot positions (percent → stay correct at any size) */
+  cursor:pointer; z-index:2; will-change:filter; }
+/* slot positions */
 .dial-slot.left1  { top:17.4%; left:22.6%; }
 .dial-slot.left2  { top:42.3%; left:11.1%; }
 .dial-slot.left3  { top:64.9%; left:21.8%; }
 .dial-slot.right1 { top:17.4%; right:23.2%; }
 .dial-slot.right2 { top:42.3%; right:12%;  }
 .dial-slot.right3 { top:64.9%; right:22.5%; }
+.dial-slot.glow{ filter:drop-shadow(0 0 10px rgba(255,166,0,.9)) drop-shadow(0 0 15px rgba(255,166,0,.75)); }
 
-/* Illuminated aura */
-.dial-slot.glow{
-  filter:drop-shadow(0 0 10px rgba(255,166,0,.9)) drop-shadow(0 0 15px rgba(255,166,0,.75));
-}
-
-/* Label under each icon (font scales with dial) */
 .dial-slot .symbol-name{
-  position:absolute; left:50%; transform:translateX(-50%);
-  bottom:-45%;
-  white-space:nowrap;
-  font-family:'Manrope', sans-serif; font-weight:700;
-  font-size: calc(var(--name-font-base) * var(--dial-scale));
-  letter-spacing:.04em; color:#e6e6e6;
-  text-shadow:0 1px 2px #000, 0 0 6px #000;
-  pointer-events:none; user-select:none; z-index:3;
+  position:absolute; left:50%; transform:translateX(-50%); bottom:-45%; white-space:nowrap;
+  font-family:'Manrope',sans-serif; font-weight:700; font-size:calc(var(--name-font-base) * var(--dial-scale));
+  letter-spacing:.04em; color:#e6e6e6; text-shadow:0 1px 2px #000, 0 0 6px #000; pointer-events:none; user-select:none; z-index:3;
 }
 
-/* ====== BUTTONS (fixed size; fixed gap; vertical offset tracks dial) ====== */
-.btn-container{
-  display:flex; justify-content:center; align-items:center;
-  gap:18px;                                  /* fixed spacing between buttons */
-  margin: calc(-20px * var(--dial-scale)) auto 2px; /* stay tucked under dial */
-  flex-wrap:nowrap;
-}
-.btn-icon{
-  width:60px; height:60px;                   /* fixed button size */
-  border:none; border-radius:12px;
-  background:#003322;
-  box-shadow:0 0 8px #005f3c, 0 0 12px #005f3c;
-  cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
-}
+/* BUTTONS */
+.btn-container{ display:flex; justify-content:center; align-items:center; gap:18px;
+  margin: calc(-20px * var(--dial-scale)) auto 2px; flex-wrap:nowrap; }
+.btn-icon{ width:60px; height:60px; border:none; border-radius:12px; background:#003322;
+  box-shadow:0 0 8px #005f3c, 0 0 12px #005f3c; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
 .btn-icon img{ width:40px; height:40px; }
 .btn-icon.glow-phase{ background:#006644; box-shadow:0 0 12px #00ff99, 0 0 24px #00ff99; }
 .btn-reset{ background:#330011; box-shadow:0 0 8px #660022, 0 0 12px #660022; }
 
-/* ====== MAP ====== */
+/* MAP */
 .map-container{ position:relative; max-width:1000px; margin:32px auto -4px; }
 .map-img{ width:100%; height:auto; display:block; }
 .map-overlay{ position:absolute; inset:0; pointer-events:none; }
 
-/* Symbol overlays on the map */
-.symbol-wrap{ position:absolute; width:5%; aspect-ratio:1 / 1; pointer-events:none; z-index:2; }
-.symbol-overlay{
-  position:absolute; inset:0; width:100%; aspect-ratio:1 / 1; pointer-events:none; z-index:2;
-  filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85));
-}
-.symbol-wrap.truth .symbol-overlay{
-  filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #4caf50);
-}
-.symbol-wrap.lie .symbol-overlay{
-  filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #f44336);
-}
-.map-label{
-  position:absolute; left:50%; top:115%; transform:translateX(-50%);
-  text-transform:uppercase; font-family:'Manrope', sans-serif; font-weight:800; letter-spacing:.04em;
-  color:#e6e6e6; text-shadow:0 1px 2px #000, 0 0 6px #000; white-space:nowrap; pointer-events:none; user-select:none; z-index:3;
-}
-.symbol-wrap.truth .map-label{ color:#c9ffd0; }
-.symbol-wrap.lie   .map-label{ color:#ffc9c9; }
+.symbol-wrap{ position:absolute; width:5%; aspect-ratio:1/1; pointer-events:none; z-index:2; }
+.symbol-overlay{ position:absolute; inset:0; width:100%; aspect-ratio:1/1; pointer-events:none; z-index:2;
+  filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)); }
+.symbol-wrap.truth .symbol-overlay{ filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #4caf50); }
+.symbol-wrap.lie   .symbol-overlay{ filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #f44336); }
+.map-label{ position:absolute; left:50%; top:115%; transform:translateX(-50%);
+  text-transform:uppercase; font-family:'Manrope',sans-serif; font-weight:800; letter-spacing:.04em;
+  color:#e6e6e6; text-shadow:0 1px 2px #000, 0 0 6px #000; white-space:nowrap; pointer-events:none; user-select:none; z-index:3; }
+.symbol-wrap.truth .map-label{ color:#c9ffd0; } .symbol-wrap.lie .map-label{ color:#ffc9c9; }
 
-/* ====== POPUP PICKER ====== */
-.symbol-popup{
-  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-  background:#222; border:2px solid #888; border-radius:8px; padding:20px; z-index:999;
-}
+/* POPUP */
+.symbol-popup{ display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:#222; border:2px solid #888; border-radius:8px; padding:20px; z-index:999; }
 .symbol-grid{ display:grid; grid-template-columns:repeat(4, 60px); gap:10px; justify-content:center; }
 .symbol-grid img{ width:60px !important; height:60px !important; object-fit:contain; display:block; cursor:pointer; background:none; box-shadow:none; }
 
-/* ====== FOOTER ====== */
-.footer{ font-family:'Open Sans', sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
+/* FOOTER */
+.footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
 .footer .map-credit{ font-size:14px !important; opacity:.7; font-weight:normal; display:block; margin-top:2px; }
 
-/* ========= MOBILE ========= */
+/* MOBILE */
 @media (max-width:640px){
   #tooltip-toggle{ position:fixed; bottom:12px; left:12px; right:auto; top:auto; transform:scale(.95); z-index:2000; padding:6px 8px; }
   #tooltip-toggle .toggle-item{ gap:4px; margin:2px 0; }
@@ -213,7 +121,7 @@ h2{
   .map-container{ margin:18px auto 8px; }
 }
 
-/* ====== MOBILE LANDSCAPE FULL MAP ====== */
+/* MOBILE LANDSCAPE MAP-ONLY MODE */
 @media (max-width:900px) and (orientation:landscape){
   body.map-full h1,
   body.map-full h2,
@@ -228,5 +136,4 @@ h2{
   body.map-full .map-overlay{ width:100%; height:100%; }
 }
 
-/* helper */
 .hidden-on-map{ display:none !important; }

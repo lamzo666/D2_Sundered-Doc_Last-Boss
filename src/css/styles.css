@@ -8,12 +8,12 @@
   --slot-size: 14%;
   --name-font-base: 1.0rem;
 
-  /* TRUTH/LIE label size — JS sizes inline as (dialWidth * --truthlie-coef) */
-  --truthlie-coef: 0.065;   /* 0.07 smaller … 0.12 larger */
+  /* TRUTH/LIE label size — JS sets font-size as (dialWidth * --truthlie-coef) */
+  --truthlie-coef: 0.065;   /* ↑ make bigger, ↓ smaller (e.g., 0.085 for larger labels) */
 
   /* TRUTH/LIE spacing knobs */
-  --truthlie-top: 8px;     /* space ABOVE the labels (under tooltip/title) */
-  --truthlie-gap: -6px;    /* space BELOW the labels (toward the dial) */
+  --truthlie-top: 8px;      /* space ABOVE the labels (under tooltip/title) */
+  --truthlie-gap: -6px;     /* space BELOW the labels (toward the dial) */
 
   /* Map label offset for above/below (%) relative to the symbol box */
   --map-label-offset: 115%;
@@ -68,10 +68,10 @@ h2{
   text-transform:uppercase; font-weight:bold;
   text-shadow:0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
 }
-/* JS sets the final pixel font-size inline; this is just a safe fallback */
+/* JS sets the final pixel font-size inline; this is a fallback */
 #truthLieLabel > #label-left,
 #truthLieLabel > #label-right{
-  font-size: 1rem;
+  font-size:1rem;
   line-height:1.05; white-space:nowrap;
 }
 .truth-label{ color:#4caf50; }
@@ -92,13 +92,13 @@ h2{
 
 /* Dial slots */
 .dial-slot{
-  position:absolute;                /* ← ensure pseudo-element positions correctly */
+  position:absolute;
   width:var(--slot-size); height:var(--slot-size);
   background-size:contain; background-repeat:no-repeat; background-position:center;
   cursor:pointer; z-index:2; will-change:filter;
 }
 
-/* positions */
+/* slot positions */
 .dial-slot.left1  { top:17.4%; left:22.6%; }
 .dial-slot.left2  { top:42.3%; left:11.1%; }
 .dial-slot.left3  { top:64.9%; left:21.8%; }
@@ -106,36 +106,26 @@ h2{
 .dial-slot.right2 { top:42.3%; right:12%;  }
 .dial-slot.right3 { top:64.9%; right:22.5%; }
 
-/* === Glow colours as vars so inner = outer === */
+/* === Glow colour vars (inner = outer) === */
 :root{
-  --slot-glow-outer-a: rgba(255,166,0,.90);   /* bright rim */
-  --slot-glow-outer-b: rgba(255,166,0,.75);   /* softer rim */
-  --slot-glow-inner:   rgba(255,166,0,.28);   /* inner fill (tweak for strength) */
+  --slot-glow-outer-a: rgba(255,166,0,.90);
+  --slot-glow-outer-b: rgba(255,166,0,.75);
+  --slot-glow-inner:   rgba(255,166,0,.28);
 }
-
-/* Outer glow (unchanged look, now using vars) */
 .dial-slot.glow{
   filter:
     drop-shadow(0 0 10px var(--slot-glow-outer-a))
     drop-shadow(0 0 15px var(--slot-glow-outer-b));
 }
-
-/* NEW: Inner glow — soft radial tint over the icon */
 .dial-slot.glow::after{
   content:"";
-  position:absolute;
-  inset:12%;                         /* how far in from edges; lower = larger inner glow */
-  border-radius:10px;                /* keeps edges soft; can adjust or remove */
-  pointer-events:none;
-  z-index:1;                         /* sits above the icon but below text */
-  background:
-    radial-gradient(closest-side,
-      var(--slot-glow-inner) 0%,
-      rgba(255,166,0,0.0) 65%);
-  mix-blend-mode: screen;            /* makes the tint “lighten” the icon gently */
+  position:absolute; inset:12%; border-radius:10px;
+  pointer-events:none; z-index:1;
+  background: radial-gradient(closest-side, var(--slot-glow-inner) 0%, rgba(255,166,0,0) 65%);
+  mix-blend-mode: screen;
 }
 
-/* symbol names under icons (DIAL) */
+/* dial symbol names */
 .dial-slot .symbol-name{
   position:absolute; left:50%; transform:translateX(-50%);
   bottom:-45%; white-space:nowrap;
@@ -143,9 +133,8 @@ h2{
   font-size:calc(var(--name-font-base) * var(--dial-scale));
   letter-spacing:.04em; color:#e6e6e6;
   text-shadow:0 1px 2px #000, 0 0 6px #000;
-  pointer-events:none; user-select:none; z-index:3; /* stays above inner glow */
+  pointer-events:none; user-select:none; z-index:3;
 }
-
 
 /* ====== BUTTONS ====== */
 .btn-container{
@@ -163,19 +152,16 @@ h2{
 .btn-icon.glow-phase{ background:#006644; box-shadow:0 0 12px #00ff99, 0 0 24px #00ff99; }
 .btn-reset{ background:#330011; box-shadow:0 0 8px #660022, 0 0 12px #660022; }
 
-/* ====== MAP ====== */
+/* ====== MAP (desktop default visible) ====== */
 .map-container{ position:relative; max-width:1000px; margin:32px auto -4px; }
 .map-img{ width:100%; height:auto; display:block; }
 .map-overlay{ position:absolute; inset:0; pointer-events:none; }
 
 .symbol-wrap{ position:absolute; width:5%; aspect-ratio:1/1; pointer-events:none; z-index:2; }
-
-/* the icon itself (pulses) */
 .symbol-overlay{
   position:absolute; inset:0; width:100%; aspect-ratio:1/1; pointer-events:none; z-index:2;
   filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85));
-  animation: mapPulse 1.5s ease-in-out infinite; /* pulse icon only */
-  transform-origin: 50% 50%;
+  animation: mapPulse 1.5s ease-in-out infinite; transform-origin:50% 50%;
 }
 .symbol-wrap.truth .symbol-overlay{
   filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #4caf50);
@@ -183,15 +169,8 @@ h2{
 .symbol-wrap.lie .symbol-overlay{
   filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #f44336);
 }
+@keyframes mapPulse{ 0%{transform:scale(1)} 55%{transform:scale(1.15)} 100%{transform:scale(1)} }
 
-/* gentle pulse */
-@keyframes mapPulse{
-  0%   { transform: scale(1); }
-  55%  { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-/* the static name (no animation) */
 .map-label{
   position:absolute; left:50%; transform:translateX(-50%);
   text-transform:uppercase; font-family:'Manrope', sans-serif; font-weight:800; letter-spacing:.04em;
@@ -199,10 +178,44 @@ h2{
 }
 .symbol-wrap.truth .map-label{ color:#c9ffd0; }
 .symbol-wrap.lie   .map-label{ color:#ffc9c9; }
-
-/* ABOVE/BELOW placement controlled by wrapper class */
 .symbol-wrap.label-below .map-label{ top: var(--map-label-offset); bottom:auto; }
-.symbol-wrap.label-above .map-label{ top: auto; bottom: var(--map-label-offset); }
+.symbol-wrap.label-above .map-label{ top:auto; bottom: var(--map-label-offset); }
+
+/* ===== Mobile portrait: hide the map entirely ===== */
+@media (max-width:900px) and (orientation:portrait){
+  .map-container{ display:none !important; }
+}
+
+/* ===== MAP-ONLY MODE (after Lock on mobile) ===== */
+body.map-only h1,
+body.map-only h2,
+body.map-only #truthLieLabel,
+body.map-only .dial-wrapper,
+body.map-only #lockButton{ display:none !important; }
+
+body.map-only .map-container{
+  margin:0 !important; max-width:none !important;
+  width:100vw; height:100vh;
+}
+body.map-only .map-img{ width:100%; height:100%; object-fit:contain; }
+body.map-only .map-overlay{ width:100%; height:100%; }
+
+/* keep the toggle visible; show only Reset (centered) */
+body.map-only #tooltip-toggle{ display:block; }
+body.map-only .btn-container{
+  position:fixed; bottom:12px; left:0; right:0; justify-content:center;
+  margin:0; z-index:2001;
+}
+body.map-only #lockButton{ display:none !important; }
+
+/* small “rotate device” banner (shown by JS when needed) */
+.rotate-prompt{
+  display:none; position:fixed; left:50%; top:12px; transform:translateX(-50%);
+  background:rgba(0,0,0,.65); color:#fff; padding:8px 12px; border-radius:8px;
+  font-family:'Manrope',sans-serif; font-weight:700; letter-spacing:.02em;
+  z-index:2002; box-shadow:0 2px 8px rgba(0,0,0,.45);
+}
+.rotate-prompt.show{ display:block; }
 
 /* ====== POPUP ====== */
 .symbol-popup{
@@ -216,7 +229,7 @@ h2{
 .footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
 .footer .map-credit{ font-size:14px !important; opacity:.7; font-weight:normal; display:block; margin-top:2px; }
 
-/* ========= MOBILE ========= */
+/* ========= MOBILE GENERAL ========= */
 @media (max-width:640px){
   #tooltip-toggle{ position:fixed; bottom:12px; left:12px; right:auto; top:auto; transform:scale(.95); z-index:2000; padding:6px 8px; }
   #tooltip-toggle .toggle-item{ gap:4px; margin:2px 0; }
@@ -225,21 +238,6 @@ h2{
   .dial-wrapper{ margin-top:-20px; }
   .dial{ width:94vw; }
   .map-container{ margin:18px auto 8px; }
-}
-
-/* ====== MOBILE LANDSCAPE FULL MAP ====== */
-@media (max-width:900px) and (orientation:landscape){
-  body.map-full h1,
-  body.map-full h2,
-  body.map-full #truthLieLabel,
-  body.map-full .dial-wrapper,
-  body.map-full .btn-container,
-  body.map-full #tooltip,
-  body.map-full #tooltip-toggle{ display:none !important; }
-
-  body.map-full .map-container{ margin:0 !important; max-width:none !important; width:100vw; height:100vh; }
-  body.map-full .map-img{ width:100%; height:100%; object-fit:contain; }
-  body.map-full .map-overlay{ width:100%; height:100%; }
 }
 
 .hidden-on-map{ display:none !important; }

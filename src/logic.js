@@ -11,7 +11,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const sizeTruthLieFromDial = () => {
     const dial = document.querySelector('.dial');
     if (!dial) return;
-    const dialWidth = dial.getBoundingClientRect().width; // current pixels
+    const dialWidth = dial.getBoundingClientRect().width;
     const coef = parseFloat(getComputedStyle(document.documentElement)
                   .getPropertyValue('--truthlie-coef')) || 0.085;
     const px = Math.max(10, Math.round(dialWidth * coef)) + 'px';
@@ -87,7 +87,29 @@ window.addEventListener('DOMContentLoaded', () => {
     label.style.display = symbolNamesCheckbox.checked ? 'block' : 'none';
   }
 
-  // Pre-lock whichever side finishes first
+  const pickSymbol = (slot, symbol) => {
+    slot.dataset.symbol = symbol || '';
+    slot.style.backgroundImage = symbol ? `url('img/${symbol}.png')` : '';
+    updateSlotLabel(slot);
+  };
+
+  // ====== Option helpers (let users change their mind) ======
+  function getOptionsForSelected(selectedArr, side, index) {
+    const raw = [...new Set(getValidSymbols(selectedArr, side, index))];
+    const taken = new Set(selectedArr.filter(Boolean));
+    return raw.filter(sym => !taken.has(sym));
+  }
+  function optionsTreatingSlotEmpty(side, index) {
+    const arr = trio(side);
+    arr[index] = null;
+    return getOptionsForSelected(arr, side, index);
+  }
+  function optionsNormal(side, index) {
+    const arr = trio(side);
+    return getOptionsForSelected(arr, side, index);
+  }
+
+  // Pre-lock whichever side completes first
   const maybePrelock = () => {
     if (phase !== 'entry') return;
     const L = trio('left'), R = trio('right');
@@ -112,30 +134,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (which === 'left') { apply(L, type); if (R) apply(R, ''); }
     else { apply(R, type); if (L) apply(L, ''); }
     sizeTruthLieFromDial();
-  }
-
-  const pickSymbol = (slot, symbol) => {
-    slot.dataset.symbol = symbol || '';
-    slot.style.backgroundImage = symbol ? `url('img/${symbol}.png')` : '';
-    updateSlotLabel(slot);
-  };
-
-  // ====== Options helpers (additions) ======
-  function getOptionsForSelected(selectedArr, side, index) {
-    const raw = [...new Set(getValidSymbols(selectedArr, side, index))];
-    const taken = new Set(selectedArr.filter(Boolean)); // avoid dup in same trio
-    return raw.filter(sym => !taken.has(sym));
-  }
-  // treat a filled slot as empty to let user change their mind
-  function optionsTreatingSlotEmpty(side, index) {
-    const arr = trio(side);
-    arr[index] = null;
-    return getOptionsForSelected(arr, side, index);
-  }
-  // normal (slot is empty already)
-  function optionsNormal(side, index) {
-    const arr = trio(side);
-    return getOptionsForSelected(arr, side, index);
   }
 
   const cascadeAutofill = () => {
@@ -178,19 +176,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const hadSymbol = !!slot.dataset.symbol;
 
-      // If slot has a symbol, pretend it's empty so we can show alternatives
       let options = hadSymbol ? optionsTreatingSlotEmpty(side, idx)
                               : optionsNormal(side, idx);
 
-      // If there are truly no alternatives, allow re-picking the same symbol
       if (hadSymbol && options.length === 0 && slot.dataset.symbol) {
         options = [slot.dataset.symbol];
       }
 
-      // Build popup
       popupGrid.innerHTML = '';
 
-      // "Clear" tile for filled slots
       if (hadSymbol) {
         const clearDiv = document.createElement('div');
         clearDiv.textContent = 'Clear';
@@ -204,7 +198,6 @@ window.addEventListener('DOMContentLoaded', () => {
         clearDiv.addEventListener('click', () => {
           pickSymbol(slot, '');
           symbolPopup.style.display = 'none';
-          // Clearing can invalidate any pre-lock
           clearLock();
           document.getElementById('label-left').textContent = '';
           document.getElementById('label-right').textContent = '';
@@ -239,8 +232,51 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('click', e => {
-    if (!symbolPopup.contains(e.target) && !slotsArr.includes(e.target)) {
+    if (!symbolPopup.contains(e.target) && ![...slots].includes(e.target)) {
       symbolPopup.style.display = 'none';
+    }
+  });
+
+  /* ------------------ MAP-ONLY MODE (mobile after Lock) ------------------ */
+  const rotatePrompt = document.createElement('div');
+  rotatePrompt.id = 'rotatePrompt';
+  rotatePrompt.className = 'rotate-prompt';
+  rotatePrompt.textContent = 'Rotate device to view map';
+  document.body.appendChild(rotatePrompt);
+
+  function showRotatePrompt(show){ rotatePrompt.classList.toggle('show', !!show); }
+
+  async function tryLockLandscape() {
+    try {
+      if (document.documentElement.requestFullscreen &&
+          !document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch(_) { /* iOS will ignore; that’s fine */ }
+  }
+
+  async function enterMapOnlyIfMobile() {
+    const small = window.innerWidth <= 900;
+    if (!small) return;
+    document.body.classList.add('map-only');
+    await tryLockLandscape();
+    showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
+  }
+
+  function exitMapOnly() {
+    document.body.classList.remove('map-only');
+    showRotatePrompt(false);
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(()=>{});
+    }
+  }
+
+  window.addEventListener('orientationchange', () => {
+    if (document.body.classList.contains('map-only')) {
+      showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
     }
   });
 
@@ -268,7 +304,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     allowedGlowSlots = [];
     [...truthGroup, ...lieGroup].forEach(sym => {
-      const slot = slotsArr.find(s => s.dataset.symbol === sym);
+      const slot = [...slots].find(s => s.dataset.symbol === sym);
       if (slot) allowedGlowSlots.push(slot);
     });
   }
@@ -280,12 +316,11 @@ window.addEventListener('DOMContentLoaded', () => {
     const lieToVisit   = lieGroup.filter(sym => !glowing.includes(sym));
     lockButton.classList.remove('glow-phase');
     phase = 'final';
-    tell('Follow the map to interact with the marked symbols. Click Reset to start again.');
+    tell('Follow the map to interact with the marked symbols. Tap Reset to start again.');
     window.showMapHighlights(truthToVisit, lieToVisit);
 
-    if (window.matchMedia('(orientation: landscape)').matches && window.innerWidth <= 900) {
-      document.body.classList.add('map-full');
-    }
+    // → go map-only on mobile
+    enterMapOnlyIfMobile();
   }
 
   function resetUI() {
@@ -309,7 +344,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('map-overlay');
     if (overlay) overlay.innerHTML = '';
     applyNamesVisibility(symbolNamesCheckbox.checked);
-    document.body.classList.remove('map-full');
+    exitMapOnly();                 // ← back to dial view on mobile
     sizeTruthLieFromDial();
   }
 
@@ -337,13 +372,4 @@ window.addEventListener('DOMContentLoaded', () => {
       tell('Both sides must be opposite types with no duplicate symbols across the dial.');
     }
   }
-
-  window.addEventListener('orientationchange', () => {
-    if (phase === 'final' && window.innerWidth <= 900 &&
-        window.matchMedia('(orientation: landscape)').matches) {
-      document.body.classList.add('map-full');
-    } else {
-      document.body.classList.remove('map-full');
-    }
-  });
 });

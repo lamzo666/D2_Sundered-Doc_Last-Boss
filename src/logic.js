@@ -20,7 +20,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (L) L.style.setProperty('font-size', px, 'important');
     if (R) R.style.setProperty('font-size', px, 'important');
   };
-  // Run once after layout paints, then on resize
   requestAnimationFrame(sizeTruthLieFromDial);
   window.addEventListener('resize', sizeTruthLieFromDial);
 
@@ -72,11 +71,8 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // ---------- Helpers ----------
-  const trio = (side) => ([
-    document.querySelector(`.dial-slot.${side}1`)?.dataset.symbol || null,
-    document.querySelector(`.dial-slot.${side}2`)?.dataset.symbol || null,
-    document.querySelector(`.dial-slot.${side}3`)?.dataset.symbol || null,
-  ]);
+  const sideSlots = (side) => [1,2,3].map(i => document.querySelector(`.dial-slot.${side}${i}`));
+  const trio = (side) => sideSlots(side).map(s => s?.dataset.symbol || null);
   const bothComplete = () => trio('left').every(Boolean) && trio('right').every(Boolean);
 
   function updateSlotLabel(slot) {
@@ -115,22 +111,32 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     if (which === 'left') { apply(L, type); if (R) apply(R, ''); }
     else { apply(R, type); if (L) apply(L, ''); }
-    // ensure size persists if classes changed
     sizeTruthLieFromDial();
   }
 
-  const sideSlots = (side) => [1,2,3].map(i => document.querySelector(`.dial-slot.${side}${i}`));
   const pickSymbol = (slot, symbol) => {
-    slot.dataset.symbol = symbol;
-    slot.style.backgroundImage = `url('img/${symbol}.png')`;
+    slot.dataset.symbol = symbol || '';
+    slot.style.backgroundImage = symbol ? `url('img/${symbol}.png')` : '';
     updateSlotLabel(slot);
   };
-  const validFor = (side, index) => {
-    const selected = sideSlots(side).map(s => s?.dataset.symbol || null);
-    const options = [...new Set(getValidSymbols(selected, side, index))]
-      .filter(sym => !selected.includes(sym));
-    return options;
-  };
+
+  // ====== Options helpers (additions) ======
+  function getOptionsForSelected(selectedArr, side, index) {
+    const raw = [...new Set(getValidSymbols(selectedArr, side, index))];
+    const taken = new Set(selectedArr.filter(Boolean)); // avoid dup in same trio
+    return raw.filter(sym => !taken.has(sym));
+  }
+  // treat a filled slot as empty to let user change their mind
+  function optionsTreatingSlotEmpty(side, index) {
+    const arr = trio(side);
+    arr[index] = null;
+    return getOptionsForSelected(arr, side, index);
+  }
+  // normal (slot is empty already)
+  function optionsNormal(side, index) {
+    const arr = trio(side);
+    return getOptionsForSelected(arr, side, index);
+  }
 
   const cascadeAutofill = () => {
     if (phase !== 'entry') return;
@@ -140,7 +146,7 @@ window.addEventListener('DOMContentLoaded', () => {
       ['left','right'].forEach(side => {
         sideSlots(side).forEach((slot, i) => {
           if (!slot || slot.dataset.symbol) return;
-          const options = validFor(side, i);
+          const options = optionsNormal(side, i);
           if (options.length === 1) {
             pickSymbol(slot, options[0]);
             changed = true;
@@ -170,17 +176,45 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const options = validFor(side, idx);
+      const hadSymbol = !!slot.dataset.symbol;
 
-      if (options.length === 1) {
-        pickSymbol(slot, options[0]);
-        maybePrelock();
-        checkProgress();
-        cascadeAutofill();
-        return;
+      // If slot has a symbol, pretend it's empty so we can show alternatives
+      let options = hadSymbol ? optionsTreatingSlotEmpty(side, idx)
+                              : optionsNormal(side, idx);
+
+      // If there are truly no alternatives, allow re-picking the same symbol
+      if (hadSymbol && options.length === 0 && slot.dataset.symbol) {
+        options = [slot.dataset.symbol];
       }
 
+      // Build popup
       popupGrid.innerHTML = '';
+
+      // "Clear" tile for filled slots
+      if (hadSymbol) {
+        const clearDiv = document.createElement('div');
+        clearDiv.textContent = 'Clear';
+        Object.assign(clearDiv.style, {
+          width:'60px', height:'60px', display:'flex',
+          alignItems:'center', justifyContent:'center',
+          background:'#333', border:'1px solid #777',
+          borderRadius:'8px', color:'#fff', cursor:'pointer',
+          fontSize:'14px', fontWeight:'700'
+        });
+        clearDiv.addEventListener('click', () => {
+          pickSymbol(slot, '');
+          symbolPopup.style.display = 'none';
+          // Clearing can invalidate any pre-lock
+          clearLock();
+          document.getElementById('label-left').textContent = '';
+          document.getElementById('label-right').textContent = '';
+          tell('Enter the symbols you see in-game');
+          sizeTruthLieFromDial();
+          checkProgress();
+        });
+        popupGrid.appendChild(clearDiv);
+      }
+
       if (options.length === 0) {
         const div = document.createElement('div');
         div.textContent = 'No valid symbols';

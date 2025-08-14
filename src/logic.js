@@ -238,13 +238,41 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ------------------ MAP-ONLY MODE (mobile after Lock) ------------------ */
+  // Create the rotate prompt once
   const rotatePrompt = document.createElement('div');
   rotatePrompt.id = 'rotatePrompt';
   rotatePrompt.className = 'rotate-prompt';
   rotatePrompt.textContent = 'Rotate device to view map';
   document.body.appendChild(rotatePrompt);
-
   function showRotatePrompt(show){ rotatePrompt.classList.toggle('show', !!show); }
+
+  // Fit the map image & overlay to the *visual* viewport (Chrome iOS)
+  function fitMapToViewport() {
+    const container = document.querySelector('.map-container');
+    const img = document.querySelector('.map-img');
+    const overlay = document.getElementById('map-overlay');
+    if (!container || !img || !overlay) return;
+
+    const vv = window.visualViewport;
+    const vw = vv ? vv.width  : window.innerWidth;
+    const vh = vv ? vv.height : window.innerHeight;
+    const ox = vv ? vv.offsetLeft : 0;
+    const oy = vv ? vv.offsetTop  : 0;
+
+    // Use real image ratio if available; fallback to map.jpg ratio
+    const ratio = (img.naturalWidth && img.naturalHeight)
+      ? img.naturalWidth / img.naturalHeight
+      : (1920 / 1080);
+
+    let w = vw, h = w / ratio;
+    if (h > vh) { h = vh; w = h * ratio; }
+
+    const left = ox + (vw - w) / 2;
+    const top  = oy + (vh - h) / 2;
+
+    Object.assign(img.style,     { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
+    Object.assign(overlay.style, { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
+  }
 
   async function tryLockLandscape() {
     try {
@@ -255,13 +283,22 @@ window.addEventListener('DOMContentLoaded', () => {
       if (screen.orientation && screen.orientation.lock) {
         await screen.orientation.lock('landscape');
       }
-    } catch(_) { /* iOS will ignore; that’s fine */ }
+    } catch(_) { /* iOS ignores — fine */ }
   }
 
   async function enterMapOnlyIfMobile() {
     const small = window.innerWidth <= 900;
     if (!small) return;
     document.body.classList.add('map-only');
+
+    const img = document.querySelector('.map-img');
+    if (img) {
+      if (img.complete) { fitMapToViewport(); }
+      else { img.addEventListener('load', fitMapToViewport, { once:true }); }
+    } else {
+      fitMapToViewport();
+    }
+
     await tryLockLandscape();
     showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
   }
@@ -274,11 +311,22 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Keep the map fitted as the viewport changes (iOS toolbars / rotation)
+  const refitIfMapOnly = () => {
+    if (document.body.classList.contains('map-only')) fitMapToViewport();
+  };
+  window.addEventListener('resize', refitIfMapOnly);
   window.addEventListener('orientationchange', () => {
+    refitIfMapOnly();
     if (document.body.classList.contains('map-only')) {
       showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
     }
   });
+  if (window.visualViewport) {
+    const vv = window.visualViewport;
+    vv.addEventListener('resize', refitIfMapOnly);
+    vv.addEventListener('scroll', refitIfMapOnly);
+  }
 
   // ----- Phases -----
   function enterIllumination(leftType, rightType) {

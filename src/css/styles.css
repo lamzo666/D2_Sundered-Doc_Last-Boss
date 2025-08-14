@@ -9,7 +9,7 @@
   --name-font-base: 1.0rem;
 
   /* TRUTH/LIE label size — JS sets font-size as (dialWidth * --truthlie-coef) */
-  --truthlie-coef: 0.065;   /* ↑ make bigger, ↓ smaller (e.g., 0.085 for larger labels) */
+  --truthlie-coef: 0.065;   /* ↑ make bigger, ↓ smaller */
 
   /* TRUTH/LIE spacing knobs */
   --truthlie-top: 8px;      /* space ABOVE the labels (under tooltip/title) */
@@ -17,6 +17,11 @@
 
   /* Map label offset for above/below (%) relative to the symbol box */
   --map-label-offset: 115%;
+
+  /* Slot glow colours */
+  --slot-glow-outer-a: rgba(255,166,0,.90);
+  --slot-glow-outer-b: rgba(255,166,0,.75);
+  --slot-glow-inner:   rgba(255,166,0,.28);
 }
 
 /* ====== PAGE / BACKDROP ====== */
@@ -68,10 +73,9 @@ h2{
   text-transform:uppercase; font-weight:bold;
   text-shadow:0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
 }
-/* JS sets the final pixel font-size inline; this is a fallback */
 #truthLieLabel > #label-left,
 #truthLieLabel > #label-right{
-  font-size:1rem;
+  font-size:1rem;          /* JS overwrites this inline every resize */
   line-height:1.05; white-space:nowrap;
 }
 .truth-label{ color:#4caf50; }
@@ -106,20 +110,14 @@ h2{
 .dial-slot.right2 { top:42.3%; right:12%;  }
 .dial-slot.right3 { top:64.9%; right:22.5%; }
 
-/* === Glow colour vars (inner = outer) === */
-:root{
-  --slot-glow-outer-a: rgba(255,166,0,.90);
-  --slot-glow-outer-b: rgba(255,166,0,.75);
-  --slot-glow-inner:   rgba(255,166,0,.28);
-}
+/* Glow (outer + soft inner) */
 .dial-slot.glow{
   filter:
     drop-shadow(0 0 10px var(--slot-glow-outer-a))
     drop-shadow(0 0 15px var(--slot-glow-outer-b));
 }
 .dial-slot.glow::after{
-  content:"";
-  position:absolute; inset:12%; border-radius:10px;
+  content:""; position:absolute; inset:12%; border-radius:10px;
   pointer-events:none; z-index:1;
   background: radial-gradient(closest-side, var(--slot-glow-inner) 0%, rgba(255,166,0,0) 65%);
   mix-blend-mode: screen;
@@ -194,21 +192,33 @@ body.map-only .dial-wrapper,
 body.map-only #lockButton{ display:none !important; }
 
 body.map-only .map-container{
+  position: fixed; inset: 0;
   margin:0 !important; max-width:none !important;
-  width:100vw; height:100vh;
+  width:100vw; height:100dvh;         /* baseline for iOS */
+  background:#000;
 }
-body.map-only .map-img{ width:100%; height:100%; object-fit:contain; }
-body.map-only .map-overlay{ width:100%; height:100%; }
+@supports (height: 100svh){
+  body.map-only .map-container{ height:100svh; } /* Chrome iOS toolbars */
+}
 
-/* keep the toggle visible; show only Reset (centered) */
+/* JS positions these exactly; keep absolute & let JS set w/h/left/top */
+body.map-only .map-img{
+  position:absolute; object-fit:fill;
+}
+body.map-only .map-overlay{
+  position:absolute;
+}
+
+/* keep the toggle visible; show only Reset (centered) with safe-area padding */
 body.map-only #tooltip-toggle{ display:block; }
 body.map-only .btn-container{
   position:fixed; bottom:12px; left:0; right:0; justify-content:center;
   margin:0; z-index:2001;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 body.map-only #lockButton{ display:none !important; }
 
-/* small “rotate device” banner (shown by JS when needed) */
+/* small “rotate device” banner */
 .rotate-prompt{
   display:none; position:fixed; left:50%; top:12px; transform:translateX(-50%);
   background:rgba(0,0,0,.65); color:#fff; padding:8px 12px; border-radius:8px;

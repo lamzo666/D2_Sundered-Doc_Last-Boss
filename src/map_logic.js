@@ -1,23 +1,27 @@
 // src/map_logic.js
 // Percent coordinates for each symbol on map.jpg (x = left %, y = top %)
+// src/map_logic.js
+// NOTE: These coordinates are the ORIGINAL top-left percentages
+// from your map (not centered). logic.js normalizes them at runtime.
+
 window.MAP_COORDS = {
-  stop:      { x: 38.64, y: 22.31 },
-  kill:      { x: 65.96, y: 70.14 },
-  darkness:  { x: 80.93, y: 39.91 },
-  drink:     { x: 56.29, y:  1.74 },
-  give:      { x: 53.32, y: 22.31 },
-  guardian:  { x: 19.49, y: 45.96 },
-  hive:      { x: 19.53, y: 29.77 },
-  light:     { x: 72.98, y: 59.68 },
-  pyramid:   { x:  2.15, y: 62.75 },
-  savathun:  { x: 92.50, y:  5.32 },
-  traveller: { x: 19.53, y: 87.52 },
-  witness:   { x:  2.00, y: 30.20 },
-  worm:      { x: 75.20, y:  7.16 },
-  worship:   { x: 31.45, y: 70.42 }
+  stop:      { top: '22.31%', left: '38.64%' },
+  kill:      { top: '70.14%', left: '65.96%' },
+  darkness:  { top: '39.91%', left: '80.93%' },
+  drink:     { top: '1.74%',  left: '56.29%' },
+  give:      { top: '22.31%', left: '53.32%' },
+  guardian:  { top: '45.96%', left: '19.49%' },
+  hive:      { top: '29.77%', left: '19.53%' },
+  light:     { top: '59.68%', left: '72.98%' },
+  pyramid:   { top: '62.75%', left: '2.15%'  },
+  savathun:  { top: '5.32%',  left: '92.50%' },
+  traveller: { top: '87.52%', left: '19.53%' },
+  witness:   { top: '30.20%', left: '2.00%'  },
+  worm:      { top: '7.16%',  left: '75.20%' },
+  worship:   { top: '70.42%', left: '31.45%' }
 };
 
-// Pretty names for map labels
+// Optional pretty names for the map labels
 window.SYMBOL_NAME_MAP = {
   stop: 'STOP',
   kill: 'KILL',

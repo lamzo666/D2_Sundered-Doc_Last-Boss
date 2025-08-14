@@ -23,6 +23,21 @@ window.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(sizeTruthLieFromDial);
   window.addEventListener('resize', sizeTruthLieFromDial);
 
+  /* ---------- MAP COORD NORMALIZER (top-left → center) ---------- */
+  // Keep this in sync with .symbol-wrap { width: 5%; } in CSS
+  const PIN_SIZE_PCT = 5;
+  function normalizePos(p) {
+    if (!p) return { x: 50, y: 50 };
+    // Supports either {x,y} or {top,left} (string or number)
+    if ('x' in p && 'y' in p) {
+      return { x: +p.x, y: +p.y };
+    }
+    const left = parseFloat(p.left);
+    const top  = parseFloat(p.top);
+    const half = PIN_SIZE_PCT / 2;
+    return { x: left + half, y: top + half };
+  }
+
   const slots = document.querySelectorAll('.dial-slot');
   const symbolPopup = document.getElementById('symbolPopup');
   const popupGrid = document.getElementById('popupGrid');
@@ -156,11 +171,12 @@ window.addEventListener('DOMContentLoaded', () => {
     checkProgress();
   };
 
-  /* ----------------- MAP HIGHLIGHTS (auto-flip labels) ------------------ */
-  const MAP_COORDS = window.MAP_COORDS || {};              // from map_logic.js
-  const SYMBOL_NAME_MAP = window.SYMBOL_NAME_MAP || {};    // from map_logic.js
+  /* ----------------- MAP HIGHLIGHTS ------------------ */
+  const MAP_COORDS = window.MAP_COORDS || {};
+  const SYMBOL_NAME_MAP = window.SYMBOL_NAME_MAP || {};
 
-  // Replaces any previous version to ensure bottom labels flip above the icon
+  // Replaces any previous version; uses normalizePos() so your old
+  // top-left coordinates render correctly with center anchoring.
   window.showMapHighlights = (truthToVisit, lieToVisit, staticNames = true) => {
     const overlay = document.getElementById('map-overlay');
     if (!overlay) return;
@@ -172,8 +188,10 @@ window.addEventListener('DOMContentLoaded', () => {
     ];
 
     chosen.forEach(({ sym, type }) => {
-      const pos = MAP_COORDS[sym];
-      if (!pos) return;
+      const raw = MAP_COORDS[sym];
+      if (!raw) return;
+
+      const pos = normalizePos(raw);                 // ← normalize here
 
       const wrap = document.createElement('div');
       wrap.className = `symbol-wrap ${type}`;
@@ -187,8 +205,8 @@ window.addEventListener('DOMContentLoaded', () => {
       img.alt = sym;
       wrap.appendChild(img);
 
-      // Decide label placement: flip to "above" if close to the bottom edge
-      const nearBottom = pos.y >= 88;   // tweak threshold if needed
+      // Flip label above if close to the bottom edge
+      const nearBottom = pos.y >= 88;                // tweak if needed
       wrap.classList.add(nearBottom ? 'label-above' : 'label-below');
 
       const label = document.createElement('div');
@@ -292,7 +310,6 @@ window.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(rotatePrompt);
   function showRotatePrompt(show){ rotatePrompt.classList.toggle('show', !!show); }
 
-  // Fit the map image & overlay to the *visual* viewport (Chrome iOS)
   function fitMapToViewport() {
     const container = document.querySelector('.map-container');
     const img = document.querySelector('.map-img');

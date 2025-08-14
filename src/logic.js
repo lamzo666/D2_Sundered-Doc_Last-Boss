@@ -156,6 +156,53 @@ window.addEventListener('DOMContentLoaded', () => {
     checkProgress();
   };
 
+  /* ----------------- MAP HIGHLIGHTS (auto-flip labels) ------------------ */
+  const MAP_COORDS = window.MAP_COORDS || {};              // from map_logic.js
+  const SYMBOL_NAME_MAP = window.SYMBOL_NAME_MAP || {};    // from map_logic.js
+
+  // Replaces any previous version to ensure bottom labels flip above the icon
+  window.showMapHighlights = (truthToVisit, lieToVisit, staticNames = true) => {
+    const overlay = document.getElementById('map-overlay');
+    if (!overlay) return;
+    overlay.innerHTML = '';
+
+    const chosen = [
+      ...truthToVisit.map(s => ({ sym: s, type: 'truth' })),
+      ...lieToVisit.map(s => ({ sym: s, type: 'lie' })),
+    ];
+
+    chosen.forEach(({ sym, type }) => {
+      const pos = MAP_COORDS[sym];
+      if (!pos) return;
+
+      const wrap = document.createElement('div');
+      wrap.className = `symbol-wrap ${type}`;
+      wrap.style.left = `${pos.x}%`;
+      wrap.style.top  = `${pos.y}%`;
+      wrap.style.transform = 'translate(-50%, -50%)';
+
+      const img = document.createElement('img');
+      img.className = 'symbol-overlay';
+      img.src = `img/${sym}.png`;
+      img.alt = sym;
+      wrap.appendChild(img);
+
+      // Decide label placement: flip to "above" if close to the bottom edge
+      const nearBottom = pos.y >= 88;   // tweak threshold if needed
+      wrap.classList.add(nearBottom ? 'label-above' : 'label-below');
+
+      const label = document.createElement('div');
+      label.className = 'map-label';
+      label.textContent = staticNames ? (SYMBOL_NAME_MAP[sym] || sym.toUpperCase()) : '';
+      wrap.appendChild(label);
+
+      overlay.appendChild(wrap);
+    });
+
+    // Respect the “Show symbol names” toggle
+    applyNamesVisibility(symbolNamesCheckbox.checked);
+  };
+
   // ----- Slot click -----
   const slotsArr = [...slots];
   slotsArr.forEach(slot => {
@@ -238,7 +285,6 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ------------------ MAP-ONLY MODE (mobile after Lock) ------------------ */
-  // Create the rotate prompt once
   const rotatePrompt = document.createElement('div');
   rotatePrompt.id = 'rotatePrompt';
   rotatePrompt.className = 'rotate-prompt';
@@ -259,7 +305,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const ox = vv ? vv.offsetLeft : 0;
     const oy = vv ? vv.offsetTop  : 0;
 
-    // Use real image ratio if available; fallback to map.jpg ratio
     const ratio = (img.naturalWidth && img.naturalHeight)
       ? img.naturalWidth / img.naturalHeight
       : (1920 / 1080);
@@ -311,7 +356,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Keep the map fitted as the viewport changes (iOS toolbars / rotation)
   const refitIfMapOnly = () => {
     if (document.body.classList.contains('map-only')) fitMapToViewport();
   };

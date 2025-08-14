@@ -15,8 +15,8 @@
   --truthlie-top: 8px;
   --truthlie-gap: -6px;
 
-  /* Map label offset (%) relative to the symbol box */
-  --map-label-offset: 115%;
+  /* Map label offset (%) relative to the symbol box (tighter so it doesn't cut) */
+  --map-label-offset: 108%;
 
   /* Slot glow colours */
   --slot-glow-outer-a: rgba(255,166,0,.90);
@@ -150,7 +150,7 @@ h2{
 .btn-icon.glow-phase{ background:#006644; box-shadow:0 0 12px #00ff99, 0 0 24px #00ff99; }
 .btn-reset{ background:#330011; box-shadow:0 0 8px #660022, 0 0 12px #660022; }
 
-/* ====== MAP (desktop default visible) ====== */
+/* ====== MAP ====== */
 .map-container{ position:relative; max-width:1000px; margin:32px auto -4px; }
 .map-img{ width:100%; height:auto; display:block; }
 .map-overlay{
@@ -158,7 +158,12 @@ h2{
   overflow:visible;                  /* let labels hang outside if needed */
 }
 
-.symbol-wrap{ position:absolute; width:5%; aspect-ratio:1/1; pointer-events:none; z-index:2; }
+/* 👉 center each pin on its (left,top) percentages */
+.symbol-wrap{
+  position:absolute; width:5%; aspect-ratio:1/1; pointer-events:none; z-index:2;
+  transform: translate(-50%, -50%);
+}
+
 .symbol-overlay{
   position:absolute; inset:0; width:100%; aspect-ratio:1/1; pointer-events:none; z-index:2;
   filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85));
@@ -172,12 +177,12 @@ h2{
 }
 @keyframes mapPulse{ 0%{transform:scale(1)} 55%{transform:scale(1.15)} 100%{transform:scale(1)} }
 
-/* Responsive, readable map labels */
+/* Responsive, readable map labels (slightly smaller than before) */
 .map-label{
   position:absolute; left:50%; transform:translateX(-50%);
   text-transform:uppercase; font-family:'Manrope', sans-serif; font-weight:800; letter-spacing:.04em;
   color:#e6e6e6; text-shadow:0 1px 2px #000, 0 0 6px #000; white-space:nowrap; pointer-events:none; user-select:none; z-index:3;
-  font-size: clamp(12px, 2.2vw, 22px);
+  font-size: clamp(11px, 1.8vw, 20px);
 }
 .symbol-wrap.truth .map-label{ color:#c9ffd0; }
 .symbol-wrap.lie   .map-label{ color:#ffc9c9; }

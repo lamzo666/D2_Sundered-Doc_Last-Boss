@@ -235,9 +235,28 @@ body.map-only #lockButton{ display:none !important; }
 .symbol-grid{ display:grid; grid-template-columns:repeat(4, 60px); gap:10px; justify-content:center; }
 .symbol-grid img{ width:60px !important; height:60px !important; object-fit:contain; display:block; cursor:pointer; background:none; box-shadow:none; }
 
-/* ====== FOOTER ====== */
+/* ====== FOOTER (normal) ====== */
 .footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
 .footer .map-credit{ font-size:14px !important; opacity:.7; font-weight:normal; display:block; margin-top:2px; }
+
+/* ====== FOOTER in MAP-ONLY (pinned at bottom, never covering Reset) ====== */
+body.map-only .footer{
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* 60px button + 12px gap + safe-area */
+  bottom: calc(env(safe-area-inset-bottom) + 72px);
+  margin: 0;
+  padding: 0 12px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #aaa;
+  opacity: .85;
+  background: transparent;
+  z-index: 2000;
+  pointer-events: none; /* doesn't block the Reset button */
+}
 
 /* ========= MOBILE GENERAL ========= */
 @media (max-width:640px){
@@ -250,4 +269,5 @@ body.map-only #lockButton{ display:none !important; }
   .map-container{ margin:18px auto 8px; }
 }
 
+/* helper */
 .hidden-on-map{ display:none !important; }

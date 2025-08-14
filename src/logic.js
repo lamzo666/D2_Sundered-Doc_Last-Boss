@@ -7,13 +7,15 @@ import {
 import './map_logic.js';
 
 window.addEventListener('DOMContentLoaded', () => {
-  /* ---------- Force TRUTH/LIE label size from the dial's width ---------- */
+  /* ---------- TRUTH/LIE label size tracks dial width ---------- */
   const sizeTruthLieFromDial = () => {
     const dial = document.querySelector('.dial');
     if (!dial) return;
     const dialWidth = dial.getBoundingClientRect().width;
-    const coef = parseFloat(getComputedStyle(document.documentElement)
-                  .getPropertyValue('--truthlie-coef')) || 0.085;
+    const coef = parseFloat(
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--truthlie-coef')
+    ) || 0.085;
     const px = Math.max(10, Math.round(dialWidth * coef)) + 'px';
     const L = document.getElementById('label-left');
     const R = document.getElementById('label-right');
@@ -24,20 +26,30 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', sizeTruthLieFromDial);
 
   /* ---------- MAP COORD NORMALIZER (top-left → center) ---------- */
-  // Keep this in sync with .symbol-wrap { width: 5%; } in CSS
-  const PIN_SIZE_PCT = 5;
+  const PIN_SIZE_PCT = 5; // keep in sync with .symbol-wrap { width:5% } in CSS
   function normalizePos(p) {
     if (!p) return { x: 50, y: 50 };
-    // Supports either {x,y} or {top,left} (string or number)
-    if ('x' in p && 'y' in p) {
-      return { x: +p.x, y: +p.y };
-    }
+    if ('x' in p && 'y' in p) return { x: +p.x, y: +p.y };
     const left = parseFloat(p.left);
     const top  = parseFloat(p.top);
     const half = PIN_SIZE_PCT / 2;
     return { x: left + half, y: top + half };
   }
 
+  /* ---------- iOS animation bootstrap helpers ---------- */
+  function restartMapPulsesNow() {
+    const pins = document.querySelectorAll('.symbol-overlay');
+    // toggle the class to restart CSS animation reliably
+    pins.forEach(el => el.classList.remove('pulse'));
+    // force reflow
+    void document.body.offsetWidth;
+    pins.forEach(el => el.classList.add('pulse'));
+  }
+  // queue a restart on the next two frames (after layout/viewport changes)
+  const queueRestartPulses = () =>
+    requestAnimationFrame(() => requestAnimationFrame(restartMapPulsesNow));
+
+  /* ---------- UI refs ---------- */
   const slots = document.querySelectorAll('.dial-slot');
   const symbolPopup = document.getElementById('symbolPopup');
   const popupGrid = document.getElementById('popupGrid');
@@ -52,14 +64,14 @@ window.addEventListener('DOMContentLoaded', () => {
   let truthGroup = [];
   let lieGroup = [];
 
-  // ---------- First-visit defaults ----------
+  /* ---------- first-visit defaults ---------- */
   if (localStorage.getItem('firstVisitDone') !== 'true') {
     localStorage.setItem('tooltipVisible', 'true');
     localStorage.setItem('showSymbolNames', 'true');
     localStorage.setItem('firstVisitDone', 'true');
   }
 
-  // ---------- Tooltip toggle (persist) ----------
+  /* ---------- tooltip toggle ---------- */
   const tooltipOn = (localStorage.getItem('tooltipVisible') ?? 'true') === 'true';
   tooltipCheckbox.checked = tooltipOn;
   tooltip.classList.toggle('hidden', !tooltipOn);
@@ -70,7 +82,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   const tell = (msg) => { if (tooltip) tooltip.textContent = msg; };
 
-  // ---------- Symbol names toggle (persist) ----------
+  /* ---------- symbol-name toggle ---------- */
   const showNames = (localStorage.getItem('showSymbolNames') ?? 'true') === 'true';
   symbolNamesCheckbox.checked = showNames;
   function applyNamesVisibility(show) {
@@ -85,7 +97,7 @@ window.addEventListener('DOMContentLoaded', () => {
     applyNamesVisibility(on);
   });
 
-  // ---------- Helpers ----------
+  /* ---------- helpers ---------- */
   const sideSlots = (side) => [1,2,3].map(i => document.querySelector(`.dial-slot.${side}${i}`));
   const trio = (side) => sideSlots(side).map(s => s?.dataset.symbol || null);
   const bothComplete = () => trio('left').every(Boolean) && trio('right').every(Boolean);
@@ -108,7 +120,6 @@ window.addEventListener('DOMContentLoaded', () => {
     updateSlotLabel(slot);
   };
 
-  // ====== Option helpers (let users change their mind) ======
   function getOptionsForSelected(selectedArr, side, index) {
     const raw = [...new Set(getValidSymbols(selectedArr, side, index))];
     const taken = new Set(selectedArr.filter(Boolean));
@@ -124,7 +135,6 @@ window.addEventListener('DOMContentLoaded', () => {
     return getOptionsForSelected(arr, side, index);
   }
 
-  // Pre-lock whichever side completes first
   const maybePrelock = () => {
     if (phase !== 'entry') return;
     const L = trio('left'), R = trio('right');
@@ -175,8 +185,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const MAP_COORDS = window.MAP_COORDS || {};
   const SYMBOL_NAME_MAP = window.SYMBOL_NAME_MAP || {};
 
-  // Replaces any previous version; uses normalizePos() so your old
-  // top-left coordinates render correctly with center anchoring.
+  // Build the overlay AND ensure pulses start even on first landscape entry.
   window.showMapHighlights = (truthToVisit, lieToVisit, staticNames = true) => {
     const overlay = document.getElementById('map-overlay');
     if (!overlay) return;
@@ -190,8 +199,7 @@ window.addEventListener('DOMContentLoaded', () => {
     chosen.forEach(({ sym, type }) => {
       const raw = MAP_COORDS[sym];
       if (!raw) return;
-
-      const pos = normalizePos(raw);                 // ← normalize here
+      const pos = normalizePos(raw);
 
       const wrap = document.createElement('div');
       wrap.className = `symbol-wrap ${type}`;
@@ -200,13 +208,12 @@ window.addEventListener('DOMContentLoaded', () => {
       wrap.style.transform = 'translate(-50%, -50%)';
 
       const img = document.createElement('img');
-      img.className = 'symbol-overlay';
+      img.className = 'symbol-overlay pulse';          // ← ensure animation class is present
       img.src = `img/${sym}.png`;
       img.alt = sym;
       wrap.appendChild(img);
 
-      // Flip label above if close to the bottom edge
-      const nearBottom = pos.y >= 88;                // tweak if needed
+      const nearBottom = pos.y >= 88;
       wrap.classList.add(nearBottom ? 'label-above' : 'label-below');
 
       const label = document.createElement('div');
@@ -217,13 +224,203 @@ window.addEventListener('DOMContentLoaded', () => {
       overlay.appendChild(wrap);
     });
 
-    // Respect the “Show symbol names” toggle
     applyNamesVisibility(symbolNamesCheckbox.checked);
+
+    // kick animations after DOM/layout settled (iOS fix)
+    queueRestartPulses();
   };
 
-  // ----- Slot click -----
-  const slotsArr = [...slots];
-  slotsArr.forEach(slot => {
+  /* ------------------ MAP-ONLY MODE (mobile after Lock) ------------------ */
+  const rotatePrompt = document.createElement('div');
+  rotatePrompt.id = 'rotatePrompt';
+  rotatePrompt.className = 'rotate-prompt';
+  rotatePrompt.textContent = 'Rotate device to view map';
+  document.body.appendChild(rotatePrompt);
+  function showRotatePrompt(show){ rotatePrompt.classList.toggle('show', !!show); }
+
+  function fitMapToViewport() {
+    const container = document.querySelector('.map-container');
+    const img = document.querySelector('.map-img');
+    const overlay = document.getElementById('map-overlay');
+    if (!container || !img || !overlay) return;
+
+    const vv = window.visualViewport;
+    const vw = vv ? vv.width  : window.innerWidth;
+    const vh = vv ? vv.height : window.innerHeight;
+    const ox = vv ? vv.offsetLeft : 0;
+    const oy = vv ? vv.offsetTop  : 0;
+
+    const ratio = (img.naturalWidth && img.naturalHeight)
+      ? img.naturalWidth / img.naturalHeight
+      : (1920 / 1080);
+
+    let w = vw, h = w / ratio;
+    if (h > vh) { h = vh; w = h * ratio; }
+
+    const left = ox + (vw - w) / 2;
+    const top  = oy + (vh - h) / 2;
+
+    Object.assign(img.style,     { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
+    Object.assign(overlay.style, { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
+
+    // when we refit, make sure pulses are running
+    queueRestartPulses();
+  }
+
+  async function tryLockLandscape() {
+    try {
+      if (document.documentElement.requestFullscreen &&
+          !document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch(_) { /* iOS ignores — fine */ }
+  }
+
+  async function enterMapOnlyIfMobile() {
+    const small = window.innerWidth <= 900;
+    if (!small) return;
+    document.body.classList.add('map-only');
+
+    const img = document.querySelector('.map-img');
+    if (img) {
+      if (img.complete) { fitMapToViewport(); }
+      else { img.addEventListener('load', fitMapToViewport, { once:true }); }
+    } else {
+      fitMapToViewport();
+    }
+
+    await tryLockLandscape();
+
+    // kick pulses once more after the orientation lock completes
+    queueRestartPulses();
+
+    showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
+  }
+
+  function exitMapOnly() {
+    document.body.classList.remove('map-only');
+    showRotatePrompt(false);
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(()=>{});
+    }
+  }
+
+  const refitIfMapOnly = () => {
+    if (document.body.classList.contains('map-only')) {
+      fitMapToViewport();
+      queueRestartPulses();
+    }
+  };
+  window.addEventListener('resize', refitIfMapOnly);
+  window.addEventListener('orientationchange', () => {
+    refitIfMapOnly();
+    if (document.body.classList.contains('map-only')) {
+      showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
+    }
+  });
+  if (window.visualViewport) {
+    const vv = window.visualViewport;
+    vv.addEventListener('resize', refitIfMapOnly);
+    vv.addEventListener('scroll', refitIfMapOnly);
+  }
+
+  /* ----------------- PHASES ----------------- */
+  function enterIllumination(leftType, rightType) {
+    phase = 'illumination';
+    lockButton.classList.add('glow-phase');
+    symbolPopup.style.display = 'none';
+    tell('Now select the symbols that are illuminated in-game');
+
+    const L = document.getElementById('label-left');
+    const R = document.getElementById('label-right');
+    if (L && R) {
+      L.textContent = leftType.toUpperCase();
+      R.textContent = rightType.toUpperCase();
+      L.className = leftType === 'truth' ? 'truth-label' : 'lie-label';
+      R.className = rightType === 'truth' ? 'truth-label' : 'lie-label';
+      sizeTruthLieFromDial();
+    }
+
+    const left = trio('left');
+    const right = trio('right');
+    truthGroup = (leftType === 'truth') ? left : right;
+    lieGroup   = (leftType === 'truth') ? right : left;
+
+    allowedGlowSlots = [];
+    [...truthGroup, ...lieGroup].forEach(sym => {
+      const slot = [...slots].find(s => s.dataset.symbol === sym);
+      if (slot) allowedGlowSlots.push(slot);
+    });
+  }
+
+  function handleLock() {
+    if (phase !== 'illumination') return;
+    const glowing = [...document.querySelectorAll('.dial-slot.glow')].map(s => s.dataset.symbol);
+    const truthToVisit = truthGroup.filter(sym => glowing.includes(sym));
+    const lieToVisit   = lieGroup.filter(sym => !glowing.includes(sym));
+    lockButton.classList.remove('glow-phase');
+    phase = 'final';
+    tell('Follow the map to interact with the marked symbols. Tap Reset to start again.');
+    window.showMapHighlights(truthToVisit, lieToVisit);
+
+    // → go map-only on mobile
+    enterMapOnlyIfMobile();
+  }
+
+  function resetUI() {
+    document.querySelectorAll('.dial-slot').forEach(s => {
+      s.dataset.symbol = '';
+      s.style.backgroundImage = '';
+      s.classList.remove('glow');
+      const label = s.querySelector('.symbol-name');
+      if (label) label.textContent = '';
+    });
+    document.getElementById('label-left').textContent = '';
+    document.getElementById('label-right').textContent = '';
+    lockButton.classList.remove('glow-phase');
+    symbolPopup.style.display = 'none';
+    phase = 'entry';
+    allowedGlowSlots = [];
+    truthGroup = [];
+    lieGroup = [];
+    clearLock();
+    tell('Enter the symbols you see in-game');
+    const overlay = document.getElementById('map-overlay');
+    if (overlay) overlay.innerHTML = '';
+    applyNamesVisibility(symbolNamesCheckbox.checked);
+    exitMapOnly();
+    sizeTruthLieFromDial();
+  }
+
+  window.handleLock = handleLock;
+  window.resetDial = resetUI;
+  lockButton.addEventListener('click', handleLock);
+  resetButton.addEventListener('click', resetUI);
+
+  function checkProgress() {
+    if (!bothComplete()) return;
+
+    const L = trio('left');
+    const R = trio('right');
+    const Lt = validateGroup(L);
+    const Rt = validateGroup(R);
+    const disjoint = !L.some(s => R.includes(s));
+    const validPair =
+      disjoint &&
+      ((Lt === 'truth' && Rt === 'lie') || (Lt === 'lie' && Rt === 'truth'));
+
+    if (validPair) {
+      enterIllumination(Lt, Rt);
+    } else {
+      tell('Both sides must be opposite types with no duplicate symbols across the dial.');
+    }
+  }
+
+  /* ----- slot click ----- */
+  [...slots].forEach(slot => {
     slot.addEventListener('click', () => {
       if (phase === 'final') return;
 
@@ -301,184 +498,4 @@ window.addEventListener('DOMContentLoaded', () => {
       symbolPopup.style.display = 'none';
     }
   });
-
-  /* ------------------ MAP-ONLY MODE (mobile after Lock) ------------------ */
-  const rotatePrompt = document.createElement('div');
-  rotatePrompt.id = 'rotatePrompt';
-  rotatePrompt.className = 'rotate-prompt';
-  rotatePrompt.textContent = 'Rotate device to view map';
-  document.body.appendChild(rotatePrompt);
-  function showRotatePrompt(show){ rotatePrompt.classList.toggle('show', !!show); }
-
-  function fitMapToViewport() {
-    const container = document.querySelector('.map-container');
-    const img = document.querySelector('.map-img');
-    const overlay = document.getElementById('map-overlay');
-    if (!container || !img || !overlay) return;
-
-    const vv = window.visualViewport;
-    const vw = vv ? vv.width  : window.innerWidth;
-    const vh = vv ? vv.height : window.innerHeight;
-    const ox = vv ? vv.offsetLeft : 0;
-    const oy = vv ? vv.offsetTop  : 0;
-
-    const ratio = (img.naturalWidth && img.naturalHeight)
-      ? img.naturalWidth / img.naturalHeight
-      : (1920 / 1080);
-
-    let w = vw, h = w / ratio;
-    if (h > vh) { h = vh; w = h * ratio; }
-
-    const left = ox + (vw - w) / 2;
-    const top  = oy + (vh - h) / 2;
-
-    Object.assign(img.style,     { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
-    Object.assign(overlay.style, { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
-  }
-
-  async function tryLockLandscape() {
-    try {
-      if (document.documentElement.requestFullscreen &&
-          !document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-      }
-      if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('landscape');
-      }
-    } catch(_) { /* iOS ignores — fine */ }
-  }
-
-  async function enterMapOnlyIfMobile() {
-    const small = window.innerWidth <= 900;
-    if (!small) return;
-    document.body.classList.add('map-only');
-
-    const img = document.querySelector('.map-img');
-    if (img) {
-      if (img.complete) { fitMapToViewport(); }
-      else { img.addEventListener('load', fitMapToViewport, { once:true }); }
-    } else {
-      fitMapToViewport();
-    }
-
-    await tryLockLandscape();
-    showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
-  }
-
-  function exitMapOnly() {
-    document.body.classList.remove('map-only');
-    showRotatePrompt(false);
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(()=>{});
-    }
-  }
-
-  const refitIfMapOnly = () => {
-    if (document.body.classList.contains('map-only')) fitMapToViewport();
-  };
-  window.addEventListener('resize', refitIfMapOnly);
-  window.addEventListener('orientationchange', () => {
-    refitIfMapOnly();
-    if (document.body.classList.contains('map-only')) {
-      showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
-    }
-  });
-  if (window.visualViewport) {
-    const vv = window.visualViewport;
-    vv.addEventListener('resize', refitIfMapOnly);
-    vv.addEventListener('scroll', refitIfMapOnly);
-  }
-
-  // ----- Phases -----
-  function enterIllumination(leftType, rightType) {
-    phase = 'illumination';
-    lockButton.classList.add('glow-phase');
-    symbolPopup.style.display = 'none';
-    tell('Now select the symbols that are illuminated in-game');
-
-    const L = document.getElementById('label-left');
-    const R = document.getElementById('label-right');
-    if (L && R) {
-      L.textContent = leftType.toUpperCase();
-      R.textContent = rightType.toUpperCase();
-      L.className = leftType === 'truth' ? 'truth-label' : 'lie-label';
-      R.className = rightType === 'truth' ? 'truth-label' : 'lie-label';
-      sizeTruthLieFromDial();
-    }
-
-    const left = trio('left');
-    const right = trio('right');
-    truthGroup = (leftType === 'truth') ? left : right;
-    lieGroup   = (leftType === 'truth') ? right : left;
-
-    allowedGlowSlots = [];
-    [...truthGroup, ...lieGroup].forEach(sym => {
-      const slot = [...slots].find(s => s.dataset.symbol === sym);
-      if (slot) allowedGlowSlots.push(slot);
-    });
-  }
-
-  function handleLock() {
-    if (phase !== 'illumination') return;
-    const glowing = [...document.querySelectorAll('.dial-slot.glow')].map(s => s.dataset.symbol);
-    const truthToVisit = truthGroup.filter(sym => glowing.includes(sym));
-    const lieToVisit   = lieGroup.filter(sym => !glowing.includes(sym));
-    lockButton.classList.remove('glow-phase');
-    phase = 'final';
-    tell('Follow the map to interact with the marked symbols. Tap Reset to start again.');
-    window.showMapHighlights(truthToVisit, lieToVisit);
-
-    // → go map-only on mobile
-    enterMapOnlyIfMobile();
-  }
-
-  function resetUI() {
-    document.querySelectorAll('.dial-slot').forEach(s => {
-      s.dataset.symbol = '';
-      s.style.backgroundImage = '';
-      s.classList.remove('glow');
-      const label = s.querySelector('.symbol-name');
-      if (label) label.textContent = '';
-    });
-    document.getElementById('label-left').textContent = '';
-    document.getElementById('label-right').textContent = '';
-    lockButton.classList.remove('glow-phase');
-    symbolPopup.style.display = 'none';
-    phase = 'entry';
-    allowedGlowSlots = [];
-    truthGroup = [];
-    lieGroup = [];
-    clearLock();
-    tell('Enter the symbols you see in-game');
-    const overlay = document.getElementById('map-overlay');
-    if (overlay) overlay.innerHTML = '';
-    applyNamesVisibility(symbolNamesCheckbox.checked);
-    exitMapOnly();                 // ← back to dial view on mobile
-    sizeTruthLieFromDial();
-  }
-
-  window.handleLock = handleLock;
-  window.resetDial = resetUI;
-  lockButton.addEventListener('click', handleLock);
-  resetButton.addEventListener('click', resetUI);
-
-  // When both trios are set, only proceed if opposite types AND disjoint
-  function checkProgress() {
-    if (!bothComplete()) return;
-
-    const L = trio('left');
-    const R = trio('right');
-    const Lt = validateGroup(L);
-    const Rt = validateGroup(R);
-    const disjoint = !L.some(s => R.includes(s));
-    const validPair =
-      disjoint &&
-      ((Lt === 'truth' && Rt === 'lie') || (Lt === 'lie' && Rt === 'truth'));
-
-    if (validPair) {
-      enterIllumination(Lt, Rt);
-    } else {
-      tell('Both sides must be opposite types with no duplicate symbols across the dial.');
-    }
-  }
 });

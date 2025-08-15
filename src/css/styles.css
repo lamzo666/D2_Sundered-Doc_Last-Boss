@@ -1,24 +1,37 @@
+/* ========= GLOBAL / DIAL ========= */
 :root{
-  /* Dial size */
+  /* Dial knobs */
   --dial-max: 450px;
   --dial-base: 572px;
   --dial-scale: calc(var(--dial-max) / var(--dial-base));
-
-  /* Icon sizes */
   --slot-size: 14%;
   --name-font-base: 1.0rem;
 
-  /* TRUTH/LIE label size — JS sets font-size as (dialWidth * --truthlie-coef) */
+  /* TRUTH/LIE sizing
+     Your JS uses --truthlie-coef (fraction of dial width) to set inline font-size.
+     Change this to resize labels in your current stable build. Typical: 0.055–0.090 */
   --truthlie-coef: 0.065;
 
-  /* TRUTH/LIE spacing knobs */
-  --truthlie-top: 8px;
-  --truthlie-gap: -6px;
+  /* Optional CSS fallback (used only before JS runs) */
+  --truthlie-font-base: 2.2rem;
+  --truthlie-mult: 2.5;
 
-  /* Map label offset (%) relative to the symbol box (tighter so it doesn't cut) */
-  --map-label-offset: 108%;
+  /* ========= MAP TUNING (CSS-only; no JS edits) ========= */
+  /* Pin size */
+  --map-pin-size-desktop: 4%;
+  --map-pin-size-mobile:  6.25%;
 
-  /* Slot glow colours */
+  /* Global pin nudge (positive pushes RIGHT/DOWN). Uses margin so it never conflicts
+     with any inline transforms your JS might set. */
+  --map-pin-nudge-x: 0%;     /* adjust if pins look globally left/right */
+  --map-pin-nudge-y: 1.2%;   /* adjust if pins look globally high/low */
+
+  /* Label distance and sizes */
+  --map-label-offset: 112%;
+  --map-label-size-desktop: clamp(11px, 1.8vw, 17.5px);
+  --map-label-size-mobile:  clamp(12px, 2.6vw, 22px);
+
+  /* Dial glow colours */
   --slot-glow-outer-a: rgba(255,166,0,.90);
   --slot-glow-outer-b: rgba(255,166,0,.75);
   --slot-glow-inner:   rgba(255,166,0,.28);
@@ -27,7 +40,7 @@
 /* ====== PAGE / BACKDROP ====== */
 body{
   background:#111 url('/img/blur_fix.jpg') center/cover fixed no-repeat;
-  color:#fff; font-family:'Open Sans', sans-serif; text-align:center; margin:0;
+  color:#fff; font-family:'Open Sans',sans-serif; text-align:center; margin:0;
 }
 
 /* Titles */
@@ -67,16 +80,17 @@ h2{
 /* ====== TRUTH / LIE LABELS ====== */
 #truthLieLabel{
   min-height: calc(40px * var(--dial-scale));
-  margin: var(--truthlie-top) auto var(--truthlie-gap);
-  width:100%; max-width:var(--dial-max);
-  display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
-  text-transform:uppercase; font-weight:bold;
-  text-shadow:0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
+  margin: 6px auto -15px;
+  width: 100%; max-width: var(--dial-max);
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  font-weight: bold; text-transform: uppercase;
+  text-shadow: 0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
 }
-#truthLieLabel > #label-left,
-#truthLieLabel > #label-right{
-  font-size:1rem;      /* JS overwrites inline every resize */
-  line-height:1.05; white-space:nowrap;
+/* CSS fallback so labels don’t look tiny before JS sizes them.
+   Once your JS runs, it sets inline font-size using --truthlie-coef and overrides this. */
+#label-left, #label-right{
+  font-size: calc(var(--truthlie-font-base) * var(--dial-scale) * var(--truthlie-mult));
+  line-height: 1.05; white-space: nowrap;
 }
 .truth-label{ color:#4caf50; }
 .lie-label{ color:#f44336; }
@@ -87,22 +101,15 @@ h2{
   margin-top: calc(-36px * var(--dial-scale));
   filter: drop-shadow(0 0 50px rgba(0,0,0,.7));
 }
-.dial{
-  position:relative;
-  width:90vw; max-width:var(--dial-max);
-  aspect-ratio:1/1;
-}
+.dial{ position:relative; width:90vw; max-width:var(--dial-max); aspect-ratio:1/1; }
 .dial img.dial-background{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
 
-/* Dial slots */
 .dial-slot{
   position:absolute;
   width:var(--slot-size); height:var(--slot-size);
   background-size:contain; background-repeat:no-repeat; background-position:center;
   cursor:pointer; z-index:2; will-change:filter;
 }
-
-/* slot positions */
 .dial-slot.left1  { top:17.4%; left:22.6%; }
 .dial-slot.left2  { top:42.3%; left:11.1%; }
 .dial-slot.left3  { top:64.9%; left:21.8%; }
@@ -110,7 +117,7 @@ h2{
 .dial-slot.right2 { top:42.3%; right:12%;  }
 .dial-slot.right3 { top:64.9%; right:22.5%; }
 
-/* Glow (outer + soft inner) */
+/* Glow (outer + inner) */
 .dial-slot.glow{
   filter:
     drop-shadow(0 0 10px var(--slot-glow-outer-a))
@@ -137,9 +144,7 @@ h2{
 /* ====== BUTTONS ====== */
 .btn-container{
   display:flex; justify-content:center; align-items:center;
-  gap:18px;
-  margin: calc(-20px * var(--dial-scale)) auto 2px;
-  flex-wrap:nowrap;
+  gap:18px; margin: calc(-20px * var(--dial-scale)) auto 2px; flex-wrap:nowrap;
 }
 .btn-icon{
   width:60px; height:60px; border:none; border-radius:12px;
@@ -150,20 +155,26 @@ h2{
 .btn-icon.glow-phase{ background:#006644; box-shadow:0 0 12px #00ff99, 0 0 24px #00ff99; }
 .btn-reset{ background:#330011; box-shadow:0 0 8px #660022, 0 0 12px #660022; }
 
-/* ====== MAP ====== */
+/* ====== MAP (CSS-only adjustments) ====== */
 .map-container{ position:relative; max-width:1000px; margin:32px auto -4px; }
 .map-img{ width:100%; height:auto; display:block; }
-.map-overlay{
-  position:absolute; inset:0; pointer-events:none;
-  overflow:visible;                  /* let labels hang outside if needed */
-}
+.map-overlay{ position:absolute; inset:0; pointer-events:none; overflow:visible; }
 
-/* 👉 center each pin on its (left,top) percentages */
+/* Pins are absolutely positioned by your JS with top/left.
+   We only resize and globally nudge using margins, so we never override any inline transform. */
 .symbol-wrap{
-  position:absolute; width:5%; aspect-ratio:1/1; pointer-events:none; z-index:2;
-  transform: translate(-50%, -50%);
+  position:absolute;
+  width: var(--map-pin-size-desktop);
+  aspect-ratio: 1 / 1;
+  pointer-events:none; z-index:2;
+  margin-left: var(--map-pin-nudge-x);
+  margin-top:  var(--map-pin-nudge-y);
+}
+@media (max-width:900px){
+  .symbol-wrap{ width: var(--map-pin-size-mobile); }
 }
 
+/* Pin art + pulse */
 .symbol-overlay{
   position:absolute; inset:0; width:100%; aspect-ratio:1/1; pointer-events:none; z-index:2;
   filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85));
@@ -177,65 +188,48 @@ h2{
 }
 @keyframes mapPulse{ 0%{transform:scale(1)} 55%{transform:scale(1.15)} 100%{transform:scale(1)} }
 
-/* Responsive, readable map labels (slightly smaller than before) */
+/* Map labels: default BELOW the pin */
 .map-label{
   position:absolute; left:50%; transform:translateX(-50%);
-  text-transform:uppercase; font-family:'Manrope', sans-serif; font-weight:800; letter-spacing:.04em;
+  top: var(--map-label-offset); bottom:auto;
+  text-transform:uppercase; font-family:'Manrope',sans-serif; font-weight:800; letter-spacing:.04em;
   color:#e6e6e6; text-shadow:0 1px 2px #000, 0 0 6px #000; white-space:nowrap; pointer-events:none; user-select:none; z-index:3;
-  font-size: clamp(11px, 1.8vw, 20px);
+  font-size: var(--map-label-size-desktop);
+}
+@media (max-width:900px){
+  .map-label{ font-size: var(--map-label-size-mobile); }
 }
 .symbol-wrap.truth .map-label{ color:#c9ffd0; }
 .symbol-wrap.lie   .map-label{ color:#ffc9c9; }
-.symbol-wrap.label-below .map-label{ top: var(--map-label-offset); bottom:auto; }
-.symbol-wrap.label-above .map-label{ top:auto; bottom: var(--map-label-offset); }
 
-/* ===== Mobile portrait: hide the map entirely ===== */
+/* Force ABOVE on the five you wanted (works without JS data attributes via :has) */
+/* Desktop */
+@media (min-width: 901px){
+  .symbol-wrap:has(> img[src$="/hive.png"])      .map-label,
+  .symbol-wrap:has(> img[src$="/drink.png"])     .map-label,
+  .symbol-wrap:has(> img[src$="/witness.png"])   .map-label,
+  .symbol-wrap:has(> img[src$="/pyramid.png"])   .map-label,
+  .symbol-wrap:has(> img[src$="/worm.png"])      .map-label{
+    top:auto; bottom: var(--map-label-offset);
+  }
+}
+/* Mobile */
+@media (max-width:900px){
+  .symbol-wrap:has(> img[src$="/hive.png"])      .map-label,
+  .symbol-wrap:has(> img[src$="/drink.png"])     .map-label,
+  .symbol-wrap:has(> img[src$="/witness.png"])   .map-label,
+  .symbol-wrap:has(> img[src$="/pyramid.png"])   .map-label,
+  .symbol-wrap:has(> img[src$="/worm.png"])      .map-label{
+    top:auto; bottom: var(--map-label-offset);
+  }
+}
+
+/* ===== Mobile portrait: hide the map (as before) ===== */
 @media (max-width:900px) and (orientation:portrait){
   .map-container{ display:none !important; }
 }
 
-/* ===== MAP-ONLY MODE (after Lock on mobile) ===== */
-body.map-only h1,
-body.map-only h2,
-body.map-only #truthLieLabel,
-body.map-only .dial-wrapper,
-body.map-only #lockButton{ display:none !important; }
-
-body.map-only .map-container{
-  position: fixed; inset: 0;
-  margin:0 !important; max-width:none !important;
-  width:100vw; height:100dvh; background:#000;
-}
-@supports (height: 100svh){
-  body.map-only .map-container{ height:100svh; }
-}
-
-/* JS sets exact w/h/left/top for perfect fit */
-body.map-only .map-img{ position:absolute; object-fit:fill; }
-body.map-only .map-overlay{ position:absolute; }
-
-/* keep the toggle visible; show only Reset centered with safe-area padding */
-body.map-only #tooltip-toggle{ display:block; }
-body.map-only .btn-container{
-  position:fixed; bottom:12px; left:0; right:0; justify-content:center;
-  margin:0; z-index:2001;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-}
-body.map-only #lockButton{ display:none !important; }
-
-/* Hide footer entirely in map-only (no overlay on map/reset) */
-body.map-only .footer{ display:none !important; }
-
-/* small “rotate device” banner (optional) */
-.rotate-prompt{
-  display:none; position:fixed; left:50%; top:12px; transform:translateX(-50%);
-  background:rgba(0,0,0,.65); color:#fff; padding:8px 12px; border-radius:8px;
-  font-family:'Manrope',sans-serif; font-weight:700; letter-spacing:.02em;
-  z-index:2002; box-shadow:0 2px 8px rgba(0,0,0,.45);
-}
-.rotate-prompt.show{ display:block; }
-
-/* ====== POPUP ====== */
+/* ===== POPUP ===== */
 .symbol-popup{
   display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
   background:#222; border:2px solid #888; border-radius:8px; padding:20px; z-index:999;
@@ -243,11 +237,11 @@ body.map-only .footer{ display:none !important; }
 .symbol-grid{ display:grid; grid-template-columns:repeat(4, 60px); gap:10px; justify-content:center; }
 .symbol-grid img{ width:60px !important; height:60px !important; object-fit:contain; display:block; cursor:pointer; background:none; box-shadow:none; }
 
-/* ====== FOOTER (normal) ====== */
+/* ===== FOOTER ===== */
 .footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
 .footer .map-credit{ font-size:14px !important; opacity:.7; font-weight:normal; display:block; margin-top:2px; }
 
-/* ========= MOBILE GENERAL ========= */
+/* ===== MOBILE (general) ===== */
 @media (max-width:640px){
   #tooltip-toggle{ position:fixed; bottom:12px; left:12px; right:auto; top:auto; transform:scale(.95); z-index:2000; padding:6px 8px; }
   #tooltip-toggle .toggle-item{ gap:4px; margin:2px 0; }
@@ -260,3 +254,57 @@ body.map-only .footer{ display:none !important; }
 
 /* helper */
 .hidden-on-map{ display:none !important; }
+
+/* Hide the "Rotate device to view map" hint by default */
+#rotateHint,
+.rotate-hint {
+  display: none !important;
+}
+
+/* Show it only on small screens in PORTRAIT */
+@media (max-width: 900px) and (orientation: portrait) {
+  #rotateHint,
+  .rotate-hint {
+    display: block !important;
+    position: fixed;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    z-index: 1500;
+
+    /* optional styling */
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(0,0,0,.55);
+    color: #cfe9ff;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: .03em;
+    text-shadow: 0 1px 2px #000;
+  }
+}
+/* ==== Safety net for the rotate prompt ==== */
+/* JS-managed prompt (logic.js creates .rotate-prompt) */
+.rotate-prompt{
+  display:none;
+  position:fixed; left:50%; bottom:12px; transform:translateX(-50%);
+  background:rgba(0,0,0,.7); color:#fff; padding:8px 12px; border-radius:8px;
+  font:600 14px/1.2 'Manrope', sans-serif; z-index:3000;
+}
+.rotate-prompt.show{ display:block; }
+
+/* If any static .rotate-hint exists, keep it hidden by default */
+.rotate-hint{ display:none !important; }
+
+/* Never show either prompt on desktop */
+@media (min-width: 901px){
+  .rotate-prompt,
+  .rotate-hint{ display:none !important; }
+}
+
+/* Only show a rotate hint in mobile *portrait* when the page is in map-only mode */
+@media (max-width:900px) and (orientation:portrait){
+  body.map-only .rotate-prompt.show{ display:block !important; }
+  body.map-only .rotate-hint{ display:block !important; }
+}

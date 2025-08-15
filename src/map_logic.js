@@ -1,9 +1,6 @@
 // src/map_logic.js
-// Percent coordinates for each symbol on map.jpg (x = left %, y = top %)
-// src/map_logic.js
-// NOTE: These coordinates are the ORIGINAL top-left percentages
-// from your map (not centered). logic.js normalizes them at runtime.
-
+// Your original TOP/LEFT percentages (top-left anchor) for map.jpg.
+// We keep them exactly as-is; CSS now nudges pins down with --pin-y-nudge.
 window.MAP_COORDS = {
   stop:      { top: '22.31%', left: '38.64%' },
   kill:      { top: '70.14%', left: '65.96%' },
@@ -21,95 +18,83 @@ window.MAP_COORDS = {
   worship:   { top: '70.42%', left: '31.45%' }
 };
 
-// Optional pretty names for the map labels
+// Shown names
 window.SYMBOL_NAME_MAP = {
-  stop: 'STOP',
-  kill: 'KILL',
-  darkness: 'DARKNESS',
-  drink: 'DRINK',
-  give: 'GIVE',
-  guardian: 'GUARDIAN',
-  hive: 'HIVE',
-  light: 'LIGHT',
-  pyramid: 'PYRAMID',
-  savathun: 'SAVATHUN',
-  traveller: 'TRAVELLER',
-  witness: 'WITNESS',
-  worm: 'WORM',
-  worship: 'WORSHIP'
+  stop:'STOP', kill:'KILL', darkness:'DARKNESS', drink:'DRINK', give:'GIVE',
+  guardian:'GUARDIAN', hive:'HIVE', light:'LIGHT', pyramid:'PYRAMID',
+  savathun:'SAVATHUN', traveller:'TRAVELLER', witness:'WITNESS',
+  worm:'WORM', worship:'WORSHIP'
 };
 
 // === Label placement preferences ===
-// Put symbol names that should be ABOVE on desktop/mobile here.
-// Everything else will be BELOW.
-// Tip: tweak these lists to your liking.
+// Everything not listed uses the defaults (below/below as requested).
 const LABEL_PREFS = {
   defaultDesktop: 'below',
   defaultMobile:  'below',
-  desktopAbove:   ['hive', 'drink', 'witness', 'pyramid', 'worm'],
-  mobileAbove:    ['hive', 'drink', 'witness', 'pyramid', 'worm']
+  desktopAbove:   ['hive','drink','witness','pyramid','worm'],
+  mobileAbove:    ['hive','drink','witness','pyramid','worm']
 };
 
 function isMobile() {
-  // Use same breakpoint as your mobile media query
+  // Same breakpoint as your CSS mobile rules
   return window.matchMedia('(max-width: 640px)').matches;
 }
 
 function applyLabelPlacement() {
-  const aboveSet = new Set(isMobile() ? LABEL_PREFS.mobileAbove : LABEL_PREFS.desktopAbove);
-  const defaultIsAbove = (isMobile() ? LABEL_PREFS.defaultMobile : LABEL_PREFS.defaultDesktop) === 'above';
+  const aboveList = isMobile() ? LABEL_PREFS.mobileAbove : LABEL_PREFS.desktopAbove;
+  const defaultAbove = (isMobile() ? LABEL_PREFS.defaultMobile : LABEL_PREFS.defaultDesktop) === 'above';
+  const aboveSet = new Set(aboveList);
 
   document.querySelectorAll('.symbol-wrap').forEach(wrap => {
     const sym = wrap.dataset.symbol;
-    const shouldBeAbove = aboveSet.has(sym) || defaultIsAbove;
-
-    wrap.classList.toggle('label-above', shouldBeAbove);
-    wrap.classList.toggle('label-below', !shouldBeAbove);
+    const placeAbove = aboveSet.has(sym) || defaultAbove;
+    wrap.classList.toggle('label-above', placeAbove);
+    wrap.classList.toggle('label-below', !placeAbove);
   });
 }
 
-function showMapHighlights(truthToVisit = [], lieToVisit = []) {
+// Build pins for the given groups
+function showMapHighlights(truthToVisit = [], lieToVisit = [], _force = false) {
   const overlay = document.getElementById('map-overlay');
   if (!overlay) return;
   overlay.innerHTML = '';
 
-  const addSymbol = (name, kind /* 'truth' | 'lie' */) => {
-    const pos = symbolPositions[name];
+  const addPin = (name, kind /* 'truth' | 'lie' */) => {
+    const pos = window.MAP_COORDS[name];
     if (!pos) return;
 
-    // wrapper at map coordinates
+    // Wrapper at top-left percentage with a small downward nudge via calc()
     const wrap = document.createElement('div');
     wrap.className = `symbol-wrap ${kind}`;
     wrap.dataset.symbol = name;
-    wrap.style.top = pos.top;
     wrap.style.left = pos.left;
+    wrap.style.top  = `calc(${pos.top} + var(--pin-y-nudge))`;
 
-    // icon image (pulses via CSS)
+    // Pin image (pulses via CSS)
     const img = document.createElement('img');
     img.className = 'symbol-overlay';
     img.src = `img/${name}.png`;
     img.alt = name;
     wrap.appendChild(img);
 
-    // static label (visibility is toggled by logic.js checkbox)
+    // Label (visibility still controlled by your checkbox logic)
     const label = document.createElement('div');
     label.className = 'map-label';
-    label.textContent = name.toUpperCase();
+    label.textContent = (window.SYMBOL_NAME_MAP[name] || name).toUpperCase();
     wrap.appendChild(label);
 
     overlay.appendChild(wrap);
   };
 
-  truthToVisit.forEach(sym => addSymbol(sym, 'truth'));
-  lieToVisit.forEach(sym => addSymbol(sym, 'lie'));
+  truthToVisit.forEach(s => addPin(s, 'truth'));
+  lieToVisit.forEach(s => addPin(s, 'lie'));
 
-  // initial placement + keep synced on viewport changes
   applyLabelPlacement();
 }
 
-// Keep label placement responsive to viewport changes
+// Keep labels responsive
 window.addEventListener('resize', applyLabelPlacement);
 window.addEventListener('orientationchange', applyLabelPlacement);
 
-// Expose to the rest of the app
+// Expose for logic.js
 window.showMapHighlights = showMapHighlights;

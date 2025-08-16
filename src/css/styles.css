@@ -7,12 +7,10 @@
   --slot-size: 14%;
   --name-font-base: 1.0rem;
 
-  /* TRUTH/LIE sizing
-     Your JS uses --truthlie-coef (fraction of dial width) to set inline font-size.
-     Change this to resize labels in your current stable build. Typical: 0.055–0.090 */
+  /* TRUTH/LIE sizing (JS reads this to set inline font-size) */
   --truthlie-coef: 0.065;
 
-  /* Optional CSS fallback (used only before JS runs) */
+  /* Optional fallback before JS runs */
   --truthlie-font-base: 2.2rem;
   --truthlie-mult: 2.5;
 
@@ -21,10 +19,9 @@
   --map-pin-size-desktop: 4%;
   --map-pin-size-mobile:  6.25%;
 
-  /* Global pin nudge (positive pushes RIGHT/DOWN). Uses margin so it never conflicts
-     with any inline transforms your JS might set. */
-  --map-pin-nudge-x: 0%;     /* adjust if pins look globally left/right */
-  --map-pin-nudge-y: 1.2%;   /* adjust if pins look globally high/low */
+  /* Global pin nudge (positive pushes RIGHT/DOWN) */
+  --map-pin-nudge-x: 0%;
+  --map-pin-nudge-y: 1.2%;
 
   /* Label distance and sizes */
   --map-label-offset: 112%;
@@ -86,8 +83,7 @@ h2{
   font-weight: bold; text-transform: uppercase;
   text-shadow: 0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
 }
-/* CSS fallback so labels don’t look tiny before JS sizes them.
-   Once your JS runs, it sets inline font-size using --truthlie-coef and overrides this. */
+/* CSS fallback (JS will override with inline font-size) */
 #label-left, #label-right{
   font-size: calc(var(--truthlie-font-base) * var(--dial-scale) * var(--truthlie-mult));
   line-height: 1.05; white-space: nowrap;
@@ -160,8 +156,7 @@ h2{
 .map-img{ width:100%; height:auto; display:block; }
 .map-overlay{ position:absolute; inset:0; pointer-events:none; overflow:visible; }
 
-/* Pins are absolutely positioned by your JS with top/left.
-   We only resize and globally nudge using margins, so we never override any inline transform. */
+/* Pins are positioned by JS with top/left; we only size + nudge. */
 .symbol-wrap{
   position:absolute;
   width: var(--map-pin-size-desktop);
@@ -202,7 +197,7 @@ h2{
 .symbol-wrap.truth .map-label{ color:#c9ffd0; }
 .symbol-wrap.lie   .map-label{ color:#ffc9c9; }
 
-/* Force ABOVE on the five you wanted (works without JS data attributes via :has) */
+/* Above placement for your five (works w/out JS data attrs via :has) */
 /* Desktop */
 @media (min-width: 901px){
   .symbol-wrap:has(> img[src$="/hive.png"])      .map-label,
@@ -224,11 +219,6 @@ h2{
   }
 }
 
-/* ===== Mobile portrait: hide the map (as before) ===== */
-@media (max-width:900px) and (orientation:portrait){
-  .map-container{ display:none !important; }
-}
-
 /* ===== POPUP ===== */
 .symbol-popup{
   display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -240,6 +230,66 @@ h2{
 /* ===== FOOTER ===== */
 .footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
 .footer .map-credit{ font-size:14px !important; opacity:.7; font-weight:normal; display:block; margin-top:2px; }
+
+/* ===== MOBILE MAP-ONLY MODE ===== */
+/* Prompt bubble (JS toggles .show) */
+.rotate-prompt{
+  display:none;
+  position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
+  background:rgba(0,0,0,.70); color:#fff; padding:10px 14px; border-radius:10px;
+  font:600 14px/1.2 'Manrope', sans-serif; z-index:3000;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);
+}
+.rotate-prompt.show{ display:block; }
+
+/* Never show rotate prompt on desktop */
+@media (min-width: 901px){
+  .rotate-prompt{ display:none !important; }
+}
+
+/* Mobile-only rules */
+@media (max-width: 900px){
+  /* Hide everything but the map when in map-only mode */
+  body.map-only h1,
+  body.map-only h2,
+  body.map-only #truthLieLabel,
+  body.map-only #tooltip,
+  body.map-only #tooltip-toggle,
+  body.map-only .dial-wrapper,
+  body.map-only .btn-container { display:none !important; }
+
+  /* Full-viewport map container */
+  body.map-only .map-container{
+    position:fixed; inset:0;
+    margin:0 !important;
+    width:100vw; height:100vh;
+    background: transparent;
+    z-index: 1000;
+  }
+  /* In map-only we absolutely position the image/overlay so JS can place them */
+  body.map-only .map-img,
+  body.map-only .map-overlay{
+    position:absolute; left:0; top:0;
+  }
+
+  /* Portrait: hide map itself, center the rotate prompt */
+  @media (orientation: portrait){
+    body.map-only .map-container{ display:none !important; }
+    body.map-only .rotate-prompt.show{
+      display:block !important;
+      left:50%; top:50%; bottom:auto; transform:translate(-50%,-50%);
+    }
+  }
+
+  /* Landscape: show full map, hide prompt */
+  @media (orientation: landscape){
+    body.map-only .map-container{ display:block !important; }
+    body.map-only .rotate-prompt{ display:none !important; }
+  }
+}
+
+/* Safety: hide any legacy static rotate-hint by default */
+.rotate-hint{ display:none !important; }
 
 /* ===== MOBILE (general) ===== */
 @media (max-width:640px){
@@ -254,57 +304,3 @@ h2{
 
 /* helper */
 .hidden-on-map{ display:none !important; }
-
-/* Hide the "Rotate device to view map" hint by default */
-#rotateHint,
-.rotate-hint {
-  display: none !important;
-}
-
-/* Show it only on small screens in PORTRAIT */
-@media (max-width: 900px) and (orientation: portrait) {
-  #rotateHint,
-  .rotate-hint {
-    display: block !important;
-    position: fixed;
-    left: 50%;
-    bottom: 10px;
-    transform: translateX(-50%);
-    z-index: 1500;
-
-    /* optional styling */
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: rgba(0,0,0,.55);
-    color: #cfe9ff;
-    font-family: 'Manrope', sans-serif;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: .03em;
-    text-shadow: 0 1px 2px #000;
-  }
-}
-/* ==== Safety net for the rotate prompt ==== */
-/* JS-managed prompt (logic.js creates .rotate-prompt) */
-.rotate-prompt{
-  display:none;
-  position:fixed; left:50%; bottom:12px; transform:translateX(-50%);
-  background:rgba(0,0,0,.7); color:#fff; padding:8px 12px; border-radius:8px;
-  font:600 14px/1.2 'Manrope', sans-serif; z-index:3000;
-}
-.rotate-prompt.show{ display:block; }
-
-/* If any static .rotate-hint exists, keep it hidden by default */
-.rotate-hint{ display:none !important; }
-
-/* Never show either prompt on desktop */
-@media (min-width: 901px){
-  .rotate-prompt,
-  .rotate-hint{ display:none !important; }
-}
-
-/* Only show a rotate hint in mobile *portrait* when the page is in map-only mode */
-@media (max-width:900px) and (orientation:portrait){
-  body.map-only .rotate-prompt.show{ display:block !important; }
-  body.map-only .rotate-hint{ display:block !important; }
-}

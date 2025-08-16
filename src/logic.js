@@ -15,7 +15,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const coef = parseFloat(
       getComputedStyle(document.documentElement)
         .getPropertyValue('--truthlie-coef')
-    ) || 0.085;
+    ) || 0.065;                      // fraction of dial width
     const px = Math.max(10, Math.round(dialWidth * coef)) + 'px';
     const L = document.getElementById('label-left');
     const R = document.getElementById('label-right');
@@ -26,7 +26,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', sizeTruthLieFromDial);
 
   /* ---------- MAP COORD NORMALIZER (top-left → center) ---------- */
-  const PIN_SIZE_PCT = 5; // keep in sync with .symbol-wrap { width:5% } in CSS
+  const PIN_SIZE_PCT = 5; // visual center math; keep ≈ the pin width in %
   function normalizePos(p) {
     if (!p) return { x: 50, y: 50 };
     if ('x' in p && 'y' in p) return { x: +p.x, y: +p.y };
@@ -39,13 +39,10 @@ window.addEventListener('DOMContentLoaded', () => {
   /* ---------- iOS animation bootstrap helpers ---------- */
   function restartMapPulsesNow() {
     const pins = document.querySelectorAll('.symbol-overlay');
-    // toggle the class to restart CSS animation reliably
     pins.forEach(el => el.classList.remove('pulse'));
-    // force reflow
     void document.body.offsetWidth;
     pins.forEach(el => el.classList.add('pulse'));
   }
-  // queue a restart on the next two frames (after layout/viewport changes)
   const queueRestartPulses = () =>
     requestAnimationFrame(() => requestAnimationFrame(restartMapPulsesNow));
 
@@ -185,7 +182,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const MAP_COORDS = window.MAP_COORDS || {};
   const SYMBOL_NAME_MAP = window.SYMBOL_NAME_MAP || {};
 
-  // Build the overlay AND ensure pulses start even on first landscape entry.
   window.showMapHighlights = (truthToVisit, lieToVisit, staticNames = true) => {
     const overlay = document.getElementById('map-overlay');
     if (!overlay) return;
@@ -208,7 +204,7 @@ window.addEventListener('DOMContentLoaded', () => {
       wrap.style.transform = 'translate(-50%, -50%)';
 
       const img = document.createElement('img');
-      img.className = 'symbol-overlay pulse';          // ← ensure animation class is present
+      img.className = 'symbol-overlay pulse';
       img.src = `img/${sym}.png`;
       img.alt = sym;
       wrap.appendChild(img);
@@ -225,18 +221,15 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     applyNamesVisibility(symbolNamesCheckbox.checked);
-
-    // kick animations after DOM/layout settled (iOS fix)
     queueRestartPulses();
   };
 
   /* ------------------ MAP-ONLY MODE (mobile after Lock) ------------------ */
   const rotatePrompt = document.createElement('div');
-  rotatePrompt.id = 'rotatePrompt';
   rotatePrompt.className = 'rotate-prompt';
   rotatePrompt.textContent = 'Rotate device to view map';
   document.body.appendChild(rotatePrompt);
-  function showRotatePrompt(show){ rotatePrompt.classList.toggle('show', !!show); }
+  const showRotatePrompt = (show) => rotatePrompt.classList.toggle('show', !!show);
 
   function fitMapToViewport() {
     const container = document.querySelector('.map-container');
@@ -263,7 +256,6 @@ window.addEventListener('DOMContentLoaded', () => {
     Object.assign(img.style,     { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
     Object.assign(overlay.style, { width:`${w}px`, height:`${h}px`, left:`${left}px`, top:`${top}px` });
 
-    // when we refit, make sure pulses are running
     queueRestartPulses();
   }
 
@@ -280,8 +272,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function enterMapOnlyIfMobile() {
-    const small = window.innerWidth <= 900;
-    if (!small) return;
+    if (window.innerWidth > 900) return;      // desktop unchanged
     document.body.classList.add('map-only');
 
     const img = document.querySelector('.map-img');
@@ -294,10 +285,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     await tryLockLandscape();
 
-    // kick pulses once more after the orientation lock completes
-    queueRestartPulses();
-
+    // Portrait → show prompt centered; Landscape → hide prompt
     showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
+
+    // Kick pulses after any orientation/FS change settles
+    queueRestartPulses();
   }
 
   function exitMapOnly() {
@@ -321,6 +313,7 @@ window.addEventListener('DOMContentLoaded', () => {
       showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
     }
   });
+  window.addEventListener('load', refitIfMapOnly);
   if (window.visualViewport) {
     const vv = window.visualViewport;
     vv.addEventListener('resize', refitIfMapOnly);
@@ -366,7 +359,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tell('Follow the map to interact with the marked symbols. Tap Reset to start again.');
     window.showMapHighlights(truthToVisit, lieToVisit);
 
-    // → go map-only on mobile
+    // → switch to map-only on mobile
     enterMapOnlyIfMobile();
   }
 

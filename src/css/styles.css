@@ -304,3 +304,39 @@ h2{
 
 /* helper */
 .hidden-on-map{ display:none !important; }
+/* ===== FIX: Dial symbol picker must sit above map and stay small ===== */
+
+/* Small centered modal (NOT full-screen). Highest z-index so it can't hide behind the map. */
+.symbol-popup#symbolPopup{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 99999;                 /* <-- key: above any map/container */
+  display: none;                  /* your JS sets display:block */
+  background: #222;
+  border: 2px solid #888;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.55);
+}
+
+/* Compact grid of icons */
+.symbol-popup#symbolPopup .symbol-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 60px);
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Lock thumbnail size so they never “explode” */
+.symbol-popup#symbolPopup .symbol-grid img{
+  width: 60px !important;
+  height: 60px !important;
+  object-fit: contain;
+  display: block;
+  cursor: pointer;
+  background: none !important;
+  box-shadow: none !important;
+  border-radius: 6px;
+}

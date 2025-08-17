@@ -1,6 +1,5 @@
 /* ========= GLOBAL / DIAL ========= */
 :root{
-  /* Dial knobs */
   --dial-max: 450px;
   --dial-base: 572px;
   --dial-scale: calc(var(--dial-max) / var(--dial-base));
@@ -15,18 +14,18 @@
   --truthlie-mult: 2.5;
 
   /* ========= MAP TUNING (CSS-only; no JS edits) ========= */
-  /* Pin size */
   --map-pin-size-desktop: 4%;
-  --map-pin-size-mobile:  6.25%;
+  /* ✅ Your preferred mobile sizes */
+  --map-pin-size-mobile:  4%;
+  --map-label-size-mobile:  clamp(12px, 2.6vw, 17.5px);
 
-  /* Global pin nudge (positive pushes RIGHT/DOWN) */
   --map-pin-nudge-x: 0%;
   --map-pin-nudge-y: 1.2%;
-
-  /* Label distance and sizes */
   --map-label-offset: 112%;
   --map-label-size-desktop: clamp(11px, 1.8vw, 17.5px);
-  --map-label-size-mobile:  clamp(12px, 2.6vw, 22px);
+
+  /* Safety margin scale for map-only landscape (prevents label clipping) */
+  --map-safe-scale: 0.950;
 
   /* Dial glow colours */
   --slot-glow-outer-a: rgba(255,166,0,.90);
@@ -83,7 +82,6 @@ h2{
   font-weight: bold; text-transform: uppercase;
   text-shadow: 0 0 4px #000, 0 0 10px #000, 0 0 20px #000;
 }
-/* CSS fallback (JS will override with inline font-size) */
 #label-left, #label-right{
   font-size: calc(var(--truthlie-font-base) * var(--dial-scale) * var(--truthlie-mult));
   line-height: 1.05; white-space: nowrap;
@@ -106,6 +104,7 @@ h2{
   background-size:contain; background-repeat:no-repeat; background-position:center;
   cursor:pointer; z-index:2; will-change:filter;
 }
+/* ✅ Canonical positions */
 .dial-slot.left1  { top:17.4%; left:22.6%; }
 .dial-slot.left2  { top:42.3%; left:11.1%; }
 .dial-slot.left3  { top:64.9%; left:21.8%; }
@@ -113,11 +112,9 @@ h2{
 .dial-slot.right2 { top:42.3%; right:12%;  }
 .dial-slot.right3 { top:64.9%; right:22.5%; }
 
-/* Glow (outer + inner) */
 .dial-slot.glow{
-  filter:
-    drop-shadow(0 0 10px var(--slot-glow-outer-a))
-    drop-shadow(0 0 15px var(--slot-glow-outer-b));
+  filter: drop-shadow(0 0 10px var(--slot-glow-outer-a))
+          drop-shadow(0 0 15px var(--slot-glow-outer-b));
 }
 .dial-slot.glow::after{
   content:""; position:absolute; inset:12%; border-radius:10px;
@@ -125,8 +122,6 @@ h2{
   background: radial-gradient(closest-side, var(--slot-glow-inner) 0%, rgba(255,166,0,0) 65%);
   mix-blend-mode: screen;
 }
-
-/* dial symbol names */
 .dial-slot .symbol-name{
   position:absolute; left:50%; transform:translateX(-50%);
   bottom:-45%; white-space:nowrap;
@@ -154,18 +149,18 @@ h2{
 /* ====== MAP (CSS-only adjustments) ====== */
 .map-container{ position:relative; max-width:1000px; margin:32px auto -4px; }
 .map-img{ width:100%; height:auto; display:block; }
-.map-overlay{ position:absolute; inset:0; pointer-events:none; overflow:visible; }
+.map-overlay{ position:absolute; inset:0; pointer-events:none; overflow:visible; z-index:2; }
 
 /* Pins are positioned by JS with top/left; we only size + nudge. */
 .symbol-wrap{
   position:absolute;
   width: var(--map-pin-size-desktop);
   aspect-ratio: 1 / 1;
-  pointer-events:none; z-index:2;
+  pointer-events:none; z-index:3;
   margin-left: var(--map-pin-nudge-x);
   margin-top:  var(--map-pin-nudge-y);
 }
-@media (max-width:900px){
+@media (max-width:1024px){
   .symbol-wrap{ width: var(--map-pin-size-mobile); }
 }
 
@@ -191,15 +186,14 @@ h2{
   color:#e6e6e6; text-shadow:0 1px 2px #000, 0 0 6px #000; white-space:nowrap; pointer-events:none; user-select:none; z-index:3;
   font-size: var(--map-label-size-desktop);
 }
-@media (max-width:900px){
+@media (max-width:1024px){
   .map-label{ font-size: var(--map-label-size-mobile); }
 }
 .symbol-wrap.truth .map-label{ color:#c9ffd0; }
 .symbol-wrap.lie   .map-label{ color:#ffc9c9; }
 
-/* Above placement for your five (works w/out JS data attrs via :has) */
-/* Desktop */
-@media (min-width: 901px){
+/* Above placement for your five */
+@media (min-width: 1025px){
   .symbol-wrap:has(> img[src$="/hive.png"])      .map-label,
   .symbol-wrap:has(> img[src$="/drink.png"])     .map-label,
   .symbol-wrap:has(> img[src$="/witness.png"])   .map-label,
@@ -208,8 +202,7 @@ h2{
     top:auto; bottom: var(--map-label-offset);
   }
 }
-/* Mobile */
-@media (max-width:900px){
+@media (max-width:1024px){
   .symbol-wrap:has(> img[src$="/hive.png"])      .map-label,
   .symbol-wrap:has(> img[src$="/drink.png"])     .map-label,
   .symbol-wrap:has(> img[src$="/witness.png"])   .map-label,
@@ -222,7 +215,7 @@ h2{
 /* ===== POPUP ===== */
 .symbol-popup{
   display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-  background:#222; border:2px solid #888; border-radius:8px; padding:20px; z-index:999;
+  background:#222; border:2px solid #888; border-radius:8px; padding:20px; z-index:99999;
 }
 .symbol-grid{ display:grid; grid-template-columns:repeat(4, 60px); gap:10px; justify-content:center; }
 .symbol-grid img{ width:60px !important; height:60px !important; object-fit:contain; display:block; cursor:pointer; background:none; box-shadow:none; }
@@ -231,8 +224,93 @@ h2{
 .footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
 .footer .map-credit{ font-size:14px !important; opacity:.7; font-weight:normal; display:block; margin-top:2px; }
 
-/* ===== MOBILE MAP-ONLY MODE ===== */
-/* Prompt bubble (JS toggles .show) */
+/* ===== MOBILE FLOW ===== */
+
+/* 1) First view on phones, PORTRAIT = dial-only */
+@media (max-width: 1024px) and (orientation: portrait){
+  .map-container{ display:none !important; }
+}
+
+/* 2) Map-only base for phones (all orientations) */
+@media (max-width: 1024px){
+  body.map-only h1,
+  body.map-only h2,
+  body.map-only #truthLieLabel,
+  body.map-only #tooltip,
+  body.map-only .dial-wrapper,
+  body.map-only .btn-container,
+  body.map-only .footer { display:none !important; }
+
+  body.map-only .map-container{
+    position:fixed; inset:0;
+    margin:0 !important;
+    width:100vw; height:100dvh; /* iOS-safe viewport height */
+    background: transparent;
+    z-index: 1000;
+  }
+  body.map-only .map-img,
+  body.map-only .map-overlay{
+    position:absolute; left:0; top:0;
+  }
+}
+
+/* 3) Map-only + PORTRAIT: show rotate bubble, hide map */
+@media (max-width: 1024px) and (orientation: portrait){
+  body.map-only .map-container{ display:none !important; }
+  body.map-only .rotate-prompt.show{
+    display:block !important;
+    left:50%; top:50%; bottom:auto; transform:translate(-50%,-50%);
+  }
+}
+
+/* 4) Map-only + LANDSCAPE: ONLY MAP + HUD (+ safety margin) */
+@media (max-width: 1024px) and (orientation: landscape){
+  body.map-only .rotate-prompt{ display:none !important; }
+  body.map-only .map-container{ display:block !important; }
+
+  /* Top-left toggles */
+  body.map-only #tooltip-toggle{
+    position:fixed;
+    top: calc(env(safe-area-inset-top, 0) + 12px);
+    left: calc(env(safe-area-inset-left, 0) + 12px);
+    z-index: 2001;
+    display:block !important;
+  }
+
+  /* Bottom-right: keep only Reset */
+  body.map-only .btn-container{
+    position: fixed;
+    right: calc(env(safe-area-inset-right, 0) + 12px);
+    bottom: calc(env(safe-area-inset-bottom, 0) + 12px);
+    z-index: 2001;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0;
+    background: transparent;
+  }
+  body.map-only .btn-container .btn-icon:not(.btn-reset){ display:none !important; }
+  body.map-only .btn-container .btn-reset{
+    display: inline-flex !important;
+    width: auto; height: auto;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.6);
+    color: #e6e6e6; font-weight: 600;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: none;
+  }
+
+  /* 🔒 Safety margin (shrinks map ~3.5% to keep labels inside viewport) */
+  body.map-only .map-img,
+  body.map-only .map-overlay{
+    transform-origin: 50% 50%;
+    transform: scale(var(--map-safe-scale));
+  }
+}
+
+/* Rotate prompt element (hidden unless map-only + .show) */
 .rotate-prompt{
   display:none;
   position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
@@ -240,56 +318,8 @@ h2{
   font:600 14px/1.2 'Manrope', sans-serif; z-index:3000;
   box-shadow:0 4px 16px rgba(0,0,0,.5);
 }
-.rotate-prompt.show{ display:block; }
-
-/* Never show rotate prompt on desktop */
-@media (min-width: 901px){
-  .rotate-prompt{ display:none !important; }
-}
-
-/* Mobile-only rules */
-@media (max-width: 900px){
-  /* Hide everything but the map when in map-only mode */
-  body.map-only h1,
-  body.map-only h2,
-  body.map-only #truthLieLabel,
-  body.map-only #tooltip,
-  body.map-only #tooltip-toggle,
-  body.map-only .dial-wrapper,
-  body.map-only .btn-container { display:none !important; }
-
-  /* Full-viewport map container */
-  body.map-only .map-container{
-    position:fixed; inset:0;
-    margin:0 !important;
-    width:100vw; height:100vh;
-    background: transparent;
-    z-index: 1000;
-  }
-  /* In map-only we absolutely position the image/overlay so JS can place them */
-  body.map-only .map-img,
-  body.map-only .map-overlay{
-    position:absolute; left:0; top:0;
-  }
-
-  /* Portrait: hide map itself, center the rotate prompt */
-  @media (orientation: portrait){
-    body.map-only .map-container{ display:none !important; }
-    body.map-only .rotate-prompt.show{
-      display:block !important;
-      left:50%; top:50%; bottom:auto; transform:translate(-50%,-50%);
-    }
-  }
-
-  /* Landscape: show full map, hide prompt */
-  @media (orientation: landscape){
-    body.map-only .map-container{ display:block !important; }
-    body.map-only .rotate-prompt{ display:none !important; }
-  }
-}
-
-/* Safety: hide any legacy static rotate-hint by default */
-.rotate-hint{ display:none !important; }
+.rotate-prompt.show{ display:none; }
+body.map-only .rotate-prompt.show{ display:block; }
 
 /* ===== MOBILE (general) ===== */
 @media (max-width:640px){
@@ -304,39 +334,3 @@ h2{
 
 /* helper */
 .hidden-on-map{ display:none !important; }
-/* ===== FIX: Dial symbol picker must sit above map and stay small ===== */
-
-/* Small centered modal (NOT full-screen). Highest z-index so it can't hide behind the map. */
-.symbol-popup#symbolPopup{
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 99999;                 /* <-- key: above any map/container */
-  display: none;                  /* your JS sets display:block */
-  background: #222;
-  border: 2px solid #888;
-  border-radius: 10px;
-  padding: 16px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.55);
-}
-
-/* Compact grid of icons */
-.symbol-popup#symbolPopup .symbol-grid{
-  display: grid;
-  grid-template-columns: repeat(4, 60px);
-  gap: 10px;
-  justify-content: center;
-}
-
-/* Lock thumbnail size so they never “explode” */
-.symbol-popup#symbolPopup .symbol-grid img{
-  width: 60px !important;
-  height: 60px !important;
-  object-fit: contain;
-  display: block;
-  cursor: pointer;
-  background: none !important;
-  box-shadow: none !important;
-  border-radius: 6px;
-}

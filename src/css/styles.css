@@ -25,7 +25,7 @@
   --map-label-size-desktop: clamp(11px, 1.8vw, 17.5px);
 
   /* Safety margin scale for map-only landscape (prevents label clipping) */
-  --map-safe-scale: 0.950;
+  --map-safe-scale: 0.925;
 
   /* Dial glow colours */
   --slot-glow-outer-a: rgba(255,166,0,.90);

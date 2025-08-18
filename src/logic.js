@@ -356,7 +356,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const lieToVisit   = lieGroup.filter(sym => !glowing.includes(sym));
     lockButton.classList.remove('glow-phase');
     phase = 'final';
-    tell('Move to the map’s symbol(s) and align the lens accordingly. Tap Reset to start again.');
+    tell('Move to the symbol(s) on the map and align the lens accordingly. Tap Reset to start again.');
     window.showMapHighlights(truthToVisit, lieToVisit);
 
     // → switch to map-only on mobile

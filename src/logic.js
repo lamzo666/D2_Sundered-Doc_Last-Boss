@@ -356,7 +356,16 @@ window.addEventListener('DOMContentLoaded', () => {
     const lieToVisit   = lieGroup.filter(sym => !glowing.includes(sym));
     lockButton.classList.remove('glow-phase');
     phase = 'final';
-    tell('Move to the symbol(s) on the map and align the lens accordingly. Tap Reset to start again.');
+
+    /* Guide (3 lines with spacing) */
+    if (tooltip) {
+      tooltip.innerHTML = `
+        <p>Move to the symbol(s) on the map and align the lens.</p>
+        <p>Colors show the action. <strong>Orange glow = ILLUMINATE</strong>, <strong>Black glow = DE-ILLUMINATE</strong>.</p>
+        <p>Tap Reset to start again.</p>
+      `;
+    }
+
     window.showMapHighlights(truthToVisit, lieToVisit);
 
     // → switch to map-only on mobile

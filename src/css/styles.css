@@ -15,7 +15,6 @@
 
   /* ========= MAP TUNING (CSS-only; no JS edits) ========= */
   --map-pin-size-desktop: 4%;
-  /* ✅ Your preferred mobile sizes */
   --map-pin-size-mobile:  4%;
   --map-label-size-mobile:  clamp(12px, 2.6vw, 17.5px);
 
@@ -69,6 +68,9 @@ h2{
   max-height:140px; overflow:hidden; opacity:1; transform:translateY(0);
   transition:opacity .25s, transform .25s, max-height .25s, padding .25s, margin .25s;
 }
+/* NEW: spacing for multi-line guide */
+#tooltip p { margin: 6px 0; }
+
 #tooltip.hidden{
   opacity:0; transform:translateY(-8px); max-height:0; padding:0; margin:0 auto; pointer-events:none;
 }
@@ -170,12 +172,23 @@ h2{
   filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85));
   animation: mapPulse 1.5s ease-in-out infinite; transform-origin:50% 50%;
 }
+
+/* Dial Truth  -> Map DE-illuminated (dim/black) */
 .symbol-wrap.truth .symbol-overlay{
-  filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #4caf50);
+  filter:
+    drop-shadow(0 0 3px rgba(0,0,0,.9))
+    drop-shadow(0 0 10px rgba(0,0,0,.95))
+    drop-shadow(0 0 18px rgba(0,0,0,.85));
 }
+/* Dial Lie -> Map ILLUMINATED (dial's orange glow) */
 .symbol-wrap.lie .symbol-overlay{
-  filter:drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 4px rgba(0,0,0,.85)) drop-shadow(0 0 10px #f44336);
+  filter:
+    drop-shadow(0 0 2px rgba(0,0,0,.85))
+    drop-shadow(0 0 4px rgba(0,0,0,.85))
+    drop-shadow(0 0 10px var(--slot-glow-outer-a))
+    drop-shadow(0 0 18px var(--slot-glow-outer-b));
 }
+
 @keyframes mapPulse{ 0%{transform:scale(1)} 55%{transform:scale(1.15)} 100%{transform:scale(1)} }
 
 /* Map labels: default BELOW the pin */
@@ -192,7 +205,7 @@ h2{
 .symbol-wrap.truth .map-label{ color:#c9ffd0; }
 .symbol-wrap.lie   .map-label{ color:#ffc9c9; }
 
-/* Above placement for your five */
+/* Above placement for your five (desktop) */
 @media (min-width: 1025px){
   .symbol-wrap:has(> img[src$="/hive.png"])      .map-label,
   .symbol-wrap:has(> img[src$="/drink.png"])     .map-label,
@@ -202,6 +215,7 @@ h2{
     top:auto; bottom: var(--map-label-offset);
   }
 }
+/* Above placement for your five (mobile) */
 @media (max-width:1024px){
   .symbol-wrap:has(> img[src$="/hive.png"])      .map-label,
   .symbol-wrap:has(> img[src$="/drink.png"])     .map-label,
@@ -224,15 +238,15 @@ h2{
 .footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
 .footer .map-credit{ font-size:14px !important; opacity:.7; font-weight:normal; display:block; margin-top:2px; }
 
-/* ===== MOBILE FLOW ===== */
+/* ===== MOBILE FLOW (touch devices only) ===== */
 
-/* 1) First view on phones, PORTRAIT = dial-only */
-@media (max-width: 1024px) and (orientation: portrait){
+/* 1) First view on phones/tablets, PORTRAIT = dial-only */
+@media (hover: none) and (pointer: coarse) and (orientation: portrait){
   .map-container{ display:none !important; }
 }
 
-/* 2) Map-only base for phones (all orientations) */
-@media (max-width: 1024px){
+/* 2) Map-only base for phones/tablets (all orientations) */
+@media (hover: none) and (pointer: coarse){
   body.map-only h1,
   body.map-only h2,
   body.map-only #truthLieLabel,
@@ -255,7 +269,7 @@ h2{
 }
 
 /* 3) Map-only + PORTRAIT: show rotate bubble, hide map */
-@media (max-width: 1024px) and (orientation: portrait){
+@media (hover: none) and (pointer: coarse) and (orientation: portrait){
   body.map-only .map-container{ display:none !important; }
   body.map-only .rotate-prompt.show{
     display:block !important;
@@ -264,7 +278,7 @@ h2{
 }
 
 /* 4) Map-only + LANDSCAPE: ONLY MAP + HUD (+ safety margin) */
-@media (max-width: 1024px) and (orientation: landscape){
+@media (hover: none) and (pointer: coarse) and (orientation: landscape){
   body.map-only .rotate-prompt{ display:none !important; }
   body.map-only .map-container{ display:block !important; }
 
@@ -302,7 +316,7 @@ h2{
     box-shadow: none;
   }
 
-  /* 🔒 Safety margin (shrinks map ~3.5% to keep labels inside viewport) */
+  /* Safety margin (shrinks map to keep labels inside viewport) */
   body.map-only .map-img,
   body.map-only .map-overlay{
     transform-origin: 50% 50%;

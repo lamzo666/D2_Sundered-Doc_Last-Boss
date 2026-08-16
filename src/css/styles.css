@@ -338,17 +338,29 @@ h2{
   .map-container{ display:none !important; }
 }
 
-/* 2) Map-only base for phones/tablets (all orientations) */
-@media (hover: none) and (pointer: coarse){
+/* 2) Map-only + PORTRAIT is the "read it" view: the page stays as it is, so
+      the callout bar sits in the flow under the dial and Reset stays in
+      reach. All that changes is a hint to rotate. */
+@media (hover: none) and (pointer: coarse) and (orientation: portrait){
+  body.map-only .map-container{ display:none !important; }
+  body.map-only .rotate-prompt.show{ display:block; }
+}
+
+/* 3) Map-only + LANDSCAPE is the "find it" view: the map and nothing else. */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape){
   body.map-only h1,
   body.map-only h2,
   body.map-only #truthLieLabel,
   body.map-only #tooltip,
   body.map-only .dial-wrapper,
-  body.map-only .btn-container,
-  body.map-only .footer { display:none !important; }
+  body.map-only .footer,
+  body.map-only .rotate-prompt,
+  /* The callout bar would sit on top of the very pins it describes. Rotate
+     back to portrait to read it. */
+  body.map-only .route-summary{ display:none !important; }
 
   body.map-only .map-container{
+    display:block !important;
     position:fixed; inset:0;
     margin:0 !important;
     width:100vw; height:100dvh; /* iOS-safe viewport height */
@@ -359,21 +371,6 @@ h2{
   body.map-only .map-overlay{
     position:absolute; left:0; top:0;
   }
-}
-
-/* 3) Map-only + PORTRAIT: show rotate bubble, hide map */
-@media (hover: none) and (pointer: coarse) and (orientation: portrait){
-  body.map-only .map-container{ display:none !important; }
-  body.map-only .rotate-prompt.show{
-    display:block !important;
-    left:50%; top:50%; bottom:auto; transform:translate(-50%,-50%);
-  }
-}
-
-/* 4) Map-only + LANDSCAPE: ONLY MAP + HUD (+ safety margin) */
-@media (hover: none) and (pointer: coarse) and (orientation: landscape){
-  body.map-only .rotate-prompt{ display:none !important; }
-  body.map-only .map-container{ display:block !important; }
 
   /* Top-left toggles */
   body.map-only #tooltip-toggle{
@@ -411,18 +408,6 @@ h2{
   body.map-only .btn-container .btn-icon img,
   body.map-only .btn-container .btn-icon svg{ width:26px; height:26px; }
 
-  /* Route summary pinned top-centre, above the map layer */
-  body.map-only .route-summary{
-    position:fixed; z-index:2001;
-    top: calc(env(safe-area-inset-top, 0) + 8px);
-    left:50%; transform:translateX(-50%);
-    margin:0; padding:8px 12px; gap:5px 10px; font-size:.8em;
-  }
-  body.map-only .route-summary .room-name:not(:first-child),
-  body.map-only .route-summary .room-name:not(:first-child) + .room-actions{
-    padding-top:5px;
-  }
-
   /* Safety margin (shrinks map to keep labels inside viewport) */
   body.map-only .map-img,
   body.map-only .map-overlay{
@@ -431,16 +416,17 @@ h2{
   }
 }
 
-/* Rotate prompt element (hidden unless map-only + .show) */
+/* Rotate prompt. Sits in the flow directly under the callout bar, so portrait
+   reads top to bottom: dial, answer, what to do next. Only ever shown by the
+   portrait map-only rule above. */
 .rotate-prompt{
   display:none;
-  position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-  background:rgba(0,0,0,.70); color:#fff; padding:10px 14px; border-radius:10px;
-  font:600 14px/1.2 'Manrope', sans-serif; z-index:3000;
+  width:max-content; max-width:92vw;
+  margin:14px auto 0; padding:10px 14px;
+  background:rgba(0,0,0,.70); color:#fff; border-radius:10px;
+  font:600 14px/1.2 'Manrope', sans-serif;
   box-shadow:0 4px 16px rgba(0,0,0,.5);
 }
-.rotate-prompt.show{ display:none; }
-body.map-only .rotate-prompt.show{ display:block; }
 
 /* ===== MOBILE (general) ===== */
 @media (max-width:640px){

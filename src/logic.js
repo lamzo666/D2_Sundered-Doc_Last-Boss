@@ -251,8 +251,14 @@ window.addEventListener('DOMContentLoaded', () => {
   /* ------------------ MAP-ONLY MODE (mobile after Lock) ------------------ */
   const rotatePrompt = document.createElement('div');
   rotatePrompt.className = 'rotate-prompt';
-  rotatePrompt.textContent = 'Rotate device to view map';
-  document.body.appendChild(rotatePrompt);
+  rotatePrompt.textContent = 'Rotate device to view the map';
+  // Placed right after the callout bar rather than on the body, so in portrait
+  // it flows underneath the answer instead of floating over the page.
+  if (routeSummary && routeSummary.parentNode) {
+    routeSummary.parentNode.insertBefore(rotatePrompt, routeSummary.nextSibling);
+  } else {
+    document.body.appendChild(rotatePrompt);
+  }
   const showRotatePrompt = (show) => rotatePrompt.classList.toggle('show', !!show);
 
   function fitMapToViewport() {

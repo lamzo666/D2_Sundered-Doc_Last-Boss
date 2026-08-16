@@ -1,8 +1,8 @@
 {
   "name": "Kerrev, The Erased - Dial Helper",
   "short_name": "Dial Helper",
-  "start_url": "/D2_Sundered-Doc_Last-Boss/",
-  "scope": "/D2_Sundered-Doc_Last-Boss/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "theme_color": "#111111",
   "background_color": "#111111",

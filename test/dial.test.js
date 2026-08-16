@@ -343,6 +343,22 @@ describe('map-only mode', () => {
     expect(document.body.classList.contains('map-only')).toBe(true);
   });
 
+  it('eases a rotation but tracks viewport nudges instantly', () => {
+    stubTouch(true);
+    fillValidDial();
+    tapLock();
+    const img = document.querySelector('.map-img');
+
+    window.dispatchEvent(new Event('resize'));            // rotation-ish
+    expect(img.classList.contains('no-anim')).toBe(false);
+
+    window.dispatchEvent(new Event('load'));              // incidental
+    expect(img.classList.contains('no-anim')).toBe(true);
+
+    window.dispatchEvent(new Event('orientationchange'));
+    expect(img.classList.contains('no-anim')).toBe(false);
+  });
+
   it('leaves no inline sizing behind when it exits', () => {
     stubTouch(true);
     fillValidDial();

@@ -45,6 +45,9 @@
      together and a wide halo bleeds onto neighbouring map furniture. */
   --map-glow-near: 5px;
   --map-glow-far:  11px;
+
+  /* Shared easing for anything that changes size with the viewport. */
+  --layout-ease: 240ms cubic-bezier(.4, 0, .2, 1);
 }
 
 /* ====== PAGE / BACKDROP ====== */
@@ -109,6 +112,7 @@ h2{
 #label-left, #label-right{
   font-size: calc(var(--truthlie-font-base) * var(--dial-scale) * var(--truthlie-mult));
   line-height: 1.05; white-space: nowrap;
+  transition: font-size var(--layout-ease);
 }
 .truth-label{ color:#4caf50; }
 .lie-label{ color:#f44336; }
@@ -119,7 +123,10 @@ h2{
   margin-top: calc(-36px * var(--dial-scale));
   filter: drop-shadow(0 0 50px rgba(0,0,0,.7));
 }
-.dial{ position:relative; width:90vw; max-width:var(--dial-max); aspect-ratio:1/1; }
+.dial{
+  position:relative; width:90vw; max-width:var(--dial-max); aspect-ratio:1/1;
+  transition: width var(--layout-ease);
+}
 .dial img.dial-background{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
 
 .dial-slot{
@@ -188,6 +195,15 @@ h2{
 .map-container{ position:relative; max-width:1000px; margin:32px auto -4px; }
 .map-img{ width:100%; height:auto; display:block; }
 .map-overlay{ position:absolute; inset:0; pointer-events:none; overflow:visible; z-index:2; }
+
+/* The map is sized in px by JS, so a rotation would otherwise snap. Ease it
+   instead. `.no-anim` is set by JS for changes that must track instantly --
+   the first fit, and the iOS URL bar sliding, which fires continuously. */
+.map-img, .map-overlay{
+  transition: width var(--layout-ease), height var(--layout-ease),
+              left var(--layout-ease), top var(--layout-ease);
+}
+.map-img.no-anim, .map-overlay.no-anim{ transition:none; }
 
 /* Pins are positioned by JS with top/left; we only size + nudge. */
 .symbol-wrap{
@@ -479,4 +495,6 @@ h2{
 @media (prefers-reduced-motion: reduce){
   .symbol-overlay{ animation:none; }
   #tooltip{ transition:none; }
+  .dial, .map-img, .map-overlay,
+  #label-left, #label-right{ transition:none; }
 }

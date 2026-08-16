@@ -261,6 +261,14 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   const showRotatePrompt = (show) => rotatePrompt.classList.toggle('show', !!show);
 
+  /* A rotation is worth easing; the iOS URL bar sliding is not, because it
+     fires continuously and any transition leaves the map trailing behind the
+     viewport. Each refit picks its own mode. */
+  function setMapAnimation(enabled) {
+    [document.querySelector('.map-img'), document.getElementById('map-overlay')]
+      .forEach(el => el && el.classList.toggle('no-anim', !enabled));
+  }
+
   function fitMapToViewport() {
     const container = document.querySelector('.map-container');
     const img = document.querySelector('.map-img');
@@ -309,13 +317,16 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!isTouchDevice()) return;             // desktop unchanged
     document.body.classList.add('map-only');
 
+    // The first fit places the map; easing it would make it fly in from
+    // wherever it happened to be sitting in the page.
+    setMapAnimation(false);
     const img = document.querySelector('.map-img');
-    if (img) {
-      if (img.complete) { fitMapToViewport(); }
-      else { img.addEventListener('load', fitMapToViewport, { once:true }); }
+    if (img && !img.complete) {
+      img.addEventListener('load', fitMapToViewport, { once: true });
     } else {
       fitMapToViewport();
     }
+    requestAnimationFrame(() => setMapAnimation(true));
 
     await tryLockLandscape();
 
@@ -332,6 +343,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Drop the inline px sizing fitMapToViewport() wrote, or the map stays
     // pinned to a fixed size and the overlay stays offset from the image.
+    // Unanimated: these fall back to `auto`/`100%`, which cannot tween anyway.
+    setMapAnimation(false);
     [document.querySelector('.map-img'), document.getElementById('map-overlay')]
       .forEach(el => {
         if (!el) return;
@@ -343,24 +356,29 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const refitIfMapOnly = () => {
-    if (document.body.classList.contains('map-only')) {
-      fitMapToViewport();
-      queueRestartPulses();
-    }
+  const refitIfMapOnly = (animate) => {
+    if (!document.body.classList.contains('map-only')) return;
+    setMapAnimation(!!animate);
+    fitMapToViewport();
+    queueRestartPulses();
   };
-  window.addEventListener('resize', refitIfMapOnly);
+  const refitSmooth  = () => refitIfMapOnly(true);   // deliberate: a rotation
+  const refitInstant = () => refitIfMapOnly(false);  // incidental: URL bar, load
+
+  window.addEventListener('resize', refitSmooth);
   window.addEventListener('orientationchange', () => {
-    refitIfMapOnly();
+    refitSmooth();
     if (document.body.classList.contains('map-only')) {
       showRotatePrompt(window.matchMedia('(orientation: portrait)').matches);
     }
   });
-  window.addEventListener('load', refitIfMapOnly);
+  window.addEventListener('load', refitInstant);
   if (window.visualViewport) {
     const vv = window.visualViewport;
-    vv.addEventListener('resize', refitIfMapOnly);
-    vv.addEventListener('scroll', refitIfMapOnly);
+    // These fire continuously while the iOS URL bar slides; easing them would
+    // leave the map trailing the viewport edge.
+    vv.addEventListener('resize', refitInstant);
+    vv.addEventListener('scroll', refitInstant);
   }
 
   /* ----------------- PHASES ----------------- */

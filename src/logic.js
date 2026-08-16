@@ -404,7 +404,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const ILLUMINATION_GUIDE =
     'Now select the symbols that are illuminated in-game, then tap the lock.<br>' +
-    '<button type="button" class="link-btn" data-action="edit-dial">Misread a symbol? Edit the dial</button>';
+    'Misread one? Long-press it, or ' +
+    '<button type="button" class="link-btn" data-action="edit-dial">edit the dial</button>.';
 
   // Open padlock = not locked yet; closed padlock = locked, tap to undo.
   function setLockAffordance() {
@@ -502,7 +503,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (tooltip) {
       tooltip.innerHTML = `
         <p>Move to the symbol(s) on the map and align the lens.</p>
-        <p>Colors show the action. <strong>Orange glow = ILLUMINATE</strong>, <strong>Black glow = DE-ILLUMINATE</strong>.</p>
+        <p>Colours match the list above. <strong>Amber glow = ILLUMINATE</strong>, <strong>blue glow = DE-ILLUMINATE</strong>.</p>
         <p>Tap the lock again to clear your marks and re-select, or Reset to start over.</p>
       `;
     }
@@ -573,33 +574,31 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ----- slot click ----- */
-  [...slots].forEach(slot => {
-    slot.addEventListener('click', () => {
-      if (phase === 'final') return;
+  /* ----- slot interaction ----- */
+  function slotPosition(slot) {
+    const cls = Array.from(slot.classList);
+    const l = cls.find(c => /^left[123]$/.test(c));
+    if (l) return { side: 'left', idx: +l.replace('left', '') - 1 };
+    const r = cls.find(c => /^right[123]$/.test(c));
+    if (r) return { side: 'right', idx: +r.replace('right', '') - 1 };
+    return null;
+  }
 
-      const cls = Array.from(slot.classList);
-      const l = cls.find(c => /^left[123]$/.test(c));
-      const r = cls.find(c => /^right[123]$/.test(c));
-      const side = l ? 'left' : r ? 'right' : null;
-      const idx  = l ? +l.replace('left','')-1 : r ? +r.replace('right','')-1 : null;
-      if (!side || idx == null) return;
+  function openPickerFor(slot) {
+    const pos = slotPosition(slot);
+    if (!pos) return;
+    const { side, idx } = pos;
 
-      if (phase === 'illumination') {
-        if (allowedGlowSlots.includes(slot)) { slot.classList.toggle('glow'); saveState(); }
-        return;
-      }
+    const hadSymbol = !!slot.dataset.symbol;
 
-      const hadSymbol = !!slot.dataset.symbol;
+    let options = hadSymbol ? optionsTreatingSlotEmpty(side, idx)
+                            : optionsNormal(side, idx);
 
-      let options = hadSymbol ? optionsTreatingSlotEmpty(side, idx)
-                              : optionsNormal(side, idx);
+    if (hadSymbol && options.length === 0) {
+      options = [slot.dataset.symbol];
+    }
 
-      if (hadSymbol && options.length === 0 && slot.dataset.symbol) {
-        options = [slot.dataset.symbol];
-      }
-
-      popupGrid.innerHTML = '';
+    popupGrid.innerHTML = '';
 
       if (hadSymbol) {
         const clearBtn = document.createElement('button');
@@ -653,8 +652,69 @@ window.addEventListener('DOMContentLoaded', () => {
           popupGrid.appendChild(opt);
         });
       }
-      applyNamesVisibility(symbolNamesCheckbox.checked);
-      symbolPopup.style.display = 'block';
+    applyNamesVisibility(symbolNamesCheckbox.checked);
+    symbolPopup.style.display = 'block';
+  }
+
+  /* Long-press (or right-click) a slot during the illumination step to fix a
+     misread symbol. The guide carries the same escape hatch as a link, but the
+     guide can be switched off — this one always works. */
+  const LONG_PRESS_MS = 550;
+  const MOVE_CANCEL_PX = 10;
+  let pressTimer = null;
+  let pressOrigin = null;
+  let suppressClick = false;
+
+  const cancelPress = () => {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    pressOrigin = null;
+  };
+
+  function editFromIllumination(slot) {
+    if (phase !== 'illumination' || !slot.dataset.symbol) return false;
+    returnToEntry();
+    openPickerFor(slot);
+    return true;
+  }
+
+  [...slots].forEach(slot => {
+    slot.addEventListener('click', () => {
+      // Swallow the click that trails a completed long-press.
+      if (suppressClick) { suppressClick = false; return; }
+      if (phase === 'final') return;
+      if (!slotPosition(slot)) return;
+
+      if (phase === 'illumination') {
+        if (allowedGlowSlots.includes(slot)) { slot.classList.toggle('glow'); saveState(); }
+        return;
+      }
+      openPickerFor(slot);
+    });
+
+    slot.addEventListener('pointerdown', (e) => {
+      suppressClick = false;
+      if (phase !== 'illumination' || !slot.dataset.symbol) return;
+      pressOrigin = { x: e.clientX, y: e.clientY };
+      pressTimer = setTimeout(() => {
+        cancelPress();
+        suppressClick = true;
+        editFromIllumination(slot);
+      }, LONG_PRESS_MS);
+    });
+
+    slot.addEventListener('pointermove', (e) => {
+      if (!pressOrigin) return;
+      const dx = e.clientX - pressOrigin.x;
+      const dy = e.clientY - pressOrigin.y;
+      if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) cancelPress();   // a scroll, not a press
+    });
+
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(type =>
+      slot.addEventListener(type, cancelPress));
+
+    slot.addEventListener('contextmenu', (e) => {
+      if (editFromIllumination(slot)) e.preventDefault();
     });
   });
 

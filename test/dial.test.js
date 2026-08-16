@@ -1,9 +1,9 @@
 // End-to-end behaviour of the dial, driven through the real DOM.
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   boot, slot, pick, clearSlot, fillValidDial, TRUTH_TRIO, LIE_TRIO,
-  tapSlot, tapLock, tapReset, pressEscape,
+  tapSlot, tapLock, tapReset, pressEscape, longPressSlot,
   lockButton, tooltipText, glowing, dialSymbols, mapPins, savedState,
   pickerOptions, pickerOpen, summaryRows, summaryVisible, padlock
 } from './helpers/app.js';
@@ -166,6 +166,74 @@ describe('editing after the dial is complete', () => {
     expect(lockButton().classList.contains('glow-phase')).toBe(false);
     expect(glowing()).toEqual([]);
     expect(dialSymbols()).toEqual([...TRUTH_TRIO, ...LIE_TRIO]);
+  });
+
+  it('long-pressing a slot opens it for editing, with the guide off', () => {
+    vi.useFakeTimers();
+    try {
+      fillValidDial();
+      tapSlot('left1');                        // mark it lit first
+      expect(glowing()).toEqual(['pyramid']);
+
+      longPressSlot('left1');
+
+      expect(lockButton().classList.contains('glow-phase')).toBe(false);  // back to entry
+      expect(glowing()).toEqual([]);
+      expect(pickerOpen()).toBe(true);
+      expect(dialSymbols()).toEqual([...TRUTH_TRIO, ...LIE_TRIO]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not mistake a normal tap for a long-press', () => {
+    vi.useFakeTimers();
+    try {
+      fillValidDial();
+      slot('left1').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 5, clientY: 5 }));
+      vi.advanceTimersByTime(150);             // released well before the threshold
+      slot('left1').dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 5, clientY: 5 }));
+      vi.advanceTimersByTime(1000);
+      tapSlot('left1');
+
+      expect(pickerOpen()).toBe(false);
+      expect(glowing()).toEqual(['pyramid']);  // still just a glow toggle
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('cancels the long-press if the finger moves, so scrolling still works', () => {
+    vi.useFakeTimers();
+    try {
+      fillValidDial();
+      slot('left1').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 5, clientY: 5 }));
+      slot('left1').dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 5, clientY: 60 }));
+      vi.advanceTimersByTime(1000);
+
+      expect(pickerOpen()).toBe(false);
+      expect(lockButton().classList.contains('glow-phase')).toBe(true);   // still illuminating
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('right-click does the same on desktop', () => {
+    fillValidDial();
+    const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    slot('left1').dispatchEvent(ev);
+
+    expect(ev.defaultPrevented).toBe(true);    // no OS menu on top of the picker
+    expect(pickerOpen()).toBe(true);
+    expect(lockButton().classList.contains('glow-phase')).toBe(false);
+  });
+
+  it('leaves an empty slot alone during illumination', () => {
+    fillValidDial();
+    const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    slot('left1').dataset.symbol = '';         // pretend it is empty
+    slot('left1').dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
   });
 
   it('reopens the picker for a slot that already holds a symbol', () => {

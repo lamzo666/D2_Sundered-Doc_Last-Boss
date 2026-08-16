@@ -8,6 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { vi } from 'vitest';
 import { clearLock } from '../../src/combination_logic_module.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -70,6 +71,20 @@ export const padlock = () => lockButton().classList.contains('is-locked') ? 'clo
 /* ---------- actions ---------- */
 
 export const tapSlot = (cls) => slot(cls).click();
+
+/**
+ * Hold a slot past the long-press threshold, then release.
+ * Requires vi.useFakeTimers() in the calling test.
+ */
+export function longPressSlot(cls, { advance = 700 } = {}) {
+  const el = slot(cls);
+  const at = (type, x = 5, y = 5) =>
+    el.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }));
+  at('pointerdown');
+  vi.advanceTimersByTime(advance);
+  at('pointerup');
+  el.click();                 // the browser still fires a click after the press
+}
 export const tapLock = () => lockButton().click();
 export const tapReset = () => document.querySelector('.btn-reset').click();
 export const pressEscape = () =>

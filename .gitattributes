@@ -1,0 +1,19 @@
+# Store all text as LF in the repository; Git checks it out native on Windows.
+# Without this, what lands in a commit depends on each contributor's local
+# core.autocrlf, and the CI check that rebuilds docs/ and compares it against
+# what's committed starts failing for reasons that have nothing to do with code.
+* text=auto
+
+# Windows launchers are run by cmd.exe and should stay CRLF everywhere.
+*.bat text eol=crlf
+
+# Keep tooling that only ever reads LF happy.
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Never touch binaries.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary

@@ -32,13 +32,14 @@
   --slot-glow-inner:   rgba(255,166,0,.28);
 
   /* Action colours, shared by the callout bar and the map pins so the two
-     always agree. De-illuminate used to be a black glow, which is close to
-     invisible on a dark map; cool blue reads against it and against the
-     map's own gold markers. */
+     always agree.
+     De-illuminate is violet: black reads as nothing on a dark map, and the
+     map art already uses both gold and blue for its own markers. Violet is
+     the one strong hue left, and it carries Darkness in Destiny's palette. */
   --action-ill-a:   rgba(255,166,0,.95);
   --action-ill-b:   rgba(255,166,0,.65);
-  --action-deill-a: rgba(120,190,255,.95);
-  --action-deill-b: rgba(120,190,255,.60);
+  --action-deill-a: rgba(186,120,255,.95);
+  --action-deill-b: rgba(147,70,235,.65);
 }
 
 /* ====== PAGE / BACKDROP ====== */
@@ -203,7 +204,7 @@ h2{
   animation: mapPulse 1.5s ease-in-out infinite; transform-origin:50% 50%;
 }
 
-/* Dial Truth -> map DE-ILLUMINATE (cool blue) */
+/* Dial Truth -> map DE-ILLUMINATE (violet) */
 .symbol-wrap.truth .symbol-overlay{
   filter:
     drop-shadow(0 0 2px rgba(0,0,0,.9))
@@ -235,7 +236,7 @@ h2{
 }
 /* Labels carry the action colour, not the truth/lie colour, so the map and
    the callout bar tell the same story. */
-.symbol-wrap.truth .map-label{ color:#d5e9ff; }
+.symbol-wrap.truth .map-label{ color:#e2cdff; }
 .symbol-wrap.lie   .map-label{ color:#ffdca6; }
 
 /* Above placement for your five (desktop) */
@@ -287,7 +288,7 @@ h2{
 }
 .do-illuminate .route-action{ color:#1a1206; background:var(--action-ill-a); }
 .do-deilluminate .route-action{
-  color:#dfefff; background:rgba(120,190,255,.18); border:1px solid var(--action-deill-b);
+  color:#ecdcff; background:rgba(160,95,245,.22); border:1px solid var(--action-deill-b);
 }
 .route-syms{ font-weight:700; letter-spacing:.04em; color:#fff; text-shadow:0 1px 2px #000; }
 

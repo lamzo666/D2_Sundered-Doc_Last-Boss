@@ -23,7 +23,7 @@ Made by Lamzo. Map by Aequorde.
    ```
 
    The map highlights the same symbols — **amber = illuminate**,
-   **blue = de-illuminate**.
+   **violet = de-illuminate**.
 
 Press the lock again to clear your marks and re-select. Misread a symbol? Long-press
 it (or right-click) to reopen that slot without losing the other five.

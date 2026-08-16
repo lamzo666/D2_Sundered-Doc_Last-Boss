@@ -503,7 +503,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (tooltip) {
       tooltip.innerHTML = `
         <p>Move to the symbol(s) on the map and align the lens.</p>
-        <p>Colours match the list above. <strong>Amber glow = ILLUMINATE</strong>, <strong>blue glow = DE-ILLUMINATE</strong>.</p>
+        <p>Colours match the list above. <strong>Amber glow = ILLUMINATE</strong>, <strong>violet glow = DE-ILLUMINATE</strong>.</p>
         <p>Tap the lock again to clear your marks and re-select, or Reset to start over.</p>
       `;
     }

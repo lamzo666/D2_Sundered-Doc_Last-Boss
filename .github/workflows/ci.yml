@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # docs/ is committed build output served by GitHub Pages, so it can
+      # silently fall behind src/. Rebuilding above should produce no diff.
+      - name: docs/ is in sync with src/
+        run: |
+          if [ -n "$(git status --porcelain docs)" ]; then
+            echo "::error::docs/ is stale. Run 'npm run build' and commit the result."
+            git status --porcelain docs
+            git diff --stat -- docs
+            exit 1
+          fi
+          echo "docs/ matches the current source."

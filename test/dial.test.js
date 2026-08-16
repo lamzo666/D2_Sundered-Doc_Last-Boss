@@ -93,6 +93,15 @@ describe('the callout bar', () => {
     expect(summaryRows().some(r => r.room === 'OTHER')).toBe(false);
   });
 
+  it('wraps each room in its own row, so separators span the full width', () => {
+    const rooms = document.querySelectorAll('#route-summary .route-room');
+    expect(rooms).toHaveLength(summaryRows().length);
+    for (const row of rooms) {
+      expect(row.querySelector(':scope > .room-name')).toBeTruthy();
+      expect(row.querySelector(':scope > .room-actions')).toBeTruthy();
+    }
+  });
+
   it('drops a pin for every symbol it lists', () => {
     const listed = summaryRows().flatMap(r => [...r.illuminate, ...r.deIlluminate]);
     expect(mapPins()).toBe(listed.length);

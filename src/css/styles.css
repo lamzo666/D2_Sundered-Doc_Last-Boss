@@ -267,18 +267,23 @@ h2{
 
 /* ===== ROUTE SUMMARY (the answer, in words, grouped by room) ===== */
 .route-summary{
-  display:grid; grid-template-columns:auto 1fr;
-  align-items:center; gap:8px 16px;
+  display:flex; flex-direction:column;
   width:max-content; max-width:min(94vw, 760px);
-  margin:22px auto -10px; padding:12px 18px;
+  margin:22px auto -10px; padding:4px 18px 6px;
   border-radius:10px; background:rgba(0,0,0,.62); backdrop-filter:blur(8px);
   box-shadow:0 4px 14px rgba(0,0,0,.45);
   font-family:'Manrope',sans-serif; text-align:left;
 }
 .route-summary[hidden]{ display:none; }
 
-/* Room label column */
+/* One row per room. The separator lives on the row, so it runs the full
+   width instead of breaking across a grid gutter. */
+.route-room{ display:flex; align-items:center; gap:14px; padding:9px 0; }
+.route-room + .route-room{ border-top:1px solid rgba(255,255,255,.10); }
+
+/* Room label column, min-width so the actions line up down the bar */
 .room-name{
+  flex:0 0 auto; min-width:8.5em;
   font-weight:800; font-size:.74em; letter-spacing:.1em; text-transform:uppercase;
   color:#9fb0c4; white-space:nowrap;
 }
@@ -296,14 +301,6 @@ h2{
   color:#ecdcff; background:rgba(160,95,245,.22); border:1px solid var(--action-deill-b);
 }
 .route-syms{ font-weight:700; letter-spacing:.04em; color:#fff; text-shadow:0 1px 2px #000; }
-
-/* Row separators keep the rooms readable when several are listed */
-.route-summary .room-name:not(:first-child){
-  border-top:1px solid rgba(255,255,255,.10); padding-top:8px;
-}
-.route-summary .room-name:not(:first-child) + .room-actions{
-  border-top:1px solid rgba(255,255,255,.10); padding-top:8px;
-}
 
 /* ===== POPUP ===== */
 .symbol-popup{
@@ -433,15 +430,46 @@ h2{
   box-shadow:0 4px 16px rgba(0,0,0,.5);
 }
 
-/* ===== MOBILE (general) ===== */
+/* ===== MOBILE (general) =====
+   Portrait has to fit title, dial, buttons, the callout bar and the rotate
+   hint on one screen, so everything is trimmed a little rather than the dial
+   simply taking whatever width it likes. */
 @media (max-width:640px){
-  #tooltip-toggle{ position:fixed; bottom:12px; left:12px; right:auto; top:auto; transform:scale(.95); z-index:2000; padding:6px 8px; }
+  /* The toggle panel is fixed over the bottom-left; keep page content clear
+     of it instead of letting the footer slide underneath. */
+  body{ padding-bottom:92px; }
+
+  #tooltip-toggle{
+    position:fixed; bottom:12px; left:12px; right:auto; top:auto;
+    transform:scale(.95); transform-origin:bottom left;
+    z-index:2000; padding:6px 8px;
+  }
   #tooltip-toggle .toggle-item{ gap:4px; margin:2px 0; }
-  h1{ font-size:1.8em; margin:18px 0 2px; }
-  h2{ font-size:.95em; margin:0 0 8px; }
-  .dial-wrapper{ margin-top:-20px; }
-  .dial{ width:94vw; }
-  .map-container{ margin:18px auto 8px; }
+
+  h1{ font-size:1.5em; margin:12px 0 2px; }
+  h2{ font-size:.85em; margin:0 0 6px; }
+  #tooltip{ font-size:.9em; padding:7px 12px; }
+
+  #truthLieLabel{ margin:2px auto -12px; }
+  .dial-wrapper{ margin-top:-12px; }
+  .dial{ width:min(84vw, 320px); }
+
+  .btn-container{ gap:14px; }
+  .btn-icon{ width:52px; height:52px; border-radius:10px; }
+  .btn-icon img, .btn-icon svg{ width:32px; height:32px; }
+
+  /* Full-bleed card, tighter rows, and the label column can shrink to fit */
+  .route-summary{
+    width:auto; max-width:none;
+    margin:14px 10px 0; padding:2px 14px 4px;
+    font-size:.95em;
+  }
+  .route-room{ gap:10px; padding:7px 0; }
+  .room-name{ min-width:0; }
+
+  .rotate-prompt{ margin-top:12px; font-size:13px; }
+  .map-container{ margin:14px auto 8px; }
+  .footer{ margin:18px 0 6px; font-size:.9em; }
 }
 
 /* helper */

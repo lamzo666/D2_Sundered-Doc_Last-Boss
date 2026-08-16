@@ -379,10 +379,11 @@ window.addEventListener('DOMContentLoaded', () => {
       : '';
     const roomRow = (label, ill, dei) =>
       (ill.length || dei.length)
-        ? `<span class="room-name">${label}</span><span class="room-actions">` +
+        ? `<div class="route-room"><span class="room-name">${label}</span>` +
+          '<span class="room-actions">' +
           group('do-illuminate', 'ILLUMINATE', ill) +
           group('do-deilluminate', 'DE-ILLUMINATE', dei) +
-          '</span>'
+          '</span></div>'
         : '';
 
     let rows = ROOMS
@@ -397,8 +398,9 @@ window.addEventListener('DOMContentLoaded', () => {
       deIlluminate.filter(s => !ROOMED.has(s)));
 
     routeSummary.innerHTML = rows ||
-      '<span class="room-name do-nothing">NOTHING TO CHANGE</span>' +
-      '<span class="room-actions"><span class="route-syms">the dial is already correct</span></span>';
+      '<div class="route-room"><span class="room-name do-nothing">NOTHING TO CHANGE</span>' +
+      '<span class="room-actions"><span class="route-syms">the dial is already correct</span>' +
+      '</span></div>';
     routeSummary.hidden = false;
   }
 

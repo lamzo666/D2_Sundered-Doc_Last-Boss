@@ -65,11 +65,18 @@ h2{
   background:rgba(0,0,0,.6); backdrop-filter:blur(8px);
   border-radius:8px; padding:8px 14px;
   max-width:420px; margin:0 auto 8px; box-shadow:0 4px 12px rgba(0,0,0,.4);
-  max-height:140px; overflow:hidden; opacity:1; transform:translateY(0);
+  max-height:420px; overflow:hidden; opacity:1; transform:translateY(0);
   transition:opacity .25s, transform .25s, max-height .25s, padding .25s, margin .25s;
 }
 /* NEW: spacing for multi-line guide */
 #tooltip p { margin: 6px 0; }
+
+/* Inline text button inside the guide (e.g. "edit the dial") */
+.link-btn{
+  display:inline; margin:0; padding:0; border:0; background:none;
+  color:#8fd0ff; font:inherit; text-decoration:underline; cursor:pointer;
+}
+.link-btn:hover{ color:#c2e6ff; }
 
 #tooltip.hidden{
   opacity:0; transform:translateY(-8px); max-height:0; padding:0; margin:0 auto; pointer-events:none;
@@ -145,8 +152,18 @@ h2{
   cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
 }
 .btn-icon img{ width:40px; height:40px; }
+.btn-icon svg{ width:40px; height:40px; display:block; color:#fff; }
 .btn-icon.glow-phase{ background:#006644; box-shadow:0 0 12px #00ff99, 0 0 24px #00ff99; }
 .btn-reset{ background:#330011; box-shadow:0 0 8px #660022, 0 0 12px #660022; }
+
+/* Lock button is a toggle: open padlock = not locked, closed = locked (tap to undo) */
+#lockButton .icon-closed{ display:none; }
+#lockButton.is-locked .icon-open{ display:none; }
+#lockButton.is-locked .icon-closed{ display:block; }
+#lockButton.is-locked{
+  background:#4a3410;
+  box-shadow:0 0 10px rgba(255,166,0,.60), 0 0 22px rgba(255,166,0,.35);
+}
 
 /* ====== MAP (CSS-only adjustments) ====== */
 .map-container{ position:relative; max-width:1000px; margin:32px auto -4px; }
@@ -226,13 +243,72 @@ h2{
   }
 }
 
+/* ===== ROUTE SUMMARY (the answer, in words, grouped by room) ===== */
+.route-summary{
+  display:grid; grid-template-columns:auto 1fr;
+  align-items:center; gap:8px 16px;
+  width:max-content; max-width:min(94vw, 760px);
+  margin:22px auto -10px; padding:12px 18px;
+  border-radius:10px; background:rgba(0,0,0,.62); backdrop-filter:blur(8px);
+  box-shadow:0 4px 14px rgba(0,0,0,.45);
+  font-family:'Manrope',sans-serif; text-align:left;
+}
+.route-summary[hidden]{ display:none; }
+
+/* Room label column */
+.room-name{
+  font-weight:800; font-size:.74em; letter-spacing:.1em; text-transform:uppercase;
+  color:#9fb0c4; white-space:nowrap;
+}
+.room-name.do-nothing{ color:#cfe9d4; }
+
+/* Action column */
+.room-actions{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; }
+.route-act{ display:inline-flex; align-items:center; gap:8px; }
+.route-action{
+  font-weight:800; letter-spacing:.06em; font-size:.7em;
+  padding:3px 8px; border-radius:999px; white-space:nowrap;
+}
+.do-illuminate .route-action{ color:#1a1206; background:var(--slot-glow-outer-a); }
+.do-deilluminate .route-action{
+  color:#dfefff; background:rgba(120,190,255,.18); border:1px solid rgba(120,190,255,.55);
+}
+.route-syms{ font-weight:700; letter-spacing:.04em; color:#fff; text-shadow:0 1px 2px #000; }
+
+/* Row separators keep the rooms readable when several are listed */
+.route-summary .room-name:not(:first-child){
+  border-top:1px solid rgba(255,255,255,.10); padding-top:8px;
+}
+.route-summary .room-name:not(:first-child) + .room-actions{
+  border-top:1px solid rgba(255,255,255,.10); padding-top:8px;
+}
+
 /* ===== POPUP ===== */
 .symbol-popup{
   display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
   background:#222; border:2px solid #888; border-radius:8px; padding:20px; z-index:99999;
 }
-.symbol-grid{ display:grid; grid-template-columns:repeat(4, 60px); gap:10px; justify-content:center; }
+.symbol-grid{ display:grid; grid-template-columns:repeat(4, 74px); gap:12px 8px; justify-content:center; }
 .symbol-grid img{ width:60px !important; height:60px !important; object-fit:contain; display:block; cursor:pointer; background:none; box-shadow:none; }
+
+/* Each pickable option: art + name */
+.symbol-option{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  margin:0; padding:0; border:0; background:none; cursor:pointer;
+  border-radius:8px; justify-self:center;
+}
+.symbol-option:hover{ background:rgba(255,255,255,.08); }
+.symbol-option .opt-name{
+  font-family:'Manrope',sans-serif; font-weight:700; font-size:10px; line-height:1.1;
+  letter-spacing:.03em; color:#ddd; text-align:center; word-break:break-word;
+}
+.symbol-option.clear-option{
+  width:60px; height:60px; justify-content:center;
+  background:#333; border:1px solid #777; border-radius:8px;
+  color:#fff; font-family:'Open Sans',sans-serif; font-size:14px; font-weight:700;
+}
+.symbol-option.clear-option:hover{ background:#444; }
+.popup-empty{ grid-column:1 / -1; color:#bbb; font-size:14px; padding:8px 0; }
 
 /* ===== FOOTER ===== */
 .footer{ font-family:'Open Sans',sans-serif; font-size:1em; color:#aaa; opacity:.8; margin:28px 0 20px; }
@@ -291,22 +367,22 @@ h2{
     display:block !important;
   }
 
-  /* Bottom-right: keep only Reset */
+  /* Bottom-right: Unlock + Reset, so a mistake doesn't force a full restart */
   body.map-only .btn-container{
     position: fixed;
     right: calc(env(safe-area-inset-right, 0) + 12px);
     bottom: calc(env(safe-area-inset-bottom, 0) + 12px);
     z-index: 2001;
-    display: block !important;
+    display: flex !important;
+    align-items: center; gap: 10px;
     margin: 0 !important;
     padding: 0;
     background: transparent;
   }
-  body.map-only .btn-container .btn-icon:not(.btn-reset){ display:none !important; }
-  body.map-only .btn-container .btn-reset{
+  body.map-only .btn-container .btn-icon{
     display: inline-flex !important;
     width: auto; height: auto;
-    padding: 10px 14px;
+    padding: 9px 13px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,0.15);
     background: rgba(0,0,0,0.6);
@@ -314,6 +390,20 @@ h2{
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     box-shadow: none;
+  }
+  body.map-only .btn-container .btn-icon img,
+  body.map-only .btn-container .btn-icon svg{ width:26px; height:26px; }
+
+  /* Route summary pinned top-centre, above the map layer */
+  body.map-only .route-summary{
+    position:fixed; z-index:2001;
+    top: calc(env(safe-area-inset-top, 0) + 8px);
+    left:50%; transform:translateX(-50%);
+    margin:0; padding:8px 12px; gap:5px 10px; font-size:.8em;
+  }
+  body.map-only .route-summary .room-name:not(:first-child),
+  body.map-only .route-summary .room-name:not(:first-child) + .room-actions{
+    padding-top:5px;
   }
 
   /* Safety margin (shrinks map to keep labels inside viewport) */
@@ -348,3 +438,9 @@ body.map-only .rotate-prompt.show{ display:block; }
 
 /* helper */
 .hidden-on-map{ display:none !important; }
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce){
+  .symbol-overlay{ animation:none; }
+  #tooltip{ transition:none; }
+}

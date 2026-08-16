@@ -55,11 +55,33 @@ window.addEventListener('DOMContentLoaded', () => {
   const tooltip = document.getElementById('tooltip');
   const tooltipCheckbox = document.getElementById('tooltipCheckbox');
   const symbolNamesCheckbox = document.getElementById('symbolNamesCheckbox');
+  const routeSummary = document.getElementById('route-summary');
 
   let phase = 'entry';
   let allowedGlowSlots = [];
   let truthGroup = [];
   let lieGroup = [];
+
+  /* ---------- session restore ----------
+     A dropped tab or a phone screen-lock shouldn't cost you six symbols
+     mid-encounter. Expires so you don't come back to a stale dial days later. */
+  const STATE_KEY = 'dialState';
+  const STATE_TTL_MS = 12 * 60 * 60 * 1000;
+  let restoring = false;
+
+  function saveState() {
+    if (restoring) return;
+    const symbols = [...slots].map(s => s.dataset.symbol || '');
+    try {
+      if (!symbols.some(Boolean)) { localStorage.removeItem(STATE_KEY); return; }
+      localStorage.setItem(STATE_KEY, JSON.stringify({
+        t: Date.now(),
+        phase,
+        symbols,
+        glow: [...slots].map(s => s.classList.contains('glow'))
+      }));
+    } catch (_) { /* private mode / quota — not worth failing over */ }
+  }
 
   /* ---------- first-visit defaults ---------- */
   if (localStorage.getItem('firstVisitDone') !== 'true') {
@@ -78,12 +100,13 @@ window.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('tooltipVisible', show ? 'true' : 'false');
   });
   const tell = (msg) => { if (tooltip) tooltip.textContent = msg; };
+  const tellHTML = (html) => { if (tooltip) tooltip.innerHTML = html; };
 
   /* ---------- symbol-name toggle ---------- */
   const showNames = (localStorage.getItem('showSymbolNames') ?? 'true') === 'true';
   symbolNamesCheckbox.checked = showNames;
   function applyNamesVisibility(show) {
-    document.querySelectorAll('.dial-slot .symbol-name, .map-label').forEach(el => {
+    document.querySelectorAll('.dial-slot .symbol-name, .map-label, .symbol-option .opt-name').forEach(el => {
       el.style.display = show ? 'block' : 'none';
     });
   }
@@ -115,6 +138,7 @@ window.addEventListener('DOMContentLoaded', () => {
     slot.dataset.symbol = symbol || '';
     slot.style.backgroundImage = symbol ? `url('img/${symbol}.png')` : '';
     updateSlotLabel(slot);
+    saveState();
   };
 
   function getOptionsForSelected(selectedArr, side, index) {
@@ -271,8 +295,12 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch(_) { /* iOS ignores — fine */ }
   }
 
+  // Must match the gate on every `body.map-only` rule in styles.css.
+  const isTouchDevice = () =>
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
   async function enterMapOnlyIfMobile() {
-    if (window.innerWidth > 900) return;      // desktop unchanged
+    if (!isTouchDevice()) return;             // desktop unchanged
     document.body.classList.add('map-only');
 
     const img = document.querySelector('.map-img');
@@ -295,6 +323,15 @@ window.addEventListener('DOMContentLoaded', () => {
   function exitMapOnly() {
     document.body.classList.remove('map-only');
     showRotatePrompt(false);
+
+    // Drop the inline px sizing fitMapToViewport() wrote, or the map stays
+    // pinned to a fixed size and the overlay stays offset from the image.
+    [document.querySelector('.map-img'), document.getElementById('map-overlay')]
+      .forEach(el => {
+        if (!el) return;
+        ['width','height','left','top'].forEach(p => el.style.removeProperty(p));
+      });
+
     if (document.fullscreenElement && document.exitFullscreen) {
       document.exitFullscreen().catch(()=>{});
     }
@@ -321,11 +358,69 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ----------------- PHASES ----------------- */
+  const nameOf = (sym) => SYMBOL_NAME_MAP[sym] || sym.toUpperCase();
+
+  // Room table lives with the rest of the map data, in map_logic.js.
+  const ROOMS = window.MAP_ROOMS || [];
+  const ROOMED = new Set(ROOMS.flatMap(r => r.symbols));
+
+  function renderRouteSummary(illuminate, deIlluminate) {
+    if (!routeSummary) return;
+
+    const group = (cls, action, list) => list.length
+      ? `<span class="route-act ${cls}"><span class="route-action">${action}</span>` +
+        `<span class="route-syms">${list.map(nameOf).join(' &middot; ')}</span></span>`
+      : '';
+    const roomRow = (label, ill, dei) =>
+      (ill.length || dei.length)
+        ? `<span class="room-name">${label}</span><span class="room-actions">` +
+          group('do-illuminate', 'ILLUMINATE', ill) +
+          group('do-deilluminate', 'DE-ILLUMINATE', dei) +
+          '</span>'
+        : '';
+
+    let rows = ROOMS
+      .map(r => roomRow(r.label,
+        illuminate.filter(s => r.symbols.includes(s)),
+        deIlluminate.filter(s => r.symbols.includes(s))))
+      .join('');
+
+    // Never silently drop a symbol that has no room assigned.
+    rows += roomRow('OTHER',
+      illuminate.filter(s => !ROOMED.has(s)),
+      deIlluminate.filter(s => !ROOMED.has(s)));
+
+    routeSummary.innerHTML = rows ||
+      '<span class="room-name do-nothing">NOTHING TO CHANGE</span>' +
+      '<span class="room-actions"><span class="route-syms">the dial is already correct</span></span>';
+    routeSummary.hidden = false;
+  }
+
+  function clearRouteSummary() {
+    if (!routeSummary) return;
+    routeSummary.innerHTML = '';
+    routeSummary.hidden = true;
+  }
+
+  const ILLUMINATION_GUIDE =
+    'Now select the symbols that are illuminated in-game, then tap the lock.<br>' +
+    '<button type="button" class="link-btn" data-action="edit-dial">Misread a symbol? Edit the dial</button>';
+
+  // Open padlock = not locked yet; closed padlock = locked, tap to undo.
+  function setLockAffordance() {
+    const locked = phase === 'final';
+    const label = locked ? 'Unlock and clear your selections' : 'Lock in your selections';
+    lockButton.classList.toggle('is-locked', locked);
+    lockButton.setAttribute('aria-pressed', locked ? 'true' : 'false');
+    lockButton.setAttribute('aria-label', label);
+    lockButton.title = label;
+  }
+
   function enterIllumination(leftType, rightType) {
     phase = 'illumination';
     lockButton.classList.add('glow-phase');
     symbolPopup.style.display = 'none';
-    tell('Now select the symbols that are illuminated in-game');
+    tellHTML(ILLUMINATION_GUIDE);
 
     const L = document.getElementById('label-left');
     const R = document.getElementById('label-right');
@@ -347,29 +442,78 @@ window.addEventListener('DOMContentLoaded', () => {
       const slot = [...slots].find(s => s.dataset.symbol === sym);
       if (slot) allowedGlowSlots.push(slot);
     });
+
+    clearRouteSummary();
+    setLockAffordance();
+    saveState();
+  }
+
+  // Escape hatch: back to symbol entry without losing the six you already typed.
+  function returnToEntry() {
+    if (phase !== 'illumination') return;
+    phase = 'entry';
+    lockButton.classList.remove('glow-phase');
+    [...slots].forEach(s => s.classList.remove('glow'));
+    allowedGlowSlots = [];
+    truthGroup = [];
+    lieGroup = [];
+    clearRouteSummary();
+    setLockAffordance();
+    tell('Tap any symbol on the dial to change it.');
+    saveState();
+  }
+
+  // Delegated: the guide's innerHTML is rewritten on every phase change.
+  if (tooltip) {
+    tooltip.addEventListener('click', (e) => {
+      if (e.target.closest('[data-action="edit-dial"]')) returnToEntry();
+    });
+  }
+
+  // Tapping the lock again undoes it: wipes every illumination mark and the
+  // answer, and hands the dial straight back for another go.
+  function unlockDial() {
+    if (phase !== 'final') return;
+    phase = 'illumination';
+    [...slots].forEach(s => s.classList.remove('glow'));
+    clearRouteSummary();
+    const overlay = document.getElementById('map-overlay');
+    if (overlay) overlay.innerHTML = '';
+    exitMapOnly();
+    lockButton.classList.add('glow-phase');
+    tellHTML(ILLUMINATION_GUIDE);
+    setLockAffordance();
+    sizeTruthLieFromDial();
+    saveState();
   }
 
   function handleLock() {
+    if (phase === 'final') { unlockDial(); return; }
     if (phase !== 'illumination') return;
     const glowing = [...document.querySelectorAll('.dial-slot.glow')].map(s => s.dataset.symbol);
-    const truthToVisit = truthGroup.filter(sym => glowing.includes(sym));
-    const lieToVisit   = lieGroup.filter(sym => !glowing.includes(sym));
+    // Truth symbols that ARE lit need putting out; lie symbols that AREN'T lit need lighting.
+    const deIlluminate = truthGroup.filter(sym => glowing.includes(sym));
+    const illuminate   = lieGroup.filter(sym => !glowing.includes(sym));
     lockButton.classList.remove('glow-phase');
     phase = 'final';
 
-    /* Guide (3 lines with spacing) */
+    renderRouteSummary(illuminate, deIlluminate);
+
     if (tooltip) {
       tooltip.innerHTML = `
         <p>Move to the symbol(s) on the map and align the lens.</p>
         <p>Colors show the action. <strong>Orange glow = ILLUMINATE</strong>, <strong>Black glow = DE-ILLUMINATE</strong>.</p>
-        <p>Tap Reset to start again.</p>
+        <p>Tap the lock again to clear your marks and re-select, or Reset to start over.</p>
       `;
     }
 
-    window.showMapHighlights(truthToVisit, lieToVisit);
+    window.showMapHighlights(deIlluminate, illuminate);
+    setLockAffordance();
 
-    // → switch to map-only on mobile
-    enterMapOnlyIfMobile();
+    // → switch to map-only on mobile. Presentation only: if fullscreen or the
+    // orientation lock misbehaves, the answer above must still stand.
+    enterMapOnlyIfMobile().catch(err => console.warn('map-only mode failed:', err));
+    saveState();
   }
 
   function resetUI() {
@@ -389,12 +533,15 @@ window.addEventListener('DOMContentLoaded', () => {
     truthGroup = [];
     lieGroup = [];
     clearLock();
+    clearRouteSummary();
+    setLockAffordance();
     tell('Enter the symbols you see in-game');
     const overlay = document.getElementById('map-overlay');
     if (overlay) overlay.innerHTML = '';
     applyNamesVisibility(symbolNamesCheckbox.checked);
     exitMapOnly();
     sizeTruthLieFromDial();
+    saveState();
   }
 
   window.handleLock = handleLock;
@@ -402,9 +549,9 @@ window.addEventListener('DOMContentLoaded', () => {
   lockButton.addEventListener('click', handleLock);
   resetButton.addEventListener('click', resetUI);
 
-  function checkProgress() {
-    if (!bothComplete()) return;
-
+  // Both sides complete AND a valid opposite-type, non-overlapping pair? → {Lt, Rt}
+  function dialTypes() {
+    if (!bothComplete()) return null;
     const L = trio('left');
     const R = trio('right');
     const Lt = validateGroup(L);
@@ -413,9 +560,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const validPair =
       disjoint &&
       ((Lt === 'truth' && Rt === 'lie') || (Lt === 'lie' && Rt === 'truth'));
+    return validPair ? { Lt, Rt } : null;
+  }
 
-    if (validPair) {
-      enterIllumination(Lt, Rt);
+  function checkProgress() {
+    if (!bothComplete()) return;
+    const types = dialTypes();
+    if (types) {
+      enterIllumination(types.Lt, types.Rt);
     } else {
       tell('Both sides must be opposite types with no duplicate symbols across the dial.');
     }
@@ -434,7 +586,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!side || idx == null) return;
 
       if (phase === 'illumination') {
-        if (allowedGlowSlots.includes(slot)) slot.classList.toggle('glow');
+        if (allowedGlowSlots.includes(slot)) { slot.classList.toggle('glow'); saveState(); }
         return;
       }
 
@@ -450,47 +602,58 @@ window.addEventListener('DOMContentLoaded', () => {
       popupGrid.innerHTML = '';
 
       if (hadSymbol) {
-        const clearDiv = document.createElement('div');
-        clearDiv.textContent = 'Clear';
-        Object.assign(clearDiv.style, {
-          width:'60px', height:'60px', display:'flex',
-          alignItems:'center', justifyContent:'center',
-          background:'#333', border:'1px solid #777',
-          borderRadius:'8px', color:'#fff', cursor:'pointer',
-          fontSize:'14px', fontWeight:'700'
-        });
-        clearDiv.addEventListener('click', () => {
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'symbol-option clear-option';
+        clearBtn.textContent = 'Clear';
+        clearBtn.addEventListener('click', () => {
           pickSymbol(slot, '');
           symbolPopup.style.display = 'none';
-          clearLock();
-          document.getElementById('label-left').textContent = '';
-          document.getElementById('label-right').textContent = '';
+          setLabel('left', '');            // blanks both sides
           tell('Enter the symbols you see in-game');
+          // Re-lock the side that is still complete, otherwise the opposite
+          // side reopens to both pools and offers same-type symbols.
+          clearLock();
+          maybePrelock();
           sizeTruthLieFromDial();
           checkProgress();
         });
-        popupGrid.appendChild(clearDiv);
+        popupGrid.appendChild(clearBtn);
       }
 
       if (options.length === 0) {
         const div = document.createElement('div');
+        div.className = 'popup-empty';
         div.textContent = 'No valid symbols';
         popupGrid.appendChild(div);
       } else {
         options.forEach(symbol => {
+          const opt = document.createElement('button');
+          opt.type = 'button';
+          opt.className = 'symbol-option';
+          opt.setAttribute('aria-label', nameOf(symbol));
+
           const img = document.createElement('img');
           img.src = `img/${symbol}.png`;
-          img.alt = symbol;
-          img.addEventListener('click', () => {
+          img.alt = '';
+          opt.appendChild(img);
+
+          const nm = document.createElement('span');
+          nm.className = 'opt-name';
+          nm.textContent = nameOf(symbol);
+          opt.appendChild(nm);
+
+          opt.addEventListener('click', () => {
             pickSymbol(slot, symbol);
             symbolPopup.style.display = 'none';
             maybePrelock();
             checkProgress();
             cascadeAutofill();
           });
-          popupGrid.appendChild(img);
+          popupGrid.appendChild(opt);
         });
       }
+      applyNamesVisibility(symbolNamesCheckbox.checked);
       symbolPopup.style.display = 'block';
     });
   });
@@ -500,4 +663,44 @@ window.addEventListener('DOMContentLoaded', () => {
       symbolPopup.style.display = 'none';
     }
   });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && symbolPopup.style.display === 'block') {
+      symbolPopup.style.display = 'none';
+    }
+  });
+
+  /* ---------- restore a dial left over from a reload / screen-lock ---------- */
+  function restoreState() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch (_) { return; }
+    if (!saved || !Array.isArray(saved.symbols) || !saved.symbols.some(Boolean)) return;
+    if (!saved.t || Date.now() - saved.t > STATE_TTL_MS) {
+      try { localStorage.removeItem(STATE_KEY); } catch (_) {}
+      return;
+    }
+
+    restoring = true;
+    [...slots].forEach((slot, i) => {
+      const sym = saved.symbols[i] || '';
+      if (!sym) return;
+      pickSymbol(slot, sym);
+      if (saved.glow?.[i]) slot.classList.add('glow');
+    });
+    maybePrelock();
+
+    // A saved 'final' comes back as 'illumination' — re-entering fullscreen needs
+    // a user gesture, so one tap of Lock replays the answer.
+    if (saved.phase === 'illumination' || saved.phase === 'final') {
+      const types = dialTypes();
+      if (types) enterIllumination(types.Lt, types.Rt);
+    }
+    restoring = false;
+    setLockAffordance();
+
+    tell(phase === 'illumination'
+      ? 'Restored your last dial — mark the illuminated symbols, or tap Reset to start over.'
+      : 'Restored your last dial — tap Reset to start over.');
+  }
+  setLockAffordance();
+  restoreState();
 });

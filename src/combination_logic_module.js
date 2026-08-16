@@ -2,7 +2,7 @@
 // Deep-simulation validator for the Sundered-Doc dial
 // Canonical lists: TRUTH x12, LIE x17
 
-const TRUTH = Object.freeze([
+export const TRUTH = Object.freeze([
   ["pyramid","drink","worm"],
   ["pyramid","kill","worm"],
   ["pyramid","stop","savathun"],
@@ -17,7 +17,7 @@ const TRUTH = Object.freeze([
   ["darkness","stop","savathun"]
 ]);
 
-const LIE = Object.freeze([
+export const LIE = Object.freeze([
   ["hive","kill","worm"],
   ["hive","kill","light"],
   ["hive","give","darkness"],

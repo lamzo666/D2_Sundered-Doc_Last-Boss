@@ -40,6 +40,11 @@
   --action-ill-b:   rgba(255,166,0,.65);
   --action-deill-a: rgba(186,120,255,.95);
   --action-deill-b: rgba(147,70,235,.65);
+
+  /* How far the map pin glow spreads. Keep it tight: the pins sit close
+     together and a wide halo bleeds onto neighbouring map furniture. */
+  --map-glow-near: 5px;
+  --map-glow-far:  11px;
 }
 
 /* ====== PAGE / BACKDROP ====== */
@@ -208,17 +213,17 @@ h2{
 .symbol-wrap.truth .symbol-overlay{
   filter:
     drop-shadow(0 0 2px rgba(0,0,0,.9))
-    drop-shadow(0 0 4px rgba(0,0,0,.85))
-    drop-shadow(0 0 10px var(--action-deill-a))
-    drop-shadow(0 0 20px var(--action-deill-b));
+    drop-shadow(0 0 3px rgba(0,0,0,.85))
+    drop-shadow(0 0 var(--map-glow-near) var(--action-deill-a))
+    drop-shadow(0 0 var(--map-glow-far)  var(--action-deill-b));
 }
 /* Dial Lie -> map ILLUMINATE (the dial's amber) */
 .symbol-wrap.lie .symbol-overlay{
   filter:
     drop-shadow(0 0 2px rgba(0,0,0,.85))
-    drop-shadow(0 0 4px rgba(0,0,0,.85))
-    drop-shadow(0 0 10px var(--action-ill-a))
-    drop-shadow(0 0 20px var(--action-ill-b));
+    drop-shadow(0 0 3px rgba(0,0,0,.85))
+    drop-shadow(0 0 var(--map-glow-near) var(--action-ill-a))
+    drop-shadow(0 0 var(--map-glow-far)  var(--action-ill-b));
 }
 
 @keyframes mapPulse{ 0%{transform:scale(1)} 55%{transform:scale(1.15)} 100%{transform:scale(1)} }
